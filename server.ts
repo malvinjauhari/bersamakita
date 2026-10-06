@@ -85,6 +85,15 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       });
     }
 
+    // Whitelist Duitku payment method codes: SP (ShopeePay QRIS), DA (DANA), SA (ShopeePay Apps)
+    const allowedPaymentMethods = ['SP', 'DA', 'SA'];
+    if (paymentMethod && !allowedPaymentMethods.includes(paymentMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Metode pembayaran tidak didukung.',
+      });
+    }
+
     const merchantCode = process.env.DUITKU_MERCHANT_CODE;
     const apiKey = process.env.DUITKU_API_KEY;
     const isSandbox = (process.env.DUITKU_ENVIRONMENT || 'sandbox') === 'sandbox';

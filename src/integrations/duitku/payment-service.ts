@@ -7,7 +7,7 @@ export interface CreatePaymentParams {
   donorEmail: string;
   donorPhone?: string;
   isAnonymous?: boolean;
-  paymentMethod: 'qris' | 'emoney'; // From frontend UI
+  paymentMethod: 'qris' | 'dana' | 'shopeepay'; // From frontend UI
 }
 
 export interface IPaymentService {
@@ -23,7 +23,9 @@ export interface IPaymentService {
 export class DuitkuPaymentService implements IPaymentService {
   async createPayment(params: CreatePaymentParams) {
     // Map frontend choice to actual Duitku code
-    const duitkuPaymentMethod = params.paymentMethod === 'qris' ? 'SP' : 'DA';
+    // qris → ShopeePay QRIS (SP), dana → DANA (DA), shopeepay → ShopeePay Apps (SA)
+    const duitkuPaymentMethod =
+      params.paymentMethod === 'qris' ? 'SP' : params.paymentMethod === 'shopeepay' ? 'SA' : 'DA';
 
     const res = await fetch('/api/payments/duitku/create', {
       method: 'POST',
@@ -47,7 +49,12 @@ export class DuitkuPaymentService implements IPaymentService {
       provider: 'duitku',
       providerReference: referenceId,
       paymentMethod: duitkuPaymentMethod,
-      paymentChannel: params.paymentMethod === 'qris' ? 'ShopeePay QRIS' : 'DANA',
+      paymentChannel:
+        params.paymentMethod === 'qris'
+          ? 'ShopeePay QRIS'
+          : params.paymentMethod === 'shopeepay'
+          ? 'ShopeePay'
+          : 'DANA',
       amount: params.amount,
       fee: 0,
       paidAmount: params.amount,

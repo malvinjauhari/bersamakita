@@ -98,7 +98,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   const [donorPhone, setDonorPhone] = useState<string>('');
   const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'emoney'>('qris');
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'dana' | 'shopeepay'>('qris');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const finalAmount = customAmount ? parseInt(customAmount, 10) || 0 : selectedAmount;
@@ -453,9 +453,8 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                   </div>
 
                   <div
-                    onClick={() => setPaymentMethod('emoney')}
-                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                      paymentMethod === 'emoney'
+                    className={`p-3.5 rounded-2xl border transition-all ${
+                      paymentMethod === 'dana' || paymentMethod === 'shopeepay'
                         ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
@@ -466,18 +465,59 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                       </div>
                       <div>
                         <span className="font-bold text-xs text-slate-900 block">
-                          DANA (E-Money)
+                          E-Money (Dompet Digital)
                         </span>
                         <span className="text-[11px] text-slate-500">
-                          Bayar langsung dengan aplikasi DANA
+                          Bayar langsung dari aplikasi e-money Anda
                         </span>
                       </div>
                     </div>
-                    <CheckCircle2
-                      className={`w-4 h-4 ${
-                        paymentMethod === 'emoney' ? 'text-emerald-600' : 'text-slate-300'
-                      }`}
-                    />
+
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('dana')}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          paymentMethod === 'dana'
+                            ? 'border-emerald-600 bg-white ring-1 ring-emerald-600'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-xs text-slate-900">DANA</span>
+                          <CheckCircle2
+                            className={`w-4 h-4 ${
+                              paymentMethod === 'dana' ? 'text-emerald-600' : 'text-slate-300'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-500 block mt-0.5">
+                          Bayar via aplikasi DANA
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('shopeepay')}
+                        className={`p-3 rounded-xl border text-left transition-all ${
+                          paymentMethod === 'shopeepay'
+                            ? 'border-emerald-600 bg-white ring-1 ring-emerald-600'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-xs text-slate-900">ShopeePay</span>
+                          <CheckCircle2
+                            className={`w-4 h-4 ${
+                              paymentMethod === 'shopeepay' ? 'text-emerald-600' : 'text-slate-300'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-500 block mt-0.5">
+                          Bayar via aplikasi ShopeePay
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
