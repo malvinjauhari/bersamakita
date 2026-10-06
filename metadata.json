@@ -1,0 +1,6 @@
+{
+  "name": "Bersama Kita",
+  "description": "Platform donasi bencana berbasis dana tunai yang menghubungkan donatur, payment, pencairan dana, partner, distribusi, dan pelacakan transparan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

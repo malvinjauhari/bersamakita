@@ -1,0 +1,180 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin", "partner"] },
+        "partnerId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    },
+    "EarthquakeEvent": {
+      "title": "EarthquakeEvent",
+      "description": "Earthquake data ingested from BMKG",
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "magnitude": { "type": "string" },
+        "depth": { "type": "string" },
+        "location": { "type": "string" },
+        "region": { "type": "string" },
+        "coordinates": { "type": "object" },
+        "eventTime": { "type": "string" },
+        "fetchedAt": { "type": "string" }
+      }
+    },
+    "Disaster": {
+      "title": "Disaster",
+      "description": "Disaster item derived from BMKG, pending or approved",
+      "type": "object",
+      "properties": {
+        "earthquakeEventId": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_verification", "admin_approved", "auto_approved", "rejected", "published", "archived"] },
+        "verificationMethod": { "type": "string" },
+        "verifiedAt": { "type": "string" },
+        "publishedAt": { "type": "string" }
+      },
+      "required": ["title", "status"]
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Cash-based donation made by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "donorName": { "type": "string" },
+        "donorEmail": { "type": "string" },
+        "isAnonymous": { "type": "boolean" },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending_payment", "paid", "failed", "expired", "refunded"] },
+        "paymentId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["amount", "status", "userId"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Duitku payment record",
+      "type": "object",
+      "properties": {
+        "donationId": { "type": "string" },
+        "provider": { "type": "string" },
+        "providerReference": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["donationId", "amount", "status"]
+    },
+    "Disbursement": {
+      "title": "Disbursement",
+      "description": "Funds disbursed by admin for disaster relief operations",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" },
+        "requestedAt": { "type": "string" }
+      }
+    },
+    "Partner": {
+      "title": "Partner",
+      "description": "Humanitarian operational partner organization",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "organization": { "type": "string" },
+        "operationalArea": { "type": "string" },
+        "status": { "type": "string" }
+      }
+    },
+    "PartnerAllocation": {
+      "title": "PartnerAllocation",
+      "description": "Funds allocated to a partner",
+      "type": "object",
+      "properties": {
+        "disbursementId": { "type": "string" },
+        "partnerId": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["allocated", "funds_received", "in_distribution", "completed"] }
+      }
+    },
+    "DistributionReport": {
+      "title": "DistributionReport",
+      "description": "Actual distribution report submitted by partner",
+      "type": "object",
+      "properties": {
+        "partnerId": { "type": "string" },
+        "allocationId": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "submitted", "published", "revised"] },
+        "location": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "TrackingEvent": {
+      "title": "TrackingEvent",
+      "description": "Vertical tracking timeline event for donor transparency",
+      "type": "object",
+      "properties": {
+        "donationId": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "visibleToUser": { "type": "boolean" }
+      },
+      "required": ["donationId", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/earthquakeEvents/{eventId}": {
+      "schema": "EarthquakeEvent",
+      "description": "BMKG raw and normalized events"
+    },
+    "/disasters/{disasterId}": {
+      "schema": "Disaster",
+      "description": "Disaster publication state"
+    },
+    "/donations/{donationId}": {
+      "schema": "Donation",
+      "description": "Cash donations"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Payment transactions"
+    },
+    "/disbursements/{disbursementId}": {
+      "schema": "Disbursement",
+      "description": "Admin fund disbursements"
+    },
+    "/partners/{partnerId}": {
+      "schema": "Partner",
+      "description": "Partner organizations"
+    },
+    "/partnerAllocations/{allocationId}": {
+      "schema": "PartnerAllocation",
+      "description": "Allocations to partners"
+    },
+    "/distributionReports/{reportId}": {
+      "schema": "DistributionReport",
+      "description": "Distribution reports by partners"
+    },
+    "/trackingEvents/{eventId}": {
+      "schema": "TrackingEvent",
+      "description": "Tracking timeline events"
+    }
+  }
+}

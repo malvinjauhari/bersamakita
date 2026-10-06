@@ -1,0 +1,164 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'admin_backend@bersamakita.org' ||
+        request.auth.token.email == 'contohasdf@gmail.com' ||
+        request.auth.token.email == 'bersamakita.my.id@protonmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin')
+      );
+    }
+
+    function isPartner() {
+      return isAuthenticated() && (
+        request.auth.token.email == 'partnerbersamakita@protonmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'partner')
+      );
+    }
+
+    function isUser() {
+      return isAuthenticated() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'user';
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin() || isPartner());
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Earthquake Events from BMKG
+    match /earthquakeEvents/{eventId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Disasters (Published/approved data visible to everyone; Pending data only visible to Admin/Partner)
+    match /disasters/{disasterId} {
+      allow read: if (
+        resource.data.status in ['admin_approved', 'auto_approved', 'published'] ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow write: if isAuthenticated();
+    }
+
+    // Cash Donations (Strict Database-Level User Isolation)
+    match /donations/{donationId} {
+      allow read: if (
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow create: if (
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
+        request.resource.data.userId == 'guest' ||
+        !isAuthenticated()
+      );
+      allow update: if (
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        resource.data.userId == 'guest' ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if (
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow create: if true;
+      allow update: if (
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Disbursements (Admin funds)
+    match /disbursements/{disbursementId} {
+      allow read: if isAuthenticated() && (isAdmin() || isPartner());
+      allow write: if isAdmin();
+    }
+
+    // Partners
+    match /partners/{partnerId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Partner Allocations (Transparan untuk Donatur & Tim Lapangan)
+    match /partnerAllocations/{allocationId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+    }
+
+    // Distribution Reports
+    match /distributionReports/{reportId} {
+      allow read: if (
+        resource.data.status in ['submitted', 'published'] ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow write: if isAuthenticated();
+    }
+
+    // Distributions (Alternative collection)
+    match /distributions/{trackingId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && (isAdmin() || isPartner() || request.resource.data.partnerId == request.auth.uid);
+      allow update: if isAuthenticated() && (isAdmin() || isPartner() || resource.data.partnerId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Tracking Events (Strict Database-Level User Isolation)
+    match /trackingEvents/{eventId} {
+      allow read: if (
+        (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow create: if (
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
+        request.resource.data.userId == 'guest' ||
+        isAdmin() ||
+        isPartner()
+      );
+      allow update, delete: if isAdmin() || isPartner();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated();
+    }
+  }
+}
