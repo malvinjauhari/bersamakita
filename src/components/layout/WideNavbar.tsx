@@ -8,6 +8,7 @@ import {
   Activity,
   LogOut,
   LogIn,
+  Receipt,
 } from 'lucide-react';
 import { useAuth } from '../../domains/access/AuthContext';
 
@@ -22,6 +23,7 @@ export const WideNavbar: React.FC = () => {
     { path: '/dashboard/reports', label: 'Transparansi Penyaluran', icon: Package },
     { path: '/dashboard/katalog', label: 'Katalog BMKG', icon: Radio },
     { path: '/my-donation', label: 'Donasi Saya', icon: Heart },
+    { path: '/cek-transaksi', label: 'Cek Transaksi', icon: Receipt },
   ];
 
   const displayName =

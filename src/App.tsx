@@ -21,6 +21,7 @@ import { TransactionUniversalDispatcher } from './domains/donation/TransactionUn
 import { TransactionDonatePage } from './domains/donation/TransactionDonatePage';
 import { TransactionCheckoutPage } from './domains/donation/TransactionCheckoutPage';
 import { TransactionStatusPage } from './domains/donation/TransactionStatusPage';
+import { TransactionHistoryPage } from './domains/donation/TransactionHistoryPage';
 import { AdminAuthPage } from './domains/admin/AdminAuthPage';
 import { AdminPortalView } from './domains/admin/AdminPortalView';
 import { PartnerAuthPage } from './domains/partner/PartnerAuthPage';
@@ -409,6 +410,10 @@ function MainRoutes() {
       <Route
         path="/lacak/:donationId"
         element={<MyDonationsPage donations={donations} />}
+      />
+      <Route
+        path="/cek-transaksi"
+        element={<TransactionHistoryPage donations={donations} />}
       />
 
       {/* 5. Transaction Donation Flow Routes (No Popups!) */}

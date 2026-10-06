@@ -99,6 +99,7 @@ export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) =
               donations={donations}
               onOpenTracking={(donId) => setSelectedDonationId(donId)}
               onOpenDonate={() => navigate('/')}
+              onResumePayment={(donId) => navigate(`/transaction/checkout/${donId}`)}
             />
 
             <div className="pt-6 border-t border-slate-200/80">
