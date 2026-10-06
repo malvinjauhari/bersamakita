@@ -6,6 +6,9 @@
   "engines": {
     "node": "22.x"
   },
+  "overrides": {
+    "jose": "^5.10.0"
+  },
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build",
