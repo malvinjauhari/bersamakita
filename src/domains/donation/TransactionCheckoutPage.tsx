@@ -56,7 +56,11 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           }
 
           if (found.paymentId) {
-            const p = await getPayment(found.paymentId);
+            let p = await getPayment(found.paymentId);
+            if (!p) {
+              // Fallback: legacy donations stored a mismatched paymentId
+              p = await getPayment(`pay-${found.id}`);
+            }
             setPayment(p);
 
             if (p?.status === 'paid' || p?.status === 'failed' || p?.status === 'expired') {
@@ -159,12 +163,20 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto" />
           <h2 className="text-lg font-bold text-slate-800">Transaksi Tidak Ditemukan</h2>
           <p className="text-xs text-slate-500">Data pembayaran ini tidak dapat ditemukan atau sesi Anda telah kedaluwarsa.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
-          >
-            Kembali ke Beranda
-          </button>
+          <div className="flex flex-col items-center gap-2 pt-2">
+            <button
+              onClick={() => navigate('/cek-transaksi')}
+              className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+            >
+              Lihat Transaksi Saya
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -326,6 +338,20 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
                 <p className="text-sm text-slate-500 mt-1">
                   Transaksi Anda telah kadaluarsa karena melewati batas waktu yang ditentukan.
                 </p>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={() => navigate('/cek-transaksi')}
+                  className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+                >
+                  Lihat Transaksi Saya
+                </button>
+                <button
+                  onClick={() => navigate('/')}
+                  className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+                >
+                  Mulai Donasi Baru
+                </button>
               </div>
             </div>
           )}

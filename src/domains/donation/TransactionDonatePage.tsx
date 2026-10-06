@@ -120,7 +120,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
     setIsSubmitting(true);
     try {
       const donationId = `don-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const paymentId = `pay-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const paymentId = `pay-${donationId}`;
       const referenceId = `BK-${Date.now()}`;
 
       const newDonation: Donation = {
