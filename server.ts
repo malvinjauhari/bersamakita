@@ -130,7 +130,8 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
     
     if (duitkuData.statusCode !== '00') {
       console.error('Duitku create error details:', duitkuData);
-      return res.status(400).json({ success: false, message: duitkuData.statusMessage || 'Gagal create invoice Duitku', raw: duitkuData });
+      const duitkuMessage = duitkuData.statusMessage || duitkuData.Message || 'Gagal create invoice Duitku';
+      return res.status(400).json({ success: false, message: duitkuMessage, raw: duitkuData });
     }
 
     return res.json({
