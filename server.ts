@@ -126,7 +126,7 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       callbackUrl: `${process.env.APP_URL || 'http://localhost:3005'}/api/payments/duitku/callback`,
       returnUrl: `${process.env.APP_URL || 'http://localhost:3005'}/transaction/status/${donationId}`,
       signature: signature,
-      expiryPeriod: 1440
+      expiryPeriod: 60 // minutes — kept in sync with the checkout countdown
     };
 
     const duitkuRes = await fetch(duitkuUrl, {
@@ -369,6 +369,209 @@ app.post('/api/payments/duitku/check-status', async (req: Request, res: Response
   }
 });
 
+
+// Sandbox-only demo endpoint: mark a pending payment as paid in one click.
+// Locked behind DUITKU_ENVIRONMENT=sandbox so it can never run in live mode.
+app.post('/api/payments/duitku/simulate-paid', async (req: Request, res: Response) => {
+  try {
+    if ((process.env.DUITKU_ENVIRONMENT || 'sandbox') !== 'sandbox') {
+      return res.status(403).json({
+        success: false,
+        message: 'Simulasi pembayaran hanya tersedia di mode sandbox.',
+      });
+    }
+
+    const { merchantOrderId } = req.body;
+    if (!merchantOrderId) {
+      return res.status(400).json({ success: false, message: 'merchantOrderId is required.' });
+    }
+    if (!adminDb) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+
+    const paymentsRef = adminDb.collection('payments');
+    const paymentSnap = await paymentsRef.where('donationId', '==', merchantOrderId).limit(1).get();
+    if (paymentSnap.empty) {
+      return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan.' });
+    }
+
+    const paymentDoc = paymentSnap.docs[0];
+    const paymentData = paymentDoc.data();
+
+    // Idempotency: already paid → acknowledge without mutating
+    if (paymentData.status === 'paid') {
+      return res.json({ success: true, message: 'Pembayaran sudah lunas.' });
+    }
+    if (paymentData.status !== 'pending') {
+      return res.status(409).json({
+        success: false,
+        message: 'Transaksi tidak dalam status menunggu pembayaran.',
+      });
+    }
+
+    const now = new Date().toISOString();
+    const batch = adminDb.batch();
+
+    batch.update(paymentDoc.ref, {
+      status: 'paid',
+      paidAmount: Number(paymentData.amount || 0),
+      paidAt: now,
+      updatedAt: now,
+    });
+
+    const donationRef = adminDb.collection('donations').doc(merchantOrderId);
+    const donationSnap = await donationRef.get();
+    if (donationSnap.exists) {
+      batch.update(donationRef, { status: 'paid', updatedAt: now });
+
+      const trackingRef = adminDb.collection('trackingEvents').doc();
+      batch.set(trackingRef, {
+        id: trackingRef.id,
+        donationId: merchantOrderId,
+        userId: donationSnap.data()?.userId || 'guest',
+        type: 'funds_recorded',
+        title: 'Dana Donasi Diterima',
+        description: 'Pembayaran donasi telah berhasil diverifikasi oleh sistem.',
+        timestamp: now,
+        visibleToUser: true,
+        createdBy: 'system',
+      });
+    }
+
+    await batch.commit();
+    console.log(`[sandbox] Simulated payment marked paid for donation ${merchantOrderId}`);
+    return res.json({ success: true, message: 'Pembayaran disimulasikan sebagai lunas (sandbox).' });
+  } catch (error: any) {
+    console.error('Simulate paid error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Scheduled sweep: donations stuck in pending_payment past the 60-minute
+// expiry window are resolved against Duitku transactionStatus (00 → paid,
+// otherwise → failed). Triggered by Vercel Cron, protected by CRON_SECRET.
+app.get('/api/payments/duitku/expire-sweep', async (req: Request, res: Response) => {
+  try {
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret) {
+      const auth = req.headers.authorization || '';
+      if (auth !== `Bearer ${cronSecret}`) {
+        return res.status(403).json({ success: false, message: 'Unauthorized.' });
+      }
+    }
+
+    if (!adminDb) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+
+    const merchantCode = process.env.DUITKU_MERCHANT_CODE;
+    const apiKey = process.env.DUITKU_API_KEY;
+    const isSandbox = (process.env.DUITKU_ENVIRONMENT || 'sandbox') === 'sandbox';
+
+    const TTL_MINUTES = 60;
+    const cutoff = Date.now() - TTL_MINUTES * 60 * 1000;
+
+    const pendingSnap = await adminDb
+      .collection('donations')
+      .where('status', '==', 'pending_payment')
+      .get();
+
+    const stale = pendingSnap.docs.filter((d) => {
+      const created = new Date(d.data().createdAt || 0).getTime();
+      return created < cutoff;
+    });
+
+    let paidCount = 0;
+    let failedCount = 0;
+    let checked = 0;
+
+    for (const doc of stale) {
+      const merchantOrderId = doc.id;
+      checked++;
+
+      // Ask Duitku for the authoritative final status first
+      let finalPaid = false;
+      if (merchantCode && apiKey) {
+        try {
+          const signatureRaw = merchantCode + merchantOrderId;
+          const signature = crypto.createHmac('sha256', apiKey).update(signatureRaw).digest('hex');
+          const duitkuUrl = isSandbox
+            ? 'https://sandbox.duitku.com/webapi/api/merchant/transactionStatus'
+            : 'https://passport.duitku.com/webapi/api/merchant/transactionStatus';
+          const statusRes = await fetch(duitkuUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchantCode, merchantOrderId, signature }),
+          });
+          const statusData = await statusRes.json();
+          finalPaid = statusData.statusCode === '00';
+        } catch (e: any) {
+          console.warn(`Expire sweep status check failed for ${merchantOrderId}:`, e.message);
+        }
+      }
+
+      const paymentSnap = await adminDb
+        .collection('payments')
+        .where('donationId', '==', merchantOrderId)
+        .limit(1)
+        .get();
+      if (paymentSnap.empty) {
+        // No payment record to settle — just close the donation out
+        const newStatus = finalPaid ? 'paid' : 'failed';
+        await doc.ref.update({ status: newStatus, updatedAt: new Date().toISOString() });
+        finalPaid ? paidCount++ : failedCount++;
+        continue;
+      }
+
+      const paymentDoc = paymentSnap.docs[0];
+      if (paymentDoc.data().status === 'paid') {
+        // Idempotent — skip
+        continue;
+      }
+
+      const now = new Date().toISOString();
+      const newStatus = finalPaid ? 'paid' : 'failed';
+      const batch = adminDb.batch();
+
+      batch.update(paymentDoc.ref, {
+        status: newStatus,
+        ...(finalPaid
+          ? {
+              paidAmount: Number(paymentDoc.data().amount || 0),
+              paidAt: now,
+            }
+          : {}),
+        updatedAt: now,
+      });
+      batch.update(doc.ref, { status: newStatus, updatedAt: now });
+
+      if (finalPaid) {
+        const trackingRef = adminDb.collection('trackingEvents').doc();
+        batch.set(trackingRef, {
+          id: trackingRef.id,
+          donationId: merchantOrderId,
+          userId: doc.data()?.userId || 'guest',
+          type: 'funds_recorded',
+          title: 'Dana Donasi Diterima',
+          description: 'Pembayaran donasi telah berhasil diverifikasi oleh sistem.',
+          timestamp: now,
+          visibleToUser: true,
+          createdBy: 'system',
+        });
+        paidCount++;
+      } else {
+        failedCount++;
+      }
+
+      await batch.commit();
+    }
+
+    return res.json({ success: true, checked, paid: paidCount, failed: failedCount });
+  } catch (error: any) {
+    console.error('Expire sweep error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // Admin-protected endpoint for creating Partner accounts
 app.post('/api/admin/create-partner', async (req: Request, res: Response): Promise<any> => {

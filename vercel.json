@@ -11,5 +11,11 @@
     "api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/payments/duitku/expire-sweep",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

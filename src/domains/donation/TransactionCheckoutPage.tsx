@@ -34,6 +34,9 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
   const { user } = useAuth();
   const { showToast } = useToast();
 
+  const isSandbox = import.meta.env.VITE_PAYMENT_MODE === 'sandbox';
+  const autoCheckRef = React.useRef(false);
+
   const [donation, setDonation] = useState<Donation | null>(null);
   const [payment, setPayment] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -144,6 +147,42 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
     navigator.clipboard.writeText(text);
     showToast('Berhasil disalin ke clipboard', 'info');
   };
+
+  const handleSimulatePaid = async () => {
+    if (!donation) return;
+    setCheckingStatus(true);
+
+    try {
+      const res = await fetch('/api/payments/duitku/simulate-paid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantOrderId: donation.id }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('Pembayaran berhasil (simulasi sandbox)!', 'success');
+        await onDataChanged?.();
+        navigate(`/transaction/status/${donation.id}`);
+      } else {
+        showToast(data.message || 'Gagal menyimulasikan pembayaran.', 'error');
+      }
+    } catch {
+      showToast('Terjadi kesalahan saat menyimulasikan pembayaran.', 'error');
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  // When the countdown hits zero, resolve the transaction against Duitku
+  // (02 → server marks it failed) so it no longer stays "pending" forever.
+  useEffect(() => {
+    if (timeLeft !== 0 || !donation || donation.status !== 'pending_payment') return;
+    if (autoCheckRef.current) return;
+    autoCheckRef.current = true;
+    handleCheckStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, donation]);
 
   if (loading) {
     return (
@@ -314,6 +353,22 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
               <hr className="border-slate-100" />
 
               <div className="flex flex-col items-center gap-3">
+                {isSandbox && (
+                  <button
+                    type="button"
+                    onClick={handleSimulatePaid}
+                    disabled={checkingStatus}
+                    className="w-full max-w-xs py-3 rounded-full bg-[#B2D850] hover:bg-[#a4cc45] text-[#1B3322] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-60"
+                  >
+                    {checkingStatus ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    <span>Bayar Sekarang (Simulasi Sandbox)</span>
+                  </button>
+                )}
+
                 <span className="text-xs text-slate-600">Sudah melakukan pembayaran?</span>
                 <button
                   type="button"
