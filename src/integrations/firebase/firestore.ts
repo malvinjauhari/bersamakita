@@ -101,9 +101,66 @@ export async function saveBMKGDisaster(
   }
   try {
     await setDoc(doc(db, 'earthquakeEvents', event.id), sanitizeForFirestore(event), { merge: true });
-    await setDoc(doc(db, 'disasters', disaster.id), sanitizeForFirestore(disaster), { merge: true });
+
+    const dRef = doc(db, 'disasters', disaster.id);
+    const existing = await getDoc(dRef);
+
+    if (existing.exists()) {
+      // BMKG re-sync must NEVER overwrite admin-managed fields
+      // (status, partnerId/partnerName, verification, notes, publishedAt, createdAt).
+      // Only refresh the raw BMKG data fields — otherwise an approved/closed
+      // disaster would silently revert to pending_verification and lose its partner.
+      const bmkgData: Partial<Disaster> = {
+        earthquakeEventId: disaster.earthquakeEventId,
+        title: disaster.title,
+        magnitude: disaster.magnitude,
+        depth: disaster.depth,
+        location: disaster.location,
+        coordinates: disaster.coordinates,
+        eventTime: disaster.eventTime,
+        updatedAt: new Date().toISOString(),
+      };
+      await setDoc(dRef, sanitizeForFirestore(bmkgData), { merge: true });
+    } else {
+      await setDoc(dRef, sanitizeForFirestore(disaster), { merge: true });
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `disasters/${disaster.id}`);
+  }
+}
+
+export async function getDisasterById(disasterId: string): Promise<Disaster | null> {
+  try {
+    const snap = await getDoc(doc(db, 'disasters', disasterId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as Disaster;
+  } catch (error) {
+    console.warn('getDisasterById notice:', error);
+    return null;
+  }
+}
+
+export async function updateDisasterPartner(
+  disasterId: string,
+  partnerId: string,
+  partnerName: string
+): Promise<void> {
+  if (!partnerId || !partnerName) {
+    handleFirestoreError(
+      new Error('Partner/Mitra Lapangan is required'),
+      OperationType.UPDATE,
+      `disasters/${disasterId}`
+    );
+    return;
+  }
+  try {
+    await updateDoc(doc(db, 'disasters', disasterId), {
+      partnerId,
+      partnerName,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `disasters/${disasterId}`);
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Heart,
@@ -13,12 +13,18 @@ import {
   QrCode,
   CreditCard,
   Building,
+  PauseCircle,
 } from 'lucide-react';
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Disaster, Donation } from '../../types';
 import { formatRupiah } from '../../lib/utils';
-import { createDonation, savePaymentRecord, addTrackingEvent } from '../../integrations/firebase/firestore';
+import {
+  createDonation,
+  savePaymentRecord,
+  addTrackingEvent,
+  getDisasterById,
+} from '../../integrations/firebase/firestore';
 import { paymentService } from '../../integrations/duitku/payment-service';
 
 declare global {
@@ -41,50 +47,9 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   const { user, profile } = useAuth();
   const { showToast } = useToast();
 
-  const selectedDisaster =
-    disasters.find((d) => d.id === disasterId) || disasters[0];
-
-  if (!selectedDisaster) {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
-        <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-full hover:bg-slate-100"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Dashboard</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850]">
-              <Heart className="w-3.5 h-3.5 fill-current" />
-            </div>
-            <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
-          </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-4 shadow-sm">
-            <div className="w-14 h-14 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200/60">
-              <ShieldCheck className="w-7 h-7" />
-            </div>
-            <div className="space-y-1.5">
-              <h2 className="text-lg font-bold text-slate-900">Bencana Belum Terverifikasi</h2>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Data bencana ini belum disetujui admin posko atau belum melewati aturan otomatis 24 jam. Donasi publik hanya dibuka untuk bencana yang telah terverifikasi demi transparansi dan akuntabilitas.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
-            >
-              Kembali ke Dashboard Posko
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const listedDisaster = disasters.find((d) => d.id === disasterId);
+  const [remoteDisaster, setRemoteDisaster] = useState<Disaster | null>(null);
+  const [lookupDone, setLookupDone] = useState<boolean>(false);
 
   const presetAmounts = [25000, 50000, 100000, 250000, 500000, 1000000];
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
@@ -100,6 +65,130 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   const [message, setMessage] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'qris' | 'dana' | 'shopeepay'>('qris');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Direct-link lookup: the disaster may be hidden from the public feed query
+  // (pending, rejected, or archived/closed) but still needs to be resolvable by ID
+  // so we can show an accurate screen instead of silently falling back to another disaster.
+  useEffect(() => {
+    let cancelled = false;
+    if (listedDisaster) {
+      setRemoteDisaster(null);
+      setLookupDone(true);
+      return;
+    }
+    if (!disasterId) {
+      setLookupDone(true);
+      return;
+    }
+    setLookupDone(false);
+    getDisasterById(disasterId).then((found) => {
+      if (cancelled) return;
+      setRemoteDisaster(found);
+      setLookupDone(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [disasterId, listedDisaster]);
+
+  const selectedDisaster = listedDisaster ?? remoteDisaster;
+  const isClosed = selectedDisaster?.status === 'archived';
+
+  const renderPageChrome = (children: React.ReactNode) => (
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-full hover:bg-slate-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Kembali ke Dashboard</span>
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850]">
+            <Heart className="w-3.5 h-3.5 fill-current" />
+          </div>
+          <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
+        </div>
+      </header>
+      <main className="flex-1 flex items-center justify-center p-6">{children}</main>
+    </div>
+  );
+
+  if (!selectedDisaster) {
+    if (!lookupDone) {
+      return renderPageChrome(
+        <div className="flex flex-col items-center gap-3 text-slate-500">
+          <Loader2 className="w-7 h-7 animate-spin text-[#1B3322]" />
+          <p className="text-xs font-semibold">Memuat data bencana...</p>
+        </div>
+      );
+    }
+    return renderPageChrome(
+      <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-4 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200/60">
+          <ShieldCheck className="w-7 h-7" />
+        </div>
+        <div className="space-y-1.5">
+          <h2 className="text-lg font-bold text-slate-900">Bencana Tidak Ditemukan</h2>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Data bencana ini tidak tersedia, belum disetujui admin posko, atau telah dihapus. Donasi publik hanya dibuka untuk bencana yang telah terverifikasi demi transparansi dan akuntabilitas.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
+        >
+          Kembali ke Dashboard Posko
+        </button>
+      </div>
+    );
+  }
+
+  if (isClosed) {
+    return renderPageChrome(
+      <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-5 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mx-auto border border-slate-200">
+          <PauseCircle className="w-7 h-7" />
+        </div>
+        <div className="space-y-1.5">
+          <span className="inline-block px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+            Penggalangan Ditutup
+          </span>
+          <h2 className="text-lg font-bold text-slate-900 leading-snug">
+            {selectedDisaster.title}
+          </h2>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Penggalangan dana untuk posko ini telah dihentikan oleh tim Admin Bersama Kita dan tidak lagi menerima donasi baru. Riwayat donasi yang telah tercatat tetap tersimpan dengan aman.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs text-left">
+          <div className="flex items-center gap-2 text-slate-600">
+            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">{selectedDisaster.location}</span>
+          </div>
+          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span>Waktu Gempa: {selectedDisaster.eventTime}</span>
+          </div>
+          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
+            <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span>
+              M {selectedDisaster.magnitude} — Kedalaman {selectedDisaster.depth}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
+        >
+          Lihat Posko Lain di Dashboard
+        </button>
+      </div>
+    );
+  }
 
   const finalAmount = customAmount ? parseInt(customAmount, 10) || 0 : selectedAmount;
 

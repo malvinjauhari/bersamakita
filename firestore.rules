@@ -57,9 +57,11 @@ service cloud.firestore {
     }
 
     // Disasters (Published/approved data visible to everyone; Pending data only visible to Admin/Partner)
+    // 'archived' = fundraising closed: hidden from public queries/filters, but still readable
+    // by id so the donate deep-link can show the "Penggalangan Ditutup" screen.
     match /disasters/{disasterId} {
       allow read: if (
-        resource.data.status in ['admin_approved', 'auto_approved', 'published'] ||
+        resource.data.status in ['admin_approved', 'auto_approved', 'published', 'archived'] ||
         isAdmin() ||
         isPartner()
       );
