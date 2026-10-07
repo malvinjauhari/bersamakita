@@ -36,13 +36,17 @@ declare global {
 interface TransactionDonatePageProps {
   disasters: Disaster[];
   onDataChanged: () => Promise<void>;
+  /** Explicit disaster ID (dispatcher route uses `:id`, not `:disasterId`) */
+  disasterId?: string;
 }
 
 export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   disasters,
   onDataChanged,
+  disasterId: disasterIdProp,
 }) => {
-  const { disasterId } = useParams<{ disasterId: string }>();
+  const routeParams = useParams<{ disasterId: string }>();
+  const disasterId = disasterIdProp ?? routeParams.disasterId;
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { showToast } = useToast();

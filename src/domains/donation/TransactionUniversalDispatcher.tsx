@@ -33,5 +33,7 @@ export const TransactionUniversalDispatcher: React.FC<TransactionUniversalDispat
   }
 
   // 2. Otherwise treat it as a disaster ID for donation creation
-  return <TransactionDonatePage disasters={disasters} onDataChanged={onDataChanged} />;
+  return (
+    <TransactionDonatePage disasters={disasters} onDataChanged={onDataChanged} disasterId={id} />
+  );
 };
