@@ -207,13 +207,19 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
             <DisbursementManager
               disbursements={disbursements}
               donations={donations}
+              disasters={disasters}
               partners={partners}
               onDataChanged={onDataChanged}
             />
           )}
 
           {activeTab === 'transactions' && (
-            <AdminTransactionsView donations={donations} onDataChanged={onDataChanged} />
+            <AdminTransactionsView
+              donations={donations}
+              disasters={disasters}
+              partners={partners}
+              onDataChanged={onDataChanged}
+            />
           )}
 
           {activeTab === 'partners' && (

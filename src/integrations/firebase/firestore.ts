@@ -606,6 +606,8 @@ export async function ensureAllocationForDonation(
     disbursementId: `disb-${donation.id}`,
     partnerId: 'partner-pmi',
     partnerName: 'Palang Merah Indonesia (PMI Lapangan)',
+    ...(donation.disasterId ? { disasterId: donation.disasterId } : {}),
+    ...(donation.disasterTitle ? { disasterTitle: donation.disasterTitle } : {}),
     amount: donation.amount,
     sourceDonationIds: [donation.id],
     status: 'funds_received',

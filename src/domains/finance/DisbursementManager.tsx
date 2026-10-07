@@ -8,8 +8,9 @@ import {
   AlertCircle,
   FileCheck2,
   Loader2,
+  MapPin,
 } from 'lucide-react';
-import { Disbursement, Partner, PartnerAllocation, Donation } from '../../types';
+import { Disbursement, Disaster, Partner, PartnerAllocation, Donation } from '../../types';
 import {
   createDisbursement,
   updateDisbursementStatus,
@@ -23,13 +24,26 @@ import { formatRupiah, formatDateIndo } from '../../lib/utils';
 interface DisbursementManagerProps {
   disbursements: Disbursement[];
   donations: Donation[];
+  disasters: Disaster[];
   partners: Partner[];
   onDataChanged: () => void;
+}
+
+interface DisasterRecap {
+  disasterId: string;
+  disasterTitle: string;
+  partnerName: string;
+  partnerAssigned: boolean;
+  paidIn: number;
+  disbursed: number;
+  disbursing: number;
+  remaining: number;
 }
 
 export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   disbursements,
   donations,
+  disasters,
   partners,
   onDataChanged,
 }) => {
@@ -38,15 +52,15 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [amountStr, setAmountStr] = useState<string>('');
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+  const [selectedDisasterId, setSelectedDisasterId] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  const paidDonations = donations.filter((d) => d.status === 'paid');
+
   // Compute live financial totals from database (no fake numbers!)
-  const totalPaidDonations = donations
-    .filter((d) => d.status === 'paid')
-    .reduce((sum, d) => sum + d.amount, 0);
+  const totalPaidDonations = paidDonations.reduce((sum, d) => sum + d.amount, 0);
 
   const totalDisbursedSuccess = disbursements
     .filter((d) => d.status === 'success')
@@ -58,6 +72,61 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
   const availableBalance = Math.max(0, totalPaidDonations - totalDisbursedSuccess - totalDisbursing);
 
+  // Per-disaster / per-partner recap
+  const buildRecap = (): DisasterRecap[] => {
+    const rows = new Map<string, DisasterRecap>();
+
+    const getRow = (disasterId: string, disasterTitle: string): DisasterRecap => {
+      if (!rows.has(disasterId)) {
+        const disaster = disasters.find((x) => x.id === disasterId);
+        const partner = disaster?.partnerId
+          ? partners.find((p) => p.id === disaster.partnerId)
+          : undefined;
+        rows.set(disasterId, {
+          disasterId,
+          disasterTitle: disaster?.title || disasterTitle,
+          partnerName: partner?.name || 'Belum ada mitra',
+          partnerAssigned: !!partner,
+          paidIn: 0,
+          disbursed: 0,
+          disbursing: 0,
+          remaining: 0,
+        });
+      }
+      return rows.get(disasterId)!;
+    };
+
+    for (const don of paidDonations) {
+      const key = don.disasterId || `__uncategorized__`;
+      const row = getRow(key, don.disasterTitle || 'Donasi Tanpa Label Bencana');
+      row.paidIn += don.amount;
+    }
+
+    for (const disb of disbursements) {
+      const key = disb.disasterId || `__legacy__`;
+      const row = getRow(key, disb.disasterTitle || 'Pencairan Lama (Tanpa Bencana)');
+      if (disb.status === 'success') row.disbursed += disb.amount;
+      else if (disb.status === 'submitted' || disb.status === 'processing') row.disbursing += disb.amount;
+    }
+
+    const list = Array.from(rows.values());
+    for (const row of list) {
+      row.remaining = Math.max(0, row.paidIn - row.disbursed - row.disbursing);
+    }
+    return list.sort((a, b) => b.paidIn - a.paidIn);
+  };
+
+  const recapRows = buildRecap();
+
+  // Disasters eligible for new disbursement: has paid donations AND has assigned partner
+  const eligibleDisasters = recapRows.filter((r) => r.paidIn > 0 && !r.disasterId.startsWith('__'));
+
+  const selectedRecap = eligibleDisasters.find((r) => r.disasterId === selectedDisasterId);
+  const selectedDisaster = disasters.find((x) => x.id === selectedDisasterId);
+  const selectedPartner = selectedDisaster?.partnerId
+    ? partners.find((p) => p.id === selectedDisaster.partnerId)
+    : undefined;
+
   const handleCreateDisbursement = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(amountStr.replace(/[^0-9]/g, ''), 10);
@@ -67,18 +136,26 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       return;
     }
 
-    if (amount > availableBalance) {
-      showToast('Nominal melebihi saldo kas tersedia yang belum dicairkan', 'error');
+    if (!selectedRecap || !selectedDisaster) {
+      showToast('Harap pilih bencana tujuan pencairan', 'warning');
       return;
     }
 
-    if (!selectedPartnerId) {
-      showToast('Harap pilih mitra operasional penerima alokasi', 'warning');
+    if (!selectedPartner) {
+      showToast(
+        'Bencana ini belum memiliki mitra. Tetapkan mitra terlebih dahulu di menu Verifikasi BMKG.',
+        'error'
+      );
       return;
     }
 
-    const partner = partners.find((p) => p.id === selectedPartnerId);
-    if (!partner) return;
+    if (amount > selectedRecap.remaining) {
+      showToast(
+        `Nominal melebihi sisa kas bencana ini (${formatRupiah(selectedRecap.remaining)})`,
+        'error'
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -86,8 +163,10 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       const newDisbursement: Disbursement = {
         id: disbId,
         amount,
-        partnerId: partner.id,
-        partnerName: partner.name,
+        partnerId: selectedPartner.id,
+        partnerName: selectedPartner.name,
+        disasterId: selectedDisaster.id,
+        disasterTitle: selectedDisaster.title,
         status: 'submitted',
         provider: 'Transfer Bank Operasional / Duitku Payout Adapter',
         requestedAt: new Date().toISOString(),
@@ -97,16 +176,20 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
       await createDisbursement(newDisbursement);
 
-      // Create linked partner allocation per Section 25
-      const paidDonationIds = donations.filter((d) => d.status === 'paid').map((d) => d.id);
+      // Create linked partner allocation — source = paid donations of THIS disaster only
+      const sourceDonationIds = paidDonations
+        .filter((d) => d.disasterId === selectedDisaster.id)
+        .map((d) => d.id);
       const allocId = `alloc-${Date.now()}`;
       const newAllocation: PartnerAllocation = {
         id: allocId,
         disbursementId: disbId,
-        partnerId: partner.id,
-        partnerName: partner.name,
+        partnerId: selectedPartner.id,
+        partnerName: selectedPartner.name,
+        disasterId: selectedDisaster.id,
+        disasterTitle: selectedDisaster.title,
         amount,
-        sourceDonationIds: paidDonationIds.slice(0, 10), // Linked traceability
+        sourceDonationIds,
         status: 'allocated',
         allocatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
@@ -123,14 +206,24 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
         action: 'DISBURSEMENT_CREATED',
         entityType: 'disbursement',
         entityId: disbId,
-        after: { amount, partnerId: partner.id, partnerName: partner.name },
+        after: {
+          amount,
+          partnerId: selectedPartner.id,
+          partnerName: selectedPartner.name,
+          disasterId: selectedDisaster.id,
+          disasterTitle: selectedDisaster.title,
+        },
         timestamp: new Date().toISOString(),
       });
 
-      showToast(`Pencairan sebesar ${formatRupiah(amount)} berhasil diajukan untuk ${partner.name}`, 'success');
+      showToast(
+        `Pencairan ${formatRupiah(amount)} untuk bencana "${selectedDisaster.title}" diajukan ke ${selectedPartner.name}`,
+        'success'
+      );
       setShowModal(false);
       setAmountStr('');
       setNotes('');
+      setSelectedDisasterId('');
       onDataChanged();
     } catch (err: any) {
       showToast('Gagal membuat pencairan: ' + err.message, 'error');
@@ -184,7 +277,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
           <div className="text-xl font-bold text-emerald-700 font-mono">
             {formatRupiah(availableBalance)}
           </div>
-          <span className="text-[10px] text-slate-400">Siap dialokasikan ke mitra</span>
+          <span className="text-[10px] text-slate-400">Ringkasan semua bencana</span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-1">
@@ -208,11 +301,81 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
         </div>
       </div>
 
+      {/* Per-Disaster / Per-Partner Recap */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B3322] uppercase tracking-wider mb-1">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+            <span>Rekap Kas per Bencana &amp; Mitra</span>
+          </div>
+          <h3 className="font-bold text-base text-slate-900">Plot Dana Sesuai Bencana</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Setiap donasi masuk tercatat pada bencana tujuannya beserta mitra lapangan yang bertugas.
+          </p>
+        </div>
+
+        {recapRows.length === 0 ? (
+          <div className="p-10 text-center text-xs text-slate-400">
+            Belum ada donasi masuk. Rekap per bencana akan tampil setelah donasi berstatus lunas.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100">
+                <tr>
+                  <th className="py-3 px-6">Bencana</th>
+                  <th className="py-3 px-6">Mitra Lapangan</th>
+                  <th className="py-3 px-6 text-right">Donasi Masuk</th>
+                  <th className="py-3 px-6 text-right">Dicairkan</th>
+                  <th className="py-3 px-6 text-right">Dalam Proses</th>
+                  <th className="py-3 px-6 text-right">Sisa Kas Bencana</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recapRows.map((row) => (
+                  <tr key={row.disasterId} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-4 px-6">
+                      <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>{row.disasterTitle}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        {row.disasterId.startsWith('__') ? '-' : row.disasterId}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className={row.partnerAssigned ? 'text-slate-700' : 'text-rose-600 font-semibold'}>
+                          {row.partnerName}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 font-mono font-bold text-slate-900 text-right">
+                      {formatRupiah(row.paidIn)}
+                    </td>
+                    <td className="py-4 px-6 font-mono text-slate-600 text-right">
+                      {formatRupiah(row.disbursed)}
+                    </td>
+                    <td className="py-4 px-6 font-mono text-amber-700 text-right">
+                      {formatRupiah(row.disbursing)}
+                    </td>
+                    <td className="py-4 px-6 font-mono font-bold text-emerald-700 text-right">
+                      {formatRupiah(row.remaining)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Main Section */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-bold text-base text-slate-900">Manajemen Pencairan & Alokasi Dana</h3>
+            <h3 className="font-bold text-base text-slate-900">Manajemen Pencairan &amp; Alokasi Dana</h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Admin mengajukan pencairan dana tunai kepada mitra resmi untuk logistik darurat lapangan.
             </p>
@@ -240,7 +403,8 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100">
                 <tr>
-                  <th className="py-3 px-6">ID & Tanggal</th>
+                  <th className="py-3 px-6">ID &amp; Tanggal</th>
+                  <th className="py-3 px-6">Bencana Tujuan</th>
                   <th className="py-3 px-6">Mitra Penerima</th>
                   <th className="py-3 px-6">Nominal Pencairan</th>
                   <th className="py-3 px-6">Status</th>
@@ -254,6 +418,12 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                     <td className="py-4 px-6 font-mono">
                       <div className="font-bold text-slate-800">{d.id}</div>
                       <div className="text-[10px] text-slate-400">{formatDateIndo(d.requestedAt)}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{d.disasterTitle || 'Tanpa Bencana (Lama)'}</span>
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="font-semibold text-slate-800 flex items-center gap-1.5">
@@ -329,26 +499,66 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
             <h3 className="text-lg font-bold text-slate-900 mb-1">Pengajuan Pencairan Dana Bencana</h3>
             <p className="text-xs text-slate-500 mb-5">
-              Saldo kas donasi tersedia: <span className="font-mono font-bold text-emerald-700">{formatRupiah(availableBalance)}</span>
+              Pilih bencana tujuan — mitra lapangan otomatis terkunci sesuai penugasan bencana.
             </p>
 
             <form onSubmit={handleCreateDisbursement} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Pilih Mitra Penerima Dana</label>
+                <label className="block font-semibold text-slate-700 mb-1">Pilih Bencana Tujuan</label>
                 <select
-                  value={selectedPartnerId}
-                  onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  value={selectedDisasterId}
+                  onChange={(e) => {
+                    setSelectedDisasterId(e.target.value);
+                    setAmountStr('');
+                  }}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] bg-white"
                   required
                 >
-                  <option value="">-- Pilih Mitra Lapangan --</option>
-                  {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.operationalArea})
+                  <option value="">-- Pilih Bencana --</option>
+                  {eligibleDisasters.map((r) => (
+                    <option key={r.disasterId} value={r.disasterId}>
+                      {r.disasterTitle} (sisa {formatRupiah(r.remaining)})
                     </option>
                   ))}
                 </select>
+                {eligibleDisasters.length === 0 && (
+                  <p className="text-[11px] text-rose-600 mt-1.5">
+                    Belum ada bencana dengan donasi masuk untuk dicairkan.
+                  </p>
+                )}
               </div>
+
+              {selectedDisaster && (
+                <div
+                  className={`p-3.5 rounded-2xl border space-y-1.5 ${
+                    selectedPartner
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-rose-50 border-rose-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>Mitra Penerima (Otomatis)</span>
+                  </div>
+                  {selectedPartner ? (
+                    <>
+                      <div className="font-bold text-sm text-slate-900">{selectedPartner.name}</div>
+                      <div className="text-[11px] text-slate-500">
+                        {selectedPartner.organization} — {selectedPartner.operationalArea}
+                      </div>
+                      <div className="text-[11px] text-emerald-700 font-mono pt-1 border-t border-emerald-200">
+                        Sisa kas bencana: <strong>{formatRupiah(selectedRecap?.remaining || 0)}</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-[11px] text-rose-700 leading-relaxed">
+                      Bencana ini <strong>belum ditugaskan ke mitra lapangan</strong>. Tetapkan mitra
+                      terlebih dahulu di menu <strong>Verifikasi BMKG</strong> sebelum pencairan dapat
+                      diajukan.
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Nominal Pencairan (Rp)</label>
@@ -360,6 +570,11 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] font-mono font-bold"
                   required
                 />
+                {selectedRecap && (
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Maksimal {formatRupiah(selectedRecap.remaining)} (sisa kas bencana ini)
+                  </p>
+                )}
               </div>
 
               <div>
@@ -374,13 +589,14 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
               </div>
 
               <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
-                Pencairan ini akan mencatat alokasi baru di dashboard mitra terkait dan dapat dikonfirmasi penerimaannya oleh mitra tersebut.
+                Pencairan hanya mengambil dana dari kas bencana terpilih dan otomatis tercatat di
+                dashboard mitra sebagai alokasi bencana tersebut.
               </div>
 
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2"
+                disabled={submitting || !selectedPartner || !selectedRecap}
+                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>Ajukan Pencairan Sekarang</span>

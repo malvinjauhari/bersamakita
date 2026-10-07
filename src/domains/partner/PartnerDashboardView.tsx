@@ -151,6 +151,8 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
         disbursementId: `disb-${Date.now()}`,
         partnerId: staffSession?.email || 'partner-pmi',
         partnerName: staffSession?.name || 'Mitra Lapangan Terpadu',
+        ...(don.disasterId ? { disasterId: don.disasterId } : {}),
+        ...(don.disasterTitle ? { disasterTitle: don.disasterTitle } : {}),
         amount: don.amount,
         sourceDonationIds: [don.id],
         status: 'funds_received',

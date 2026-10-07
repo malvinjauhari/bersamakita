@@ -127,6 +127,8 @@ export interface Disbursement {
   amount: number;
   partnerId: string;
   partnerName: string;
+  disasterId?: string;
+  disasterTitle?: string;
   status: DisbursementStatus;
   provider: string;
   providerReference?: string;
@@ -184,6 +186,8 @@ export interface PartnerAllocation {
   disbursementId: string;
   partnerId: string;
   partnerName: string;
+  disasterId?: string;
+  disasterTitle?: string;
   amount: number;
   sourceDonationIds: string[];
   status: PartnerAllocationStatus;

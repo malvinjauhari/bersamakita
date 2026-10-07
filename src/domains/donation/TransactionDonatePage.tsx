@@ -125,7 +125,8 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
       const newDonation: Donation = {
         id: donationId,
-        disasterId: selectedDisaster?.id || 'general-relief',
+        disasterId: selectedDisaster.id,
+        disasterTitle: selectedDisaster.title,
         userId: user.uid,
         amount: finalAmount,
         donorName: isAnonymous ? 'Hamba Allah' : donorName || 'Donatur Peduli',

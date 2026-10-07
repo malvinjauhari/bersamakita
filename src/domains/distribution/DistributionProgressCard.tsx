@@ -253,6 +253,14 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                 <strong className="text-slate-800">{allocation.partnerName}</strong>
               </span>
             </p>
+            {allocation.disasterTitle && (
+              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                <span>
+                  Bencana Tujuan: <strong className="text-slate-800">{allocation.disasterTitle}</strong>
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="sm:text-right space-y-1 bg-slate-50 p-3 sm:p-3.5 rounded-2xl border border-slate-100 min-w-[200px]">

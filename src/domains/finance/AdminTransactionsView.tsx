@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { CreditCard, Search, Filter, CheckCircle2, Clock, XCircle, ArrowUpRight, Trash2, AlertTriangle } from 'lucide-react';
-import { Donation } from '../../types';
+import { CreditCard, Search, Filter, CheckCircle2, Clock, XCircle, ArrowUpRight, Trash2, AlertTriangle, Building2 } from 'lucide-react';
+import { Donation, Disaster, Partner } from '../../types';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
 import { deleteFailedTransactions } from '../../integrations/firebase/firestore';
 import { useToast } from '../../components/feedback/Toast';
 
 interface AdminTransactionsViewProps {
   donations: Donation[];
+  disasters: Disaster[];
+  partners: Partner[];
   onDataChanged?: () => Promise<void>;
 }
 
-export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ donations, onDataChanged }) => {
+export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
+  donations,
+  disasters,
+  partners,
+  onDataChanged,
+}) => {
   const { showToast } = useToast();
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'failed'>('all');
@@ -18,6 +25,23 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ do
   const [cleaning, setCleaning] = useState<boolean>(false);
 
   const failedCount = donations.filter((d) => d.status === 'failed').length;
+
+  // Derive partner dynamically from the disaster (single source of truth, no data duplication)
+  const resolvePartnerName = (d: Donation): string => {
+    if (!d.disasterId) return '-';
+    const disaster = disasters.find((x) => x.id === d.disasterId);
+    if (!disaster?.partnerId) return 'Belum ada mitra';
+    return partners.find((p) => p.id === disaster.partnerId)?.name || 'Mitra tidak ditemukan';
+  };
+
+  const resolveDisasterTitle = (d: Donation): string => {
+    if (d.disasterTitle) return d.disasterTitle;
+    if (d.disasterId) {
+      const disaster = disasters.find((x) => x.id === d.disasterId);
+      if (disaster) return disaster.title;
+    }
+    return 'Tanpa Label Bencana';
+  };
 
   const handleCleanupFailed = async () => {
     setCleaning(true);
@@ -128,6 +152,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ do
                   <th className="py-3 px-6">Donatur</th>
                   <th className="py-3 px-6">Nominal</th>
                   <th className="py-3 px-6">Bencana Terkait</th>
+                  <th className="py-3 px-6">Mitra Lapangan</th>
                   <th className="py-3 px-6">Waktu Transaksi</th>
                   <th className="py-3 px-6">Status Gateway</th>
                 </tr>
@@ -148,7 +173,13 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ do
                         {formatRupiah(d.amount)}
                       </td>
                       <td className="py-4 px-6 text-slate-600 max-w-xs truncate">
-                        {d.disasterTitle || 'Tanggap Darurat Umum'}
+                        {resolveDisasterTitle(d)}
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{resolvePartnerName(d)}</span>
+                        </div>
                       </td>
                       <td className="py-4 px-6 text-slate-500 font-mono text-[11px]">
                         {formatDateIndo(d.createdAt)}
