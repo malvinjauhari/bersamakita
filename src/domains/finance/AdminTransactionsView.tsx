@@ -1,15 +1,45 @@
 import React, { useState } from 'react';
-import { CreditCard, Search, Filter, CheckCircle2, Clock, XCircle, ArrowUpRight } from 'lucide-react';
+import { CreditCard, Search, Filter, CheckCircle2, Clock, XCircle, ArrowUpRight, Trash2, AlertTriangle } from 'lucide-react';
 import { Donation } from '../../types';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
+import { deleteFailedTransactions } from '../../integrations/firebase/firestore';
+import { useToast } from '../../components/feedback/Toast';
 
 interface AdminTransactionsViewProps {
   donations: Donation[];
+  onDataChanged?: () => Promise<void>;
 }
 
-export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ donations }) => {
+export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ donations, onDataChanged }) => {
+  const { showToast } = useToast();
   const [search, setSearch] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'failed'>('all');
+  const [showCleanupModal, setShowCleanupModal] = useState<boolean>(false);
+  const [cleaning, setCleaning] = useState<boolean>(false);
+
+  const failedCount = donations.filter((d) => d.status === 'failed').length;
+
+  const handleCleanupFailed = async () => {
+    setCleaning(true);
+    try {
+      const deleted = await deleteFailedTransactions();
+      showToast(
+        deleted > 0
+          ? `${deleted} dokumen transaksi gagal telah dihapus permanen.`
+          : 'Tidak ada transaksi gagal untuk dihapus.',
+        'success'
+      );
+      if (onDataChanged) {
+        await onDataChanged();
+      }
+      setShowCleanupModal(false);
+    } catch (err: any) {
+      showToast('Gagal menghapus transaksi gagal: ' + (err.message || 'Error'), 'error');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
 
   const filtered = donations.filter((d) => {
     const matchesSearch =
@@ -40,6 +70,17 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ do
             Daftar transaksi terintegrasi dengan status gateway pembayaran Duitku.
           </p>
         </div>
+
+        {/* Cleanup Failed History */}
+        <button
+          onClick={() => setShowCleanupModal(true)}
+          disabled={failedCount === 0 || cleaning}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          title={failedCount === 0 ? 'Tidak ada transaksi gagal' : 'Hapus permanen semua transaksi gagal dari histori user'}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Hapus Riwayat Transaksi Gagal ({failedCount})
+        </button>
 
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -133,6 +174,50 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ do
           </div>
         )}
       </div>
+
+      {/* Cleanup Failed History Confirmation Modal */}
+      {showCleanupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">
+                Hapus Histori Transaksi Gagal?
+              </h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                <strong>{failedCount} transaksi berstatus Gagal</strong> beserta catatan pembayaran
+                terkait akan dihapus permanen dan <strong>tidak lagi muncul di histori user</strong>.
+                <br /><br />
+                Transaksi <strong>Lunas</strong> dan <strong>Pending</strong> tidak ikut terhapus.
+                Operasi ini tidak dapat dibatalkan.
+              </p>
+
+              <div className="flex items-center gap-3 w-full pt-4">
+                <button
+                  onClick={() => setShowCleanupModal(false)}
+                  disabled={cleaning}
+                  className="flex-1 px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleCleanupFailed}
+                  disabled={cleaning}
+                  className="flex-1 px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {cleaning ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span>Ya, Hapus Permanen</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

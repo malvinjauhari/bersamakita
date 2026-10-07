@@ -5,9 +5,11 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   limit,
+  writeBatch,
 } from 'firebase/firestore';
 import { db, auth } from '../../config/firebase';
 import {
@@ -730,4 +732,78 @@ export async function getAuditLogs(): Promise<AuditLog[]> {
     }
     return [];
   }
+}
+
+// ---------------------------------------------------------------------------
+// Failed Transaction History Cleanup (Admin Only)
+// ---------------------------------------------------------------------------
+
+export async function deleteFailedTransactions(): Promise<number> {
+  const failedDonationsSnap = await getDocs(
+    query(collection(db, 'donations'), where('status', '==', 'failed'))
+  );
+  const failedPaymentsSnap = await getDocs(
+    query(collection(db, 'payments'), where('status', '==', 'failed'))
+  );
+
+  if (failedDonationsSnap.empty && failedPaymentsSnap.empty) {
+    return 0;
+  }
+
+  const failedDonationIds = failedDonationsSnap.docs.map((d) => d.id);
+  let deletedCount = 0;
+
+  let batch = writeBatch(db);
+  let ops = 0;
+
+  const flush = async () => {
+    if (ops > 0) {
+      await batch.commit();
+      batch = writeBatch(db);
+      ops = 0;
+    }
+  };
+
+  for (const snap of [failedDonationsSnap, failedPaymentsSnap]) {
+    for (const d of snap.docs) {
+      batch.delete(d.ref);
+      ops++;
+      deletedCount++;
+      if (ops === 500) {
+        await flush();
+      }
+    }
+  }
+
+  // Remove any tracking events still referencing the failed donations
+  for (const donationId of failedDonationIds) {
+    const eventsSnap = await getDocs(
+      query(collection(db, 'trackingEvents'), where('donationId', '==', donationId))
+    );
+    for (const d of eventsSnap.docs) {
+      batch.delete(d.ref);
+      ops++;
+      deletedCount++;
+      if (ops === 500) {
+        await flush();
+      }
+    }
+  }
+
+  await flush();
+
+  const actor = auth.currentUser;
+  await addAuditLog({
+    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    actorId: actor?.uid || 'unknown',
+    actorRole: 'admin',
+    actorEmail: actor?.email || undefined,
+    action: 'delete_failed_transactions',
+    entityType: 'donations',
+    entityId: `failed_batch_${Date.now()}`,
+    after: { deletedCount, failedDonationCount: failedDonationIds.length },
+    timestamp: new Date().toISOString(),
+  });
+
+  return deletedCount;
 }
