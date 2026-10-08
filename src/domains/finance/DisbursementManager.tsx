@@ -20,7 +20,7 @@ import {
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
-import { calculateAdminFee, MIN_WITHDRAWAL } from '../../lib/fees';
+import { calculateAdminFee, MIN_WITHDRAWAL, MIN_WITHDRAWAL_TOTAL, maxWithdrawableAmount } from '../../lib/fees';
 
 interface DisbursementManagerProps {
   disbursements: Disbursement[];
@@ -139,6 +139,10 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   const previewTotal = previewAmount + previewFee;
   const belowMinimum = previewAmount > 0 && previewAmount < MIN_WITHDRAWAL;
   const exceedsRemaining = selectedRecap ? previewTotal > selectedRecap.remaining : false;
+  // Max nominal = sisa kas − biaya admin (bukan sekadar sisa kas)
+  const maxWithdrawable = selectedRecap ? maxWithdrawableAmount(selectedRecap.remaining) : 0;
+  // Saldo harus sanggup menutup MIN_WITHDRAWAL + biaya admin-nya
+  const canRequestDisbursement = availableBalance >= MIN_WITHDRAWAL_TOTAL;
 
   const handleCreateDisbursement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -403,16 +407,18 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
           <div className="flex flex-col items-start sm:items-end gap-1.5">
             <button
               onClick={() => setShowModal(true)}
-              disabled={availableBalance < MIN_WITHDRAWAL}
+              disabled={!canRequestDisbursement}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" />
               <span>Buat Pengajuan Pencairan</span>
             </button>
-            {availableBalance < MIN_WITHDRAWAL && (
+            {!canRequestDisbursement && (
               <span className="text-[10px] text-rose-600 font-semibold">
-                Saldo tersedia {formatRupiah(availableBalance)} — minimal penarikan{' '}
-                {formatRupiah(MIN_WITHDRAWAL)}
+                Saldo tersedia {formatRupiah(availableBalance)} — pencairan minimal{' '}
+                {formatRupiah(MIN_WITHDRAWAL)} + biaya admin{' '}
+                {formatRupiah(MIN_WITHDRAWAL_TOTAL - MIN_WITHDRAWAL)} ={' '}
+                {formatRupiah(MIN_WITHDRAWAL_TOTAL)}
               </span>
             )}
           </div>
@@ -608,7 +614,8 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                 {selectedRecap && (
                   <p className="text-[10px] text-slate-400 mt-1">
                     Minimal {formatRupiah(MIN_WITHDRAWAL)} • Maksimal{' '}
-                    {formatRupiah(selectedRecap.remaining)} (sisa kas bencana ini)
+                    {formatRupiah(maxWithdrawable)} (sisa kas{' '}
+                    {formatRupiah(selectedRecap.remaining)} dikurangi biaya admin)
                   </p>
                 )}
                 {belowMinimum && (

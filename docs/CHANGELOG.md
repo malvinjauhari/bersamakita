@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - E-Money/DANA/ShopeePay payment options from the donation flow UI.
 
 ### Fixed
+- **Disbursement balance check now includes the admin fee everywhere**: the "Buat Pengajuan Pencairan" gate and its hint now require `saldo ≥ MIN_WITHDRAWAL + biaya admin` (`MIN_WITHDRAWAL_TOTAL`, e.g. Rp1.000.000 + Rp1.700 = Rp1.001.700) instead of comparing the saldo with the nominal only, and the input's "Maksimal" hint shows `maxWithdrawableAmount(remaining)` (largest nominal whose nominal + fee still fits the remaining cash) instead of the raw remaining balance. Submit-time validation continues to compare `nominal + biaya admin` against the disaster's remaining cash.
 - `payments` documents now store `userId`, so `firestore.rules` grants owners read access — checkout no longer shows "Transaksi Tidak Ditemukan" for regular users.
 - `simulate-paid` / `expire-sweep` now record `paidAmount = amount + fee` (they previously wrote the nominal only once a fee existed).
 - Status page receipt label clarified to "Nominal Donasi".
