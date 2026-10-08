@@ -137,10 +137,10 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   const previewAmount = parseInt(amountStr.replace(/[^0-9]/g, ''), 10) || 0;
   const previewFee = calculateAdminFee(previewAmount);
   const previewTotal = previewAmount + previewFee;
-  const belowMinimum = previewAmount > 0 && previewAmount < MIN_WITHDRAWAL;
-  const exceedsRemaining = selectedRecap ? previewTotal > selectedRecap.remaining : false;
   // Max nominal = sisa kas − biaya admin (bukan sekadar sisa kas)
   const maxWithdrawable = selectedRecap ? maxWithdrawableAmount(selectedRecap.remaining) : 0;
+  const belowMinimum = previewAmount > 0 && previewAmount < MIN_WITHDRAWAL;
+  const exceedsMax = selectedRecap ? previewAmount > maxWithdrawable : false;
   // Saldo harus sanggup menutup MIN_WITHDRAWAL + biaya admin-nya
   const canRequestDisbursement = availableBalance >= MIN_WITHDRAWAL_TOTAL;
 
@@ -151,7 +151,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
     const totalOutflow = amount + fee;
 
     if (isNaN(amount) || amount < MIN_WITHDRAWAL) {
-      showToast(`Minimal penarikan dana adalah ${formatRupiah(MIN_WITHDRAWAL)}`, 'warning');
+      showToast(`Minimal pencairan ${formatRupiah(MIN_WITHDRAWAL)}`, 'warning');
       return;
     }
 
@@ -168,9 +168,10 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       return;
     }
 
-    if (totalOutflow > selectedRecap.remaining) {
+    const maxAllowed = maxWithdrawableAmount(selectedRecap.remaining);
+    if (amount > maxAllowed) {
       showToast(
-        `Nominal + biaya admin (${formatRupiah(totalOutflow)}) melebihi sisa kas bencana ini (${formatRupiah(selectedRecap.remaining)})`,
+        `Nominal melebihi maksimal pencairan ${formatRupiah(maxAllowed)} (sisa kas ${formatRupiah(selectedRecap.remaining)} − biaya admin)`,
         'error'
       );
       return;
@@ -543,7 +544,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
               Pilih bencana tujuan — mitra lapangan otomatis terkunci sesuai penugasan bencana.
             </p>
 
-            <form onSubmit={handleCreateDisbursement} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateDisbursement} noValidate className="space-y-4 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Pilih Bencana Tujuan</label>
                 <select
@@ -604,7 +605,11 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Nominal Pencairan (Rp)</label>
                 <input
-                  type="text"
+                  type="number"
+                  inputMode="numeric"
+                  min={MIN_WITHDRAWAL}
+                  max={maxWithdrawable > 0 ? maxWithdrawable : undefined}
+                  step={1}
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="Contoh: 5000000"
@@ -618,9 +623,21 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                     {formatRupiah(selectedRecap.remaining)} dikurangi biaya admin)
                   </p>
                 )}
+                {selectedRecap && maxWithdrawable < MIN_WITHDRAWAL && (
+                  <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                    Sisa kas belum cukup — pencairan minimum {formatRupiah(MIN_WITHDRAWAL)} butuh
+                    total {formatRupiah(MIN_WITHDRAWAL_TOTAL)}
+                  </p>
+                )}
                 {belowMinimum && (
                   <p className="text-[10px] text-rose-600 font-semibold mt-1">
-                    Minimal penarikan {formatRupiah(MIN_WITHDRAWAL)}
+                    Minimal pencairan {formatRupiah(MIN_WITHDRAWAL)}
+                  </p>
+                )}
+                {exceedsMax && (
+                  <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                    Maksimal pencairan {formatRupiah(maxWithdrawable)} (sisa kas dikurangi biaya
+                    admin)
                   </p>
                 )}
               </div>
@@ -647,9 +664,10 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   <span className="font-bold">Total Pengeluaran</span>
                   <span className="font-extrabold">{formatRupiah(previewTotal)}</span>
                 </div>
-                {exceedsRemaining && (
+                {exceedsMax && (
                   <p className="text-[10px] text-rose-600 font-sans font-semibold pt-1">
-                    Melebihi sisa kas bencana ({formatRupiah(selectedRecap?.remaining || 0)})
+                    Melebihi maksimal pencairan {formatRupiah(maxWithdrawable)} (sisa kas{' '}
+                    {formatRupiah(selectedRecap?.remaining || 0)} − biaya admin)
                   </p>
                 )}
               </div>
@@ -677,7 +695,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   !selectedPartner ||
                   !selectedRecap ||
                   previewAmount < MIN_WITHDRAWAL ||
-                  exceedsRemaining
+                  exceedsMax
                 }
                 className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
