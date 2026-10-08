@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
+import { calculateAdminFee, MIN_WITHDRAWAL } from '../../lib/fees';
 
 interface DisbursementManagerProps {
   disbursements: Disbursement[];
@@ -39,6 +40,10 @@ interface DisasterRecap {
   disbursing: number;
   remaining: number;
 }
+
+/** Total kas keluar untuk satu penarikan = nominal + biaya admin (dokumen lama tanpa fee = nominal saja). */
+const disbursementOutflow = (d: Disbursement): number =>
+  d.totalAmount ?? d.amount + (d.fee ?? 0);
 
 export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   disbursements,
@@ -64,11 +69,11 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
   const totalDisbursedSuccess = disbursements
     .filter((d) => d.status === 'success')
-    .reduce((sum, d) => sum + d.amount, 0);
+    .reduce((sum, d) => sum + disbursementOutflow(d), 0);
 
   const totalDisbursing = disbursements
     .filter((d) => d.status === 'processing' || d.status === 'submitted')
-    .reduce((sum, d) => sum + d.amount, 0);
+    .reduce((sum, d) => sum + disbursementOutflow(d), 0);
 
   const availableBalance = Math.max(0, totalPaidDonations - totalDisbursedSuccess - totalDisbursing);
 
@@ -105,8 +110,9 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
     for (const disb of disbursements) {
       const key = disb.disasterId || `__legacy__`;
       const row = getRow(key, disb.disasterTitle || 'Pencairan Lama (Tanpa Bencana)');
-      if (disb.status === 'success') row.disbursed += disb.amount;
-      else if (disb.status === 'submitted' || disb.status === 'processing') row.disbursing += disb.amount;
+      if (disb.status === 'success') row.disbursed += disbursementOutflow(disb);
+      else if (disb.status === 'submitted' || disb.status === 'processing')
+        row.disbursing += disbursementOutflow(disb);
     }
 
     const list = Array.from(rows.values());
@@ -127,12 +133,21 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
     ? partners.find((p) => p.id === selectedDisaster.partnerId)
     : undefined;
 
+  // Live withdrawal preview (biaya admin 0,17%)
+  const previewAmount = parseInt(amountStr.replace(/[^0-9]/g, ''), 10) || 0;
+  const previewFee = calculateAdminFee(previewAmount);
+  const previewTotal = previewAmount + previewFee;
+  const belowMinimum = previewAmount > 0 && previewAmount < MIN_WITHDRAWAL;
+  const exceedsRemaining = selectedRecap ? previewTotal > selectedRecap.remaining : false;
+
   const handleCreateDisbursement = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseInt(amountStr.replace(/[^0-9]/g, ''), 10);
+    const fee = Number.isFinite(amount) && amount > 0 ? calculateAdminFee(amount) : 0;
+    const totalOutflow = amount + fee;
 
-    if (isNaN(amount) || amount < 50000) {
-      showToast('Nominal pencairan minimal Rp50.000', 'warning');
+    if (isNaN(amount) || amount < MIN_WITHDRAWAL) {
+      showToast(`Minimal penarikan dana adalah ${formatRupiah(MIN_WITHDRAWAL)}`, 'warning');
       return;
     }
 
@@ -149,9 +164,9 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       return;
     }
 
-    if (amount > selectedRecap.remaining) {
+    if (totalOutflow > selectedRecap.remaining) {
       showToast(
-        `Nominal melebihi sisa kas bencana ini (${formatRupiah(selectedRecap.remaining)})`,
+        `Nominal + biaya admin (${formatRupiah(totalOutflow)}) melebihi sisa kas bencana ini (${formatRupiah(selectedRecap.remaining)})`,
         'error'
       );
       return;
@@ -163,6 +178,8 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       const newDisbursement: Disbursement = {
         id: disbId,
         amount,
+        fee,
+        totalAmount: totalOutflow,
         partnerId: selectedPartner.id,
         partnerName: selectedPartner.name,
         disasterId: selectedDisaster.id,
@@ -208,6 +225,8 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
         entityId: disbId,
         after: {
           amount,
+          fee,
+          totalAmount: totalOutflow,
           partnerId: selectedPartner.id,
           partnerName: selectedPartner.name,
           disasterId: selectedDisaster.id,
@@ -217,7 +236,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       });
 
       showToast(
-        `Pencairan ${formatRupiah(amount)} untuk bencana "${selectedDisaster.title}" diajukan ke ${selectedPartner.name}`,
+        `Pencairan ${formatRupiah(amount)} (biaya admin ${formatRupiah(fee)} → total keluar ${formatRupiah(totalOutflow)}) untuk bencana "${selectedDisaster.title}" diajukan ke ${selectedPartner.name}`,
         'success'
       );
       setShowModal(false);
@@ -377,16 +396,26 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
           <div>
             <h3 className="font-bold text-base text-slate-900">Manajemen Pencairan &amp; Alokasi Dana</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Admin mengajukan pencairan dana tunai kepada mitra resmi untuk logistik darurat lapangan.
+              Admin mengajukan pencairan dana tunai kepada mitra resmi untuk logistik darurat
+              lapangan. Minimal penarikan {formatRupiah(MIN_WITHDRAWAL)}.
             </p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Buat Pengajuan Pencairan</span>
-          </button>
+          <div className="flex flex-col items-start sm:items-end gap-1.5">
+            <button
+              onClick={() => setShowModal(true)}
+              disabled={availableBalance < MIN_WITHDRAWAL}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Pengajuan Pencairan</span>
+            </button>
+            {availableBalance < MIN_WITHDRAWAL && (
+              <span className="text-[10px] text-rose-600 font-semibold">
+                Saldo tersedia {formatRupiah(availableBalance)} — minimal penarikan{' '}
+                {formatRupiah(MIN_WITHDRAWAL)}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* List of Disbursements */}
@@ -433,6 +462,12 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                     </td>
                     <td className="py-4 px-6 font-mono font-bold text-slate-900">
                       {formatRupiah(d.amount)}
+                      <div className="text-[10px] font-normal text-amber-600 mt-0.5">
+                        + Biaya admin 0,17% {formatRupiah(d.fee ?? 0)}
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-600">
+                        Total keluar {formatRupiah(disbursementOutflow(d))}
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                       <span
@@ -572,7 +607,42 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                 />
                 {selectedRecap && (
                   <p className="text-[10px] text-slate-400 mt-1">
-                    Maksimal {formatRupiah(selectedRecap.remaining)} (sisa kas bencana ini)
+                    Minimal {formatRupiah(MIN_WITHDRAWAL)} • Maksimal{' '}
+                    {formatRupiah(selectedRecap.remaining)} (sisa kas bencana ini)
+                  </p>
+                )}
+                {belowMinimum && (
+                  <p className="text-[10px] text-rose-600 font-semibold mt-1">
+                    Minimal penarikan {formatRupiah(MIN_WITHDRAWAL)}
+                  </p>
+                )}
+              </div>
+
+              {/* Rincian biaya penarikan (transparan) */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1 text-[11px] font-mono">
+                <div className="flex justify-between text-slate-500">
+                  <span>Saldo Tersedia</span>
+                  <span className="font-bold text-slate-700">
+                    {formatRupiah(availableBalance)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>Dana Ditarik</span>
+                  <span className="font-bold text-slate-700">
+                    {formatRupiah(previewAmount)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-500">
+                  <span>Biaya Admin Penarikan 0,17%</span>
+                  <span className="font-bold text-amber-600">{formatRupiah(previewFee)}</span>
+                </div>
+                <div className="flex justify-between pt-1.5 border-t border-slate-200 text-slate-700">
+                  <span className="font-bold">Total Pengeluaran</span>
+                  <span className="font-extrabold">{formatRupiah(previewTotal)}</span>
+                </div>
+                {exceedsRemaining && (
+                  <p className="text-[10px] text-rose-600 font-sans font-semibold pt-1">
+                    Melebihi sisa kas bencana ({formatRupiah(selectedRecap?.remaining || 0)})
                   </p>
                 )}
               </div>
@@ -595,11 +665,19 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
               <button
                 type="submit"
-                disabled={submitting || !selectedPartner || !selectedRecap}
+                disabled={
+                  submitting ||
+                  !selectedPartner ||
+                  !selectedRecap ||
+                  previewAmount < MIN_WITHDRAWAL ||
+                  exceedsRemaining
+                }
                 className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                <span>Ajukan Pencairan Sekarang</span>
+                <span>
+                  Ajukan Pencairan {previewAmount > 0 ? formatRupiah(previewAmount) : ''} ➔
+                </span>
               </button>
             </form>
           </div>

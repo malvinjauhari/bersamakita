@@ -235,6 +235,7 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
               reports={reports}
               allocations={allocations}
               onDataChanged={onDataChanged}
+              progressMode="admin"
             />
           )}
 

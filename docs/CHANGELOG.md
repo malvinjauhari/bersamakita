@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- **Transparent 0,17% admin fee**: single source of truth in `src/lib/fees.ts` (`ADMIN_FEE_RATE`, `calculateAdminFee`, `calculateTotalPayment`, `MIN_WITHDRAWAL`) shared by frontend and backend. Fee is charged on top of the donation (`Total Dibayar = Donasi + Biaya Admin`), stored separately (`payments.fee`), and displayed on the donate page (with "Kenapa ada biaya admin?" explainer), on the checkout page, and in the public Riwayat Dana Masuk.
+- **`GET /api/transparency/summary`** public endpoint (Firebase Admin SDK): riwayat dana masuk per donatur + total/biaya admin/per-bencana fundraising totals — identical data for every role without relaxing `firestore.rules`.
+- **TransparencySummarySection** on the Transparansi Penyaluran page (topmost): "Riwayat Dana Masuk" (donatur, keterangan, waktu, donasi, biaya admin 0,17%, total, metode QRIS) and "Informasi Penggalangan Dana" (nama bencana, total terkumpul, jumlah donatur, riwayat transaksi dengan filter per bencana).
+- Withdrawal transparency: `Disbursement` now records `fee` + `totalAmount`; the pencairan modal shows a live breakdown (Saldo Tersedia / Dana Ditarik / Biaya Admin 0,17% / Total Pengeluaran).
 - Created `.env.example` with blank placeholders for secure local environment setup.
 - Created `test-callback.ts` to verify the robustness of the Duitku callback implementation.
 - Created `test-admin.ts` to verify Firestore Read, Write, and Delete operations using Admin SDK.
@@ -14,7 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added default values to `.env` file for Duitku and internal secrets.
 
 ### Changed
-- **Payment Gateway**: Replaced mock payment integration with Real Duitku Direct API (`SP` for QRIS, `DA` for DANA). Upgraded webhook signature to HMAC-SHA256, added `/api/payments/duitku/check-status`. Overhauled `TransactionCheckoutPage` to remove POP integration and display raw `qrString` with proper timers.
+- **QRIS-only payment gateway**: removed DANA/ShopeePay options from UI (`TransactionDonatePage`) and API (server whitelist `['SP']`, rejects `DA`/`SA`). `PaymentService` maps `qris → SP` exclusively.
+- **Withdrawal minimum**: pencairan raised from Rp50.000 to **Rp1.000.000** (`MIN_WITHDRAWAL`); the "Buat Pengajuan Pencairan" button is disabled while available balance is below the minimum, and the submit button validates amount + fee against the disaster's remaining cash.
+- **Role-synced data**: `getDistributionReports()` falls back to a `status in ['submitted','published']` query when the unfiltered list is denied by `firestore.rules`, so guests/users see the same reports as staff; regular authenticated users now also fetch `partnerAllocations` for the transparency monitoring section.
+- **Payment gateway**: Replaced mock payment integration with Real Duitku Direct API. Upgraded webhook signature to HMAC-SHA256, added `/api/payments/duitku/check-status`. Overhauled `TransactionCheckoutPage` to remove POP integration and display raw `qrString` with proper timers.
 - Removed hardcoded Duitku API Key (`<redacted>`) and Merchant Code (`<redacted>`) from frontend (`DuitkuSettingsView.tsx`). Both are now securely isolated in backend environment variables.
 - Refactored frontend Admin Reset action to securely prompt the user for the `ADMIN_SECRET_KEY` instead of hardcoding `<redacted>` in the code bundle.
 - Removed hardcoded credentials from documentation (`PAYMENT.md`, `API.md`).
@@ -27,10 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - None yet.
 
 ### Removed
-- None yet.
+- **"Aksi Cepat Tahap Selanjutnya (Tinggal Klik)"** quick-action bar removed from the user-facing Transparansi Penyaluran page (`PublicReportsView` defaults to read-only `progressMode="donor"`; the admin portal opts back in with `progressMode="admin"`).
+- E-Money/DANA/ShopeePay payment options from the donation flow UI.
 
 ### Fixed
-- None yet.
+- `payments` documents now store `userId`, so `firestore.rules` grants owners read access — checkout no longer shows "Transaksi Tidak Ditemukan" for regular users.
+- `simulate-paid` / `expire-sweep` now record `paidAmount = amount + fee` (they previously wrote the nominal only once a fee existed).
+- Status page receipt label clarified to "Nominal Donasi".
 
 ### Security
 - None yet.

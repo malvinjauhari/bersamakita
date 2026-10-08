@@ -104,12 +104,17 @@ export type PaymentStatus = 'pending' | 'processing' | 'paid' | 'failed' | 'canc
 export interface PaymentRecord {
   id: string;
   donationId: string;
+  /** Firebase Auth UID of the donating user (mirrors donations.userId so firestore.rules can grant the owner read access). */
+  userId?: string;
   provider: 'duitku';
   providerReference: string;
   paymentMethod: string;
   paymentChannel: string;
+  /** Nominal donasi (dana penggalangan), WITHOUT admin fee. */
   amount: number;
+  /** Biaya administrasi 0,17% terpisah dari nominal donasi. */
   fee: number;
+  /** Total yang dibayar donatur = amount + fee (nilai riil dari gateway). */
   paidAmount?: number;
   status: PaymentStatus;
   paymentUrl?: string;
@@ -124,7 +129,12 @@ export type DisbursementStatus = 'draft' | 'submitted' | 'processing' | 'success
 
 export interface Disbursement {
   id: string;
+  /** Nominal penarikan/dana yang ditarik. */
   amount: number;
+  /** Biaya administrasi penarikan 0,17% (optional — dokumen lama tanpa fee dianggap 0). */
+  fee?: number;
+  /** Total pengeluaran = amount + fee. */
+  totalAmount?: number;
   partnerId: string;
   partnerName: string;
   disasterId?: string;

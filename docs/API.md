@@ -20,9 +20,9 @@ This document outlines the API endpoints provided by `server.ts` and external AP
 
 ### Duitku Payment Gateway
 1. **`POST /api/payments/duitku/create`**
-   - **Body**: `{ donationId, amount, donorName, donorEmail, donorPhone, paymentMethod }`
-   - **Description**: Creates a Duitku inquiry/invoice and returns the payment URL and/or QR String. Generates MD5 signature for the inquiry.
-   - **Response**: `{ success: true, reference: string, paymentUrl?: string, qrString?: string, vaNumber?: string }`
+   - **Body**: `{ donationId, amount, donorName, donorEmail, donorPhone, paymentMethod }` — `amount` = **nominal donasi**; `paymentMethod` must be `'SP'` (QRIS) or omitted (defaults to QRIS).
+   - **Description**: Creates a Duitku inquiry/invoice. Computes the transparent 0,17% admin fee server-side (`src/lib/fees.ts`) and charges `paymentAmount = amount + fee`. Generates MD5 signature for the inquiry.
+   - **Response**: `{ success: true, reference: string, paymentUrl?: string, qrString?: string, vaNumber?: string, fee: number, totalAmount: number }`
 
 2. **`POST /api/payments/duitku/callback`**
    - **Body**: Standard Duitku callback payload.
@@ -33,6 +33,21 @@ This document outlines the API endpoints provided by `server.ts` and external AP
    - **Body**: `{ merchantOrderId }`
    - **Description**: Queries Duitku transactionStatus API to get current payment status. Verifies using HMAC-SHA256 signature. Updates Firestore if status is paid or failed.
    - **Response**: `{ success: true, statusCode: string, statusMessage: string, reference: string }`
+
+### Transparency
+1. **`GET /api/transparency/summary`**
+   - **Description**: Public, read-only summary of recorded (paid) transactions via Firebase Admin SDK — identical for every role (guest/user/admin/partner). Never exposes donor email/phone.
+   - **Response**:
+     ```json
+     { "success": true, "data": {
+         "totalReceived": 0, "totalAdminFees": 0, "totalTransactions": 0, "adminFeeRate": 0.0017,
+         "disasters": [{ "disasterId": "", "disasterTitle": "", "totalCollected": 0, "donationCount": 0 }],
+         "transactions": [{ "id": "", "donorName": "", "amount": 0, "adminFee": 0, "totalPaid": 0,
+                            "paymentMethod": "QRIS", "paidAt": "", "disasterId": "", "disasterTitle": "",
+                            "keterangan": "", "createdAt": "" }]
+     }}
+     ```
+   - `transactions` is capped to the 100 most recent paid donations; aggregates cover all paid donations.
 
 ### Admin Endpoints
 1. **`POST /api/admin/reset-transactions`**

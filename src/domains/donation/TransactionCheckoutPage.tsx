@@ -272,12 +272,22 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-slate-100">
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Total Pembayaran Donasi
+                Total Dibayar (Donasi + Biaya Admin)
               </span>
               <div className="text-3xl font-extrabold font-mono text-slate-900 mt-0.5">
-                {formatRupiah(donation.amount)}
+                {formatRupiah(donation.amount + (payment.fee ?? 0))}
               </div>
-              <div className="text-xs text-slate-500 font-mono mt-1 flex items-center gap-1.5">
+              <div className="mt-2 space-y-1 text-xs font-mono text-slate-600">
+                <div className="flex justify-between gap-6">
+                  <span>Donasi</span>
+                  <span className="font-bold text-slate-900">{formatRupiah(donation.amount)}</span>
+                </div>
+                <div className="flex justify-between gap-6">
+                  <span>Biaya Admin 0,17%</span>
+                  <span className="font-bold text-amber-600">{formatRupiah(payment.fee ?? 0)}</span>
+                </div>
+              </div>
+              <div className="text-xs text-slate-500 font-mono mt-1.5 flex items-center gap-1.5">
                 ID: {donation.id} 
                 <button onClick={() => copyToClipboard(donation.id)} className="text-emerald-600 hover:text-emerald-700">
                   <Copy className="w-3 h-3" />
@@ -324,15 +334,15 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
                   </p>
                 </div>
               ) : payment.paymentUrl ? (
-                // E-Money / DANA link
+                // Fallback: legacy payments without QR payload
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-2 text-[#1B3322] font-bold">
                     <CreditCard className="w-5 h-5" />
-                    <span>Selesaikan via Aplikasi E-Money</span>
+                    <span>Buka Halaman Pembayaran QRIS</span>
                   </div>
                   
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Anda akan diarahkan ke halaman pembayaran atau aplikasi E-Wallet Anda untuk menyelesaikan pembayaran ini.
+                    Jika QR Code tidak muncul, buka halaman pembayaran resmi untuk menampilkan QRIS Anda.
                   </p>
 
                   <a

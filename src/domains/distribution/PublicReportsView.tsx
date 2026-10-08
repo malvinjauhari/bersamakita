@@ -8,12 +8,19 @@ interface PublicReportsViewProps {
   reports: DistributionReport[];
   allocations?: PartnerAllocation[];
   onDataChanged?: () => void;
+  /**
+   * 'donor' (default): read-only — quick-action bar "Aksi Cepat Tahap
+   * Selanjutnya" is fully hidden for the public/user-facing side.
+   * 'admin': keeps the milestone quick actions (admin portal only).
+   */
+  progressMode?: 'donor' | 'admin';
 }
 
 export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
   reports,
   allocations = [],
   onDataChanged,
+  progressMode = 'donor',
 }) => {
   // Only submitted / published reports per section 22
   const publicReports = reports.filter((r) => r.status === 'submitted' || r.status === 'published');
@@ -51,7 +58,7 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
               <DistributionProgressCard
                 key={alloc.id}
                 allocation={alloc}
-                mode="admin"
+                mode={progressMode}
                 onUpdated={onDataChanged}
               />
             ))}

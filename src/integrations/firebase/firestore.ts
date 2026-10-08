@@ -706,8 +706,22 @@ export async function getDistributionReports(
 ): Promise<DistributionReport[]> {
   try {
     const collRef = collection(db, 'distributionReports');
-    const q = partnerId ? query(collRef, where('partnerId', '==', partnerId)) : collRef;
-    const snap = await getDocs(q);
+    let snap;
+    try {
+      // Staff (admin/partner) can read every status; keep the unfiltered query for them.
+      const q = partnerId ? query(collRef, where('partnerId', '==', partnerId)) : collRef;
+      snap = await getDocs(q);
+    } catch (err: any) {
+      if (!partnerId && err?.code === 'permission-denied') {
+        // Public / regular users: firestore.rules only exposes submitted|published —
+        // retry with the matching filter so every role sees the same reports.
+        snap = await getDocs(
+          query(collRef, where('status', 'in', ['submitted', 'published']))
+        );
+      } else {
+        throw err;
+      }
+    }
     const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as DistributionReport));
     return results.sort((a, b) => {
       const timeA = new Date(a.submittedAt || a.createdAt).getTime();

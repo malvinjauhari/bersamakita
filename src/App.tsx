@@ -242,6 +242,16 @@ function MainRoutes() {
             console.warn('User donations fetch:', e);
             setDonations([]);
           }
+
+          // partnerAllocations are readable by any authenticated user
+          // (firestore.rules) — fetch them so the transparency page shows the
+          // same monitoring data for regular users as for staff.
+          try {
+            const allocList = await getPartnerAllocations();
+            setAllocations(allocList);
+          } catch (e) {
+            console.warn('User allocations fetch:', e);
+          }
         } else {
           // Unauthenticated guests see 0 donations. When user logs in, their distinct records are fetched.
           setDonations([]);

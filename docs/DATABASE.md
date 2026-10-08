@@ -15,16 +15,17 @@ This schema reflects the actual Firestore structure based on `firestore.rules` a
 - **Rules**: Read depends on status (public if approved/published, otherwise Admin/Partner). Authenticated write.
 
 ## 4. `donations`
-- **Fields**: `id`, `userId`, `amount`, `donorName`, `donorEmail`, `donorPhone`, `isAnonymous`, `message`, `status` (`pending_payment`, `paid`, `failed`, `expired`, `refunded`), `paymentId`, `paymentMethod`, `disasterId`, `disasterTitle`, `createdAt`, `updatedAt`
+- **Fields**: `id`, `userId`, `amount` (nominal donasi — WITHOUT admin fee), `donorName`, `donorEmail`, `donorPhone`, `isAnonymous`, `message`, `status` (`pending_payment`, `paid`, `failed`, `expired`, `refunded`), `paymentId`, `paymentMethod` (`qris`), `disasterId`, `disasterTitle`, `createdAt`, `updatedAt`
 - **Rules**: Read for owner, Admin, Partner. Create for anyone/authenticated owner. Update for owner, Admin, Partner.
 
 ## 5. `payments`
-- **Fields**: `id`, `donationId`, `provider`, `providerReference`, `paymentMethod`, `paymentChannel`, `amount`, `fee`, `paidAmount`, `status` (`pending`, `processing`, `paid`, `failed`, `cancelled`, `expired`), `paymentUrl`, `createdAt`, `updatedAt`
+- **Fields**: `id`, `donationId`, `userId` (owner — required by the `firestore.rules` payments read rule), `provider`, `providerReference`, `paymentMethod` (`SP` = QRIS), `paymentChannel` (`QRIS`), `amount` (nominal donasi), `fee` (biaya administrasi 0,17%, terpisah dari nominal), `paidAmount` (total yang dibayar = amount + fee), `status` (`pending`, `processing`, `paid`, `failed`, `cancelled`, `expired`), `paymentUrl`, `qrString`, `vaNumber`, `createdAt`, `paidAt`, `updatedAt`
 - **Rules**: Read for owner, Admin, Partner. Create public. Update for owner, Admin, Partner.
 
 ## 6. `disbursements`
-- **Fields**: `id`, `amount`, `partnerId`, `partnerName`, `status`, `provider`, `requestedAt`, `processedAt`, `createdBy`
+- **Fields**: `id`, `amount` (nominal penarikan), `fee` (biaya administrasi penarikan 0,17%, optional — dokumen lama tanpa fee = 0), `totalAmount` (= amount + fee), `partnerId`, `partnerName`, `status`, `provider`, `requestedAt`, `processedAt`, `createdBy`
 - **Rules**: Read for Admin/Partner. Write for Admin.
+- **Note**: Minimal penarikan Rp1.000.000 (`MIN_WITHDRAWAL` di `src/lib/fees.ts`). Saldo keluar dihitung memakai `totalAmount` (nominal + fee).
 
 ## 7. `partners`
 - **Fields**: `id`, `userId` (Firebase Auth UID), `name`, `email`, `organization`, `contact`, `operationalArea`, `status`, `createdAt`, `updatedAt`

@@ -14,6 +14,7 @@ global.fetch = function(url, options) {
 };
 
 import { adminDb, adminAuth } from './src/config/firebase-admin.js';
+import { ADMIN_FEE_RATE, calculateAdminFee, calculateTotalPayment } from './src/lib/fees.js';
 
 dotenv.config();
 
@@ -85,12 +86,12 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       });
     }
 
-    // Whitelist Duitku payment method codes: SP (ShopeePay QRIS), DA (DANA), SA (ShopeePay Apps)
-    const allowedPaymentMethods = ['SP', 'DA', 'SA'];
+    // QRIS is the only supported payment method (SP = ShopeePay QRIS).
+    const allowedPaymentMethods = ['SP'];
     if (paymentMethod && !allowedPaymentMethods.includes(paymentMethod)) {
       return res.status(400).json({
         success: false,
-        message: 'Metode pembayaran tidak didukung.',
+        message: 'Metode pembayaran tidak didukung. Hanya QRIS.',
       });
     }
 
@@ -109,8 +110,13 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       ? 'https://sandbox.duitku.com/webapi/api/merchant/v2/inquiry'
       : 'https://passport.duitku.com/webapi/api/merchant/v2/inquiry';
 
+    // Transparent admin fee: charged ON TOP of the donation so the recorded
+    // donation amount stays whole. Total Dibayar = Nominal + (Nominal × 0,17%).
+    const donationAmount = Math.round(amount);
+    const adminFee = calculateAdminFee(donationAmount);
+    const paymentAmount = calculateTotalPayment(donationAmount);
+
     const merchantOrderId = donationId;
-    const paymentAmount = amount;
     const signatureRaw = merchantCode + merchantOrderId + paymentAmount + apiKey;
     const signature = crypto.createHash('md5').update(signatureRaw).digest('hex');
 
@@ -118,7 +124,7 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       merchantCode: merchantCode,
       merchantOrderId: merchantOrderId,
       paymentAmount: paymentAmount,
-      paymentMethod: paymentMethod || "", 
+      paymentMethod: 'SP',
       productDetails: "Donasi Bersama Kita",
       email: donorEmail || 'donatur@bersamakita.org',
       phoneNumber: donorPhone || '081234567890',
@@ -149,6 +155,8 @@ app.post('/api/payments/duitku/create', async (req: Request, res: Response) => {
       paymentUrl: duitkuData.paymentUrl,
       qrString: duitkuData.qrString,
       vaNumber: duitkuData.vaNumber,
+      fee: adminFee,
+      totalAmount: paymentAmount,
     });
   } catch (error: any) {
     console.error('Payment create error:', error);
@@ -321,7 +329,10 @@ app.post('/api/payments/duitku/check-status', async (req: Request, res: Response
           const batch = adminDb.batch();
           batch.update(paymentDoc.ref, {
             status: 'paid',
-            paidAmount: Number(duitkuData.amount || paymentDoc.data().amount),
+            paidAmount: Number(
+              duitkuData.amount ||
+                Number(paymentDoc.data().amount || 0) + Number(paymentDoc.data().fee || 0)
+            ),
             paidAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           });
@@ -414,7 +425,7 @@ app.post('/api/payments/duitku/simulate-paid', async (req: Request, res: Respons
 
     batch.update(paymentDoc.ref, {
       status: 'paid',
-      paidAmount: Number(paymentData.amount || 0),
+      paidAmount: Number(paymentData.amount || 0) + Number(paymentData.fee || 0),
       paidAt: now,
       updatedAt: now,
     });
@@ -537,7 +548,8 @@ app.get('/api/payments/duitku/expire-sweep', async (req: Request, res: Response)
         status: newStatus,
         ...(finalPaid
           ? {
-              paidAmount: Number(paymentDoc.data().amount || 0),
+              paidAmount:
+                Number(paymentDoc.data().amount || 0) + Number(paymentDoc.data().fee || 0),
               paidAt: now,
             }
           : {}),
@@ -569,6 +581,100 @@ app.get('/api/payments/duitku/expire-sweep', async (req: Request, res: Response)
     return res.json({ success: true, checked, paid: paidCount, failed: failedCount });
   } catch (error: any) {
     console.error('Expire sweep error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Public transparency summary: incoming-funds history + fundraising totals.
+// Read-only via Firebase Admin SDK so every role (guest/user/admin/partner)
+// sees the SAME numbers, without exposing donor email/phone or relaxing
+// firestore.rules. Both queries are equality-only (no composite index needed).
+app.get('/api/transparency/summary', async (_req: Request, res: Response) => {
+  try {
+    if (!adminDb) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+
+    const [donationsSnap, paymentsSnap] = await Promise.all([
+      adminDb.collection('donations').where('status', '==', 'paid').get(),
+      adminDb.collection('payments').where('status', '==', 'paid').get(),
+    ]);
+
+    // Index payments by donationId (and doc id) for the join
+    const paymentByDonationId = new Map<string, any>();
+    for (const doc of paymentsSnap.docs) {
+      const data = doc.data();
+      if (data.donationId) paymentByDonationId.set(data.donationId, data);
+    }
+
+    const paidDonations = donationsSnap.docs
+      .map((doc) => doc.data())
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+    let totalReceived = 0;
+    let totalAdminFees = 0;
+    const disasterMap = new Map<
+      string,
+      { disasterId: string; disasterTitle: string; totalCollected: number; donationCount: number }
+    >();
+
+    const transactions = paidDonations.map((don: any) => {
+      const payment =
+        paymentByDonationId.get(don.id) ||
+        (don.paymentId ? paymentByDonationId.get(don.paymentId) : undefined) ||
+        null;
+
+      const amount = Number(don.amount || 0);
+      const adminFee = Number(payment?.fee || 0);
+      totalReceived += amount;
+      totalAdminFees += adminFee;
+
+      const disasterId = don.disasterId || '';
+      const disasterTitle = don.disasterTitle || 'Donasi Umum';
+      const key = disasterId || '__none__';
+      const row =
+        disasterMap.get(key) ||
+        { disasterId, disasterTitle, totalCollected: 0, donationCount: 0 };
+      row.totalCollected += amount;
+      row.donationCount += 1;
+      disasterMap.set(key, row);
+
+      // QRIS is the only supported method; legacy records keep their real channel
+      const rawChannel = String(payment?.paymentChannel || 'QRIS');
+      const paymentMethod = /qris/i.test(rawChannel) ? 'QRIS' : rawChannel;
+
+      return {
+        id: don.id,
+        donorName: don.donorName || 'Hamba Allah',
+        amount,
+        adminFee,
+        totalPaid: amount + adminFee,
+        paymentMethod,
+        paidAt: payment?.paidAt || payment?.updatedAt || don.updatedAt || don.createdAt,
+        disasterId,
+        disasterTitle,
+        keterangan: don.message || `Donasi untuk ${disasterTitle}`,
+        createdAt: don.createdAt,
+      };
+    });
+
+    const disasters = Array.from(disasterMap.values()).sort(
+      (a, b) => b.totalCollected - a.totalCollected
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        totalReceived,
+        totalAdminFees,
+        totalTransactions: paidDonations.length,
+        adminFeeRate: ADMIN_FEE_RATE,
+        disasters,
+        transactions: transactions.slice(0, 100),
+      },
+    });
+  } catch (error: any) {
+    console.error('Transparency summary error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

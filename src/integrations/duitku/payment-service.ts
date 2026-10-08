@@ -1,13 +1,15 @@
 import { PaymentRecord } from '../../types';
+import { calculateAdminFee } from '../../lib/fees';
 
 export interface CreatePaymentParams {
   donationId: string;
+  userId?: string;
   amount: number;
   donorName: string;
   donorEmail: string;
   donorPhone?: string;
   isAnonymous?: boolean;
-  paymentMethod: 'qris' | 'dana' | 'shopeepay'; // From frontend UI
+  paymentMethod: 'qris'; // QRIS is the only supported payment method
 }
 
 export interface IPaymentService {
@@ -22,10 +24,8 @@ export interface IPaymentService {
 
 export class DuitkuPaymentService implements IPaymentService {
   async createPayment(params: CreatePaymentParams) {
-    // Map frontend choice to actual Duitku code
-    // qris → ShopeePay QRIS (SP), dana → DANA (DA), shopeepay → ShopeePay Apps (SA)
-    const duitkuPaymentMethod =
-      params.paymentMethod === 'qris' ? 'SP' : params.paymentMethod === 'shopeepay' ? 'SA' : 'DA';
+    // QRIS only → Duitku code SP (ShopeePay QRIS)
+    const duitkuPaymentMethod = 'SP';
 
     const res = await fetch('/api/payments/duitku/create', {
       method: 'POST',
@@ -43,21 +43,24 @@ export class DuitkuPaymentService implements IPaymentService {
     const qrString = data.qrString;
     const vaNumber = data.vaNumber;
 
+    // Server is the source of truth for the 0,17% admin fee; fall back to the
+    // shared helper only if an older backend response lacks the field.
+    const fee: number =
+      typeof data.fee === 'number' ? data.fee : calculateAdminFee(params.amount);
+    const totalAmount: number =
+      typeof data.totalAmount === 'number' ? data.totalAmount : params.amount + fee;
+
     const paymentRecord: PaymentRecord = {
       id: `pay-${params.donationId}`,
       donationId: params.donationId,
+      userId: params.userId,
       provider: 'duitku',
       providerReference: referenceId,
       paymentMethod: duitkuPaymentMethod,
-      paymentChannel:
-        params.paymentMethod === 'qris'
-          ? 'ShopeePay QRIS'
-          : params.paymentMethod === 'shopeepay'
-          ? 'ShopeePay'
-          : 'DANA',
+      paymentChannel: 'QRIS',
       amount: params.amount,
-      fee: 0,
-      paidAmount: params.amount,
+      fee,
+      paidAmount: totalAmount,
       status: 'pending',
       paymentUrl: paymentUrl,
       qrString: qrString,
@@ -77,4 +80,3 @@ export class DuitkuPaymentService implements IPaymentService {
 }
 
 export const paymentService: IPaymentService = new DuitkuPaymentService();
-

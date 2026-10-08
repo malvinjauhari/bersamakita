@@ -11,14 +11,15 @@ import {
   Lock,
   Loader2,
   QrCode,
-  CreditCard,
   Building,
   PauseCircle,
+  Info,
 } from 'lucide-react';
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Disaster, Donation } from '../../types';
 import { formatRupiah } from '../../lib/utils';
+import { calculateAdminFee, calculateTotalPayment } from '../../lib/fees';
 import {
   createDonation,
   savePaymentRecord,
@@ -67,7 +68,6 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   const [donorPhone, setDonorPhone] = useState<string>('');
   const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'dana' | 'shopeepay'>('qris');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Direct-link lookup: the disaster may be hidden from the public feed query
@@ -195,6 +195,9 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   }
 
   const finalAmount = customAmount ? parseInt(customAmount, 10) || 0 : selectedAmount;
+  // Transparent 0,17% admin fee — single source: src/lib/fees.ts
+  const adminFee = calculateAdminFee(finalAmount);
+  const totalPayment = calculateTotalPayment(finalAmount);
 
   const handleSubmitTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,7 +230,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
         isAnonymous,
         message: message.trim() || '',
         status: 'pending_payment',
-        paymentMethod: 'duitku_pop',
+        paymentMethod: 'qris',
         paymentId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -236,14 +239,15 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
       // Save initial donation record
       await createDonation(newDonation);
 
-      // Create Payment through Duitku API
+      // Create Payment through Duitku API (QRIS only)
       const paymentResult = await paymentService.createPayment({
         donationId,
+        userId: user.uid,
         amount: finalAmount,
         donorName: newDonation.donorName,
         donorEmail: newDonation.donorEmail,
         isAnonymous,
-        paymentMethod,
+        paymentMethod: 'qris',
       });
 
       // Save payment transaction record
@@ -256,7 +260,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
         userId: user.uid,
         type: 'donation_received',
         title: 'Instruksi Pembayaran Diterbitkan',
-        description: `Menunggu konfirmasi pembayaran sebesar ${formatRupiah(finalAmount)} melalui Duitku POP.`,
+        description: `Menunggu konfirmasi pembayaran sebesar ${formatRupiah(totalPayment)} (donasi ${formatRupiah(finalAmount)} + biaya admin ${formatRupiah(adminFee)}) melalui QRIS.`,
         visibleToUser: true,
         createdBy: user.uid,
         timestamp: new Date().toISOString(),
@@ -312,7 +316,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
               <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">
                 2
               </span>
-              <span>Pembayaran (QRIS / E-Money)</span>
+              <span>Pembayaran (QRIS)</span>
             </div>
             <span className="w-8 h-0.5 bg-slate-200" />
             <div className="flex items-center gap-2 text-slate-400">
@@ -511,131 +515,79 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
             {/* Right Column: Payment Method & Final Summary */}
             <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
-              {/* Payment Method Selector */}
+              {/* Payment Method Selector — QRIS only */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                 <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
                   3. Metode Pembayaran
                 </h2>
 
-                <div className="space-y-2">
-                  <div
-                    onClick={() => setPaymentMethod('qris')}
-                    className={`p-3.5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between ${
-                      paymentMethod === 'qris'
-                        ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                        <QrCode className="w-5 h-5 text-[#B2D850]" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-xs text-slate-900 block">
-                          QRIS (Realtime & Bebas Biaya)
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          BCA, Mandiri, GoPay, OVO, ShopeePay, Dana
-                        </span>
-                      </div>
+                <div className="p-3.5 rounded-2xl border border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                      <QrCode className="w-5 h-5 text-[#B2D850]" />
                     </div>
-                    <CheckCircle2
-                      className={`w-4 h-4 ${
-                        paymentMethod === 'qris' ? 'text-emerald-600' : 'text-slate-300'
-                      }`}
-                    />
-                  </div>
-
-                  <div
-                    className={`p-3.5 rounded-2xl border transition-all ${
-                      paymentMethod === 'dana' || paymentMethod === 'shopeepay'
-                        ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                        <CreditCard className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="font-bold text-xs text-slate-900 block">
-                          E-Money (Dompet Digital)
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          Bayar langsung dari aplikasi e-money Anda
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('dana')}
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          paymentMethod === 'dana'
-                            ? 'border-emerald-600 bg-white ring-1 ring-emerald-600'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-xs text-slate-900">DANA</span>
-                          <CheckCircle2
-                            className={`w-4 h-4 ${
-                              paymentMethod === 'dana' ? 'text-emerald-600' : 'text-slate-300'
-                            }`}
-                          />
-                        </div>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Bayar via aplikasi DANA
-                        </span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('shopeepay')}
-                        className={`p-3 rounded-xl border text-left transition-all ${
-                          paymentMethod === 'shopeepay'
-                            ? 'border-emerald-600 bg-white ring-1 ring-emerald-600'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-xs text-slate-900">ShopeePay</span>
-                          <CheckCircle2
-                            className={`w-4 h-4 ${
-                              paymentMethod === 'shopeepay' ? 'text-emerald-600' : 'text-slate-300'
-                            }`}
-                          />
-                        </div>
-                        <span className="text-[10px] text-slate-500 block mt-0.5">
-                          Bayar via aplikasi ShopeePay
-                        </span>
-                      </button>
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 block">QRIS</span>
+                      <span className="text-[11px] text-slate-500">
+                        BCA, Mandiri, GoPay, OVO, ShopeePay, Dana — scan dari aplikasi bank/e-wallet
+                        Anda
+                      </span>
                     </div>
                   </div>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 </div>
 
-                {/* Removed iPaymu Notice */}
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Satu-satunya metode pembayaran yang tersedia. Nominal donasi Anda tetap utuh
+                  sebagai dana penggalangan — biaya administrasi 0,17% dibayar terpisah di atas
+                  nominal donasi.
+                </p>
               </div>
 
               {/* Order Total & Submit CTA */}
               <div className="bg-[#1B3322] rounded-3xl p-6 text-white shadow-xl space-y-5">
                 <div className="space-y-2 border-b border-white/10 pb-4 text-xs">
                   <div className="flex justify-between text-slate-300">
-                    <span>Donasi Posko</span>
+                    <span>Donasi</span>
                     <span className="font-mono font-bold text-white">{formatRupiah(finalAmount)}</span>
                   </div>
                   <div className="flex justify-between text-slate-300">
-                    <span>Biaya Layanan</span>
-                    <span className="text-emerald-400 font-bold">Rp 0 (Gratis)</span>
+                    <span>Biaya Admin 0,17%</span>
+                    <span className="font-mono font-bold text-amber-300">{formatRupiah(adminFee)}</span>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-slate-300">Total Pembayaran:</span>
+                  <span className="text-xs text-slate-300">Total Dibayar:</span>
                   <span className="text-2xl font-extrabold font-mono text-[#B2D850]">
-                    {formatRupiah(finalAmount)}
+                    {formatRupiah(totalPayment)}
                   </span>
+                </div>
+
+                {/* Transparent fee explainer */}
+                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B2D850]">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    <span>Kenapa ada biaya admin?</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Biaya administrasi digunakan untuk memastikan nominal dana donasi yang
+                    tercatat dalam penggalangan tetap utuh setelah proses transaksi.
+                  </p>
+                  <div className="pt-1.5 border-t border-white/10 font-mono text-[10px] text-slate-400 space-y-0.5">
+                    <div className="flex justify-between">
+                      <span>Donasi</span>
+                      <span>{formatRupiah(finalAmount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Biaya Admin 0,17%</span>
+                      <span>{formatRupiah(adminFee)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-200 font-bold">
+                      <span>Total Dibayar</span>
+                      <span>{formatRupiah(totalPayment)}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -648,12 +600,12 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                   ) : (
                     <Heart className="w-4 h-4 fill-current" />
                   )}
-                  <span>Lanjut ke Pembayaran ➔</span>
+                  <span>Bayar {formatRupiah(totalPayment)} via QRIS ➔</span>
                 </button>
 
                 <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-300">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>100% dialokasikan dengan persetujuan partner posko</span>
+                  <span>Donasi {formatRupiah(finalAmount)} tercatat utuh • biaya {formatRupiah(adminFee)} transparan</span>
                 </div>
               </div>
             </div>
