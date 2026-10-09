@@ -28,19 +28,19 @@ This schema reflects the actual Firestore structure based on `firestore.rules` a
 - **Note**: Minimal penarikan Rp1.000.000 (`MIN_WITHDRAWAL` di `src/lib/fees.ts`). Saldo keluar dihitung memakai `totalAmount` (nominal + fee).
 
 ## 7. `partners`
-- **Fields**: `id`, `userId` (Firebase Auth UID), `name`, `email`, `organization`, `contact`, `operationalArea`, `status`, `createdAt`, `updatedAt`
+- **Fields**: `id`, `userId` (Firebase Auth UID), `name`, `email`, `organization`, `contact`, `operationalArea`, `logo` (image URL — legacy external or Cloudinary), `logoPublicId` (Cloudinary `public_id` of `logo`, empty for legacy URLs), `description`, `location`, `status`, `createdAt`, `updatedAt`
 - **Rules**: Public read. Admin authenticated write only. Created strictly via backend endpoint.
 
 ## 8. `partnerAllocations`
-- **Fields**: `id`, `disbursementId`, `partnerId`, `partnerName`, `amount`, `sourceDonationIds`, `status`, `allocatedAt`, `createdAt`, `updatedAt`
+- **Fields**: `id`, `disbursementId`, `partnerId`, `partnerName`, `amount`, `sourceDonationIds`, `status`, `evidencePhotoUrl` (Cloudinary or legacy URL), `evidencePhotoPublicId`, `milestones[].photoUrl`, `milestones[].photoPublicId`, `allocatedAt`, `createdAt`, `updatedAt`
 - **Rules**: Authenticated read/write.
 
 ## 9. `distributionReports`
-- **Fields**: `id`, `partnerId`, `partnerName`, `allocationId`, `status`, `location`, `distributionDate`, `items`, `notes`, `photoUrls`, `submittedAt`, `createdAt`, `updatedAt`
+- **Fields**: `id`, `partnerId`, `partnerName`, `allocationId`, `status`, `location`, `distributionDate`, `items`, `notes`, `photoUrls`, `photoPublicIds` (Cloudinary `public_id` aligned with `photoUrls`), `submittedAt`, `createdAt`, `updatedAt`
 - **Rules**: Read public if submitted/published. Authenticated write.
 
 ## 10. `trackingEvents`
-- **Fields**: `id`, `donationId`, `type`, `title`, `description`, `timestamp`, `visibleToUser`, `createdBy`, `partnerId`, `location`, `photoUrl`, `itemsDetail`
+- **Fields**: `id`, `donationId`, `type`, `title`, `description`, `timestamp`, `visibleToUser`, `createdBy`, `partnerId`, `location`, `photoUrl`, `photoPublicId`, `itemsDetail`
 - **Rules**: Read for owner, Admin, Partner. Create/Update/Delete primarily Admin/Partner.
 
 ## 11. `auditLogs`

@@ -55,5 +55,13 @@ This document outlines the API endpoints provided by `server.ts` and external AP
    - **Description**: Deletes all transaction data (donations, payments, etc.) for testing purposes.
    - **Response**: `{ success: true, deletedCount: number }`
 
+### Image Upload (Cloudinary)
+1. **`POST /api/images/sign`**
+   - **Headers**: `Authorization: Bearer <Firebase ID Token>` (role `admin` or `partner`)
+   - **Body**: `{ folder: 'bersamakita/reports' | 'bersamakita/evidence' | 'bersamakita/partners' }`
+   - **Description**: Issues a Cloudinary signed-upload signature (SHA-1 computed server-side). `CLOUDINARY_API_SECRET` never leaves the server and the browser uploads the file directly to `https://api.cloudinary.com/v1_1/<cloud>/image/upload`. Unknown folders are rejected with `400`, missing/invalid tokens with `401`.
+   - **Response**: `{ success: true, data: { cloudName, apiKey, timestamp, signature, folder } }`
+   - **Frontend helper**: `src/integrations/cloudinary/upload.ts` → `uploadImageToCloudinary(file, folder)` returns `{ secureUrl, publicId }`.
+
 ## External APIs
 - **Firebase / Firestore**: Client-side direct access using Firebase JS SDK, protected by `firestore.rules`.

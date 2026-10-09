@@ -23,6 +23,7 @@ import { PartnerAllocation, DistributionMilestoneKey, DistributionMilestone, Don
 import { updateAllocationMilestone, addAuditLog } from '../../integrations/firebase/firestore';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
 import { useToast } from '../../components/feedback/Toast';
+import { ImageUploadField } from '../../components/ImageUploadField';
 
 export interface DistributionProgressCardProps {
   allocation: PartnerAllocation;
@@ -148,9 +149,9 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
   const [updatingStage, setUpdatingStage] = useState<DistributionMilestoneKey | null>(null);
   const [inputDetail, setInputDetail] = useState<string>('');
   const [inputLocation, setInputLocation] = useState<string>('');
-  const [inputPhoto, setInputPhoto] = useState<string>(
-    'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80'
-  );
+  const [inputPhoto, setInputPhoto] = useState<string>('');
+  const [inputPhotoPublicId, setInputPhotoPublicId] = useState<string>('');
+  const [photoUploading, setPhotoUploading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
 
@@ -176,19 +177,23 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
     setUpdatingStage(m.key);
     setInputDetail(allocation.packedItemsSummary || m.defaultDetail);
     setInputLocation(allocation.targetLocation || m.defaultLocation);
-    setInputPhoto(
-      allocation.evidencePhotoUrl ||
-        'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80'
-    );
+    setInputPhoto(allocation.evidencePhotoUrl || '');
+    setInputPhotoPublicId(allocation.evidencePhotoPublicId || '');
+    setPhotoUploading(false);
   };
 
   const handleConfirmStage = async (milestoneKey: DistributionMilestoneKey) => {
+    if (photoUploading) {
+      showToast('Tunggu sampai gambar selesai diunggah', 'warning');
+      return;
+    }
     setSaving(true);
     try {
       await updateAllocationMilestone(allocation.id, milestoneKey, {
         detail: inputDetail.trim() || undefined,
         location: inputLocation.trim() || undefined,
         photoUrl: inputPhoto.trim() || undefined,
+        photoPublicId: inputPhoto.trim() ? inputPhotoPublicId || undefined : undefined,
         actorEmail: actorEmail || 'partner@bersamakita.org',
         actorName: actorName || allocation.partnerName,
       });
@@ -692,42 +697,20 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                 </div>
               </div>
 
-              {/* Photo Evidence URL */}
+              {/* Photo Evidence Upload */}
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  URL Foto Dokumentasi Lapangan:
-                </label>
-                <input
-                  type="text"
+                <ImageUploadField
+                  label="Foto Dokumentasi Lapangan:"
                   value={inputPhoto}
-                  onChange={(e) => setInputPhoto(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
+                  publicId={inputPhotoPublicId}
+                  folder="bersamakita/evidence"
+                  hint="Unggah foto langsung dari perangkat (JPG/PNG/WEBP, maks 5 MB)."
+                  onUploadingChange={setPhotoUploading}
+                  onChange={(url, publicId) => {
+                    setInputPhoto(url);
+                    setInputPhotoPublicId(publicId || '');
+                  }}
                 />
-                <div className="flex gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setInputPhoto(
-                        'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80'
-                      )
-                    }
-                    className="text-[10px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                  >
-                    Preset: Serah Terima Sembako
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setInputPhoto(
-                        'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80'
-                      )
-                    }
-                    className="text-[10px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer"
-                  >
-                    Preset: Posko Pengungsi
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -741,7 +724,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
               </button>
               <button
                 type="button"
-                disabled={saving}
+                disabled={saving || photoUploading}
                 onClick={() => handleConfirmStage(updatingStage)}
                 className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >

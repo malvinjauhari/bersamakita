@@ -491,6 +491,7 @@ export async function updateAllocationMilestone(
     detail?: string;
     location?: string;
     photoUrl?: string;
+    photoPublicId?: string;
     actorEmail?: string;
     actorName?: string;
   }
@@ -513,6 +514,13 @@ export async function updateAllocationMilestone(
         ? 'funds_received'
         : 'in_distribution';
 
+    // Keep (photoUrl, publicId) in lockstep: a new URL always brings its own
+    // public_id, and keeping the previous URL keeps the previous public_id.
+    const nextPhotoUrl = data.photoUrl || current.evidencePhotoUrl;
+    const nextPhotoPublicId = data.photoUrl
+      ? data.photoPublicId || ''
+      : current.evidencePhotoPublicId || '';
+
     const milestoneTitles: Record<DistributionMilestoneKey, string> = {
       allocated: 'Dana Dialokasikan ke Mitra',
       funds_received: 'Dana Masuk Kas Posko',
@@ -528,7 +536,8 @@ export async function updateAllocationMilestone(
       title: milestoneTitles[milestoneKey],
       detail: data.detail || current.packedItemsSummary,
       location: data.location || current.targetLocation,
-      photoUrl: data.photoUrl || current.evidencePhotoUrl,
+      photoUrl: nextPhotoUrl,
+      photoPublicId: nextPhotoPublicId,
       completedAt: now,
       isCurrent: true,
     };
@@ -551,12 +560,13 @@ export async function updateAllocationMilestone(
       milestones: updatedMilestones,
       targetLocation: data.location || current.targetLocation,
       packedItemsSummary: data.detail || current.packedItemsSummary,
-      evidencePhotoUrl: data.photoUrl || current.evidencePhotoUrl,
+      evidencePhotoUrl: nextPhotoUrl,
+      evidencePhotoPublicId: nextPhotoPublicId,
       receivedAt: milestoneKey === 'funds_received' ? now : current.receivedAt,
       updatedAt: now,
     };
 
-    await setDoc(allocRef, updatedAllocation, { merge: true });
+    await setDoc(allocRef, sanitizeForFirestore(updatedAllocation), { merge: true });
 
     // Synchronize tracking event for each source donation with strict userId association
     if (updatedAllocation.sourceDonationIds) {
@@ -601,7 +611,8 @@ export async function updateAllocationMilestone(
           createdBy: data.actorEmail || 'partner',
           partnerId: updatedAllocation.partnerId,
           location: data.location || updatedAllocation.targetLocation,
-          photoUrl: data.photoUrl || updatedAllocation.evidencePhotoUrl,
+          photoUrl: nextPhotoUrl,
+          photoPublicId: nextPhotoPublicId,
           itemsDetail: data.detail || updatedAllocation.packedItemsSummary,
           milestoneKey,
         });
@@ -631,10 +642,8 @@ export async function updateAllocationMilestone(
         notes: `${milestoneTitles[milestoneKey]}: ${
           data.detail ? `Berupa ${data.detail}. ` : ''
         }${data.location ? `Lokasi: ${data.location}.` : ''}`,
-        photoUrls:
-          data.photoUrl || updatedAllocation.evidencePhotoUrl
-            ? [data.photoUrl || updatedAllocation.evidencePhotoUrl!]
-            : [],
+        photoUrls: nextPhotoUrl ? [nextPhotoUrl] : [],
+        photoPublicIds: nextPhotoUrl ? [nextPhotoPublicId] : [],
         submittedAt: now,
         updatedAt: now,
         createdAt: now,

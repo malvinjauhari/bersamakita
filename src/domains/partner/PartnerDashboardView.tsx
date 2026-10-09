@@ -34,6 +34,7 @@ import {
 } from '../../integrations/firebase/firestore';
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
+import { ImageUploadField } from '../../components/ImageUploadField';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
 import { DistributionProgressCard } from '../distribution/DistributionProgressCard';
 
@@ -86,9 +87,9 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
   const [items, setItems] = useState<DistributionItem[]>([
     { name: 'Paket Sembako & Beras', quantity: 100, unit: 'paket' },
   ]);
-  const [photoUrlInput, setPhotoUrlInput] = useState<string>(
-    'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80'
-  );
+  const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [photoPublicId, setPhotoPublicId] = useState<string>('');
+  const [photoUploading, setPhotoUploading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   // Filter donations that are paid
@@ -188,6 +189,8 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
     setLocation(staffSession?.name ? `Posko ${staffSession.name}` : 'Posko Bencana Lapangan');
     setNotes('');
     setItems([{ name: 'Paket Beras & Logistik', quantity: 150, unit: 'paket' }]);
+    setPhotoUrl('');
+    setPhotoPublicId('');
     setShowReportModal(true);
   };
 
@@ -198,7 +201,8 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
     setDistributionDate(rep.distributionDate);
     setNotes(rep.notes);
     setItems(rep.items || [{ name: 'Logistik', quantity: 10, unit: 'paket' }]);
-    setPhotoUrlInput(rep.photoUrls?.[0] || '');
+    setPhotoUrl(rep.photoUrls?.[0] || '');
+    setPhotoPublicId(rep.photoPublicIds?.[0] || '');
     setShowReportModal(true);
   };
 
@@ -224,6 +228,11 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
       return;
     }
 
+    if (photoUploading) {
+      showToast('Tunggu sampai gambar selesai diunggah', 'warning');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const reportId = editingReport?.id || `rep-${Date.now()}`;
@@ -242,7 +251,8 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
         distributionDate,
         items: validItems,
         notes,
-        photoUrls: photoUrlInput ? [photoUrlInput] : [],
+        photoUrls: photoUrl ? [photoUrl] : [],
+        photoPublicIds: photoUrl ? [photoPublicId || ''] : [],
         submittedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         createdAt: editingReport?.createdAt || new Date().toISOString(),
@@ -745,15 +755,17 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  URL Foto Dokumentasi Penyerahan (Opsional)
-                </label>
-                <input
-                  type="url"
-                  value={photoUrlInput}
-                  onChange={(e) => setPhotoUrlInput(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                <ImageUploadField
+                  label="Foto Dokumentasi Penyerahan (Opsional)"
+                  value={photoUrl}
+                  publicId={photoPublicId}
+                  folder="bersamakita/reports"
+                  hint="Unggah foto langsung dari perangkat (JPG/PNG/WEBP, maks 5 MB)."
+                  onUploadingChange={setPhotoUploading}
+                  onChange={(url, publicId) => {
+                    setPhotoUrl(url);
+                    setPhotoPublicId(publicId || '');
+                  }}
                 />
               </div>
 
@@ -761,17 +773,17 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
               <div className="flex gap-2 pt-3">
                 <button
                   type="button"
-                  disabled={submitting}
+                  disabled={submitting || photoUploading}
                   onClick={() => handleSubmitReport(true)}
-                  className="flex-1 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs"
+                  className="flex-1 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs disabled:opacity-60"
                 >
                   Simpan Draft
                 </button>
                 <button
                   type="button"
-                  disabled={submitting}
+                  disabled={submitting || photoUploading}
                   onClick={() => handleSubmitReport(false)}
-                  className="flex-1 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Kirim Laporan (Publik)</span>

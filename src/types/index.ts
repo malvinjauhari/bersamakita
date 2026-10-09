@@ -155,6 +155,8 @@ export interface Partner {
   name: string;
   email?: string;
   logo?: string;
+  /** Cloudinary public_id of `logo`; empty for legacy/external logo URLs. */
+  logoPublicId?: string;
   description?: string;
   location?: string;
   organization: string;
@@ -181,6 +183,8 @@ export interface DistributionMilestone {
   detail?: string;
   location?: string;
   photoUrl?: string;
+  /** Cloudinary public_id of `photoUrl`. */
+  photoPublicId?: string;
   completedAt?: string;
   isCurrent?: boolean;
 }
@@ -206,6 +210,8 @@ export interface PartnerAllocation {
   targetLocation?: string;
   packedItemsSummary?: string;
   evidencePhotoUrl?: string;
+  /** Cloudinary public_id of `evidencePhotoUrl`. */
+  evidencePhotoPublicId?: string;
   allocatedAt: string;
   receivedAt?: string;
   createdAt: string;
@@ -232,6 +238,8 @@ export interface DistributionReport {
   items?: DistributionItem[];
   notes: string;
   photoUrls?: string[];
+  /** Cloudinary public_ids aligned with `photoUrls` (legacy entries may be empty). */
+  photoPublicIds?: string[];
   submittedAt: string;
   updatedAt: string;
   createdAt: string;
@@ -267,6 +275,8 @@ export interface TrackingEvent {
   documentIds?: string[];
   location?: string;
   photoUrl?: string;
+  /** Cloudinary public_id of `photoUrl`. */
+  photoPublicId?: string;
   itemsDetail?: string;
   milestoneKey?: DistributionMilestoneKey;
 }

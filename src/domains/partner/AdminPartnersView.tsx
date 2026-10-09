@@ -5,8 +5,8 @@ import { savePartner, updatePartner, addAuditLog } from '../../integrations/fire
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { formatRupiah } from '../../lib/utils';
-import { auth, storage } from '../../config/firebase';
-import { ref } from 'firebase/storage';
+import { auth } from '../../config/firebase';
+import { ImageUploadField } from '../../components/ImageUploadField';
 
 interface AdminPartnersViewProps {
   partners: Partner[];
@@ -36,6 +36,9 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
   const [editDescription, setEditDescription] = useState<string>('');
   const [editLocation, setEditLocation] = useState<string>('');
   const [editName, setEditName] = useState<string>('');
+  const [editLogo, setEditLogo] = useState<string>('');
+  const [editLogoPublicId, setEditLogoPublicId] = useState<string>('');
+  const [logoUploading, setLogoUploading] = useState<boolean>(false);
 
   const [submitting, setSubmitting] = useState<boolean>(false);
 
@@ -109,21 +112,27 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
     setEditName(p.name || '');
     setEditDescription(p.description || '');
     setEditLocation(p.location || '');
+    setEditLogo(p.logo || '');
+    setEditLogoPublicId(p.logoPublicId || '');
+    setLogoUploading(false);
   };
 
   const handleUpdatePartner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPartner) return;
+    if (logoUploading) {
+      showToast('Tunggu sampai logo selesai diunggah', 'warning');
+      return;
+    }
     setSubmitting(true);
     try {
-      let logoUrl = editingPartner.logo;
-
       const updated = {
         ...editingPartner,
         name: editName,
         description: editDescription,
         location: editLocation,
-        ...(logoUrl ? { logo: logoUrl } : {}),
+        logo: editLogo || '',
+        logoPublicId: editLogoPublicId || '',
         updatedAt: new Date().toISOString()
       };
 
@@ -137,7 +146,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
         action: 'PARTNER_UPDATED',
         entityType: 'partner',
         entityId: editingPartner.id,
-        after: { name: editName, description: editDescription },
+        after: { name: editName, description: editDescription, logo: editLogo || null },
         timestamp: new Date().toISOString(),
       });
 
@@ -401,10 +410,25 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                 />
               </div>
 
+              <div>
+                <ImageUploadField
+                  label="Logo Resmi Mitra"
+                  value={editLogo}
+                  publicId={editLogoPublicId}
+                  folder="bersamakita/partners"
+                  hint="Logo ditampilkan pada daftar bantuan & kartu mitra (JPG/PNG/WEBP, maks 5 MB)."
+                  onUploadingChange={setLogoUploading}
+                  onChange={(url, publicId) => {
+                    setEditLogo(url);
+                    setEditLogoPublicId(publicId || '');
+                  }}
+                />
+              </div>
+
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || logoUploading}
                   className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] disabled:bg-slate-300 disabled:text-slate-500 text-[#B2D850] font-bold text-xs transition-colors flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
