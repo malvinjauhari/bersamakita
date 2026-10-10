@@ -70,12 +70,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange, onOpe
                 onClick={() => onTabChange(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-[#1B3322] text-[#B2D850] shadow-sm'
+                    ? 'bg-[#1B3322] text-[#0C8F63] shadow-sm'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#B2D850]' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#0C8F63]' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </div>
                 {(item as any).badge && (
@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange, onOpe
 
       {/* Bottom Promo Card per LawnBuster theme */}
       <div className="mt-6 p-4 rounded-3xl bg-gradient-to-br from-[#1B3322] to-[#243E2C] text-white space-y-3">
-        <div className="flex items-center gap-2 text-[#B2D850] text-xs font-bold">
+        <div className="flex items-center gap-2 text-[#0C8F63] text-xs font-bold">
           <Sparkles className="w-4 h-4" />
           <span>Transparansi Nyata</span>
         </div>
@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange, onOpe
         {onOpenDonate && role !== 'admin' && (
           <button
             onClick={onOpenDonate}
-            className="w-full py-2 px-3 rounded-full bg-[#B2D850] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-xs transition-colors shadow-sm"
+            className="w-full py-2 px-3 rounded-full bg-[#0C8F63] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-xs transition-colors shadow-sm"
           >
             Donasi Sekarang
           </button>

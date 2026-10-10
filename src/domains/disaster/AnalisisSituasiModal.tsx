@@ -158,7 +158,7 @@ export const AnalisisSituasiModal: React.FC<AnalisisSituasiModalProps> = ({
             onClose();
             onDonate(disaster.id);
           }}
-          className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2"
+          className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2"
         >
           <Heart className="w-4 h-4 fill-current" />
           <span>Bantu Posko Ini Sekarang</span>

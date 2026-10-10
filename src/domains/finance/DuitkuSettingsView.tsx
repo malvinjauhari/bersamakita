@@ -116,7 +116,7 @@ export const DuitkuSettingsView: React.FC<{ onDataChanged?: () => Promise<void> 
                 type="number"
                 value={testAmount}
                 onChange={(e) => setTestAmount(parseInt(e.target.value, 10) || 10000)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-[#B2D850]"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 font-mono text-xs focus:ring-2 focus:ring-[#0C8F63]"
               />
             </div>
 

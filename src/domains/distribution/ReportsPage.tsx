@@ -27,7 +27,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ reports }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-[#1B3322]">
       <WideNavbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-10 space-y-10">
@@ -55,7 +55,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ reports }) => {
 
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-3 rounded-2xl bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-sm font-bold shadow-lg shadow-[#1B3322]/20 transition-all self-start sm:self-auto hover:-translate-y-0.5 active:translate-y-0"
+            className="px-6 py-3 rounded-2xl bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] text-sm font-bold shadow-lg shadow-[#1B3322]/20 transition-all self-start sm:self-auto hover:-translate-y-0.5 active:translate-y-0"
           >
             Berdonasi ke Posko
           </button>

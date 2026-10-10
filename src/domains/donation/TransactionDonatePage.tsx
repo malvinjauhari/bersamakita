@@ -99,7 +99,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   const isClosed = selectedDisaster?.status === 'archived';
 
   const renderPageChrome = (children: React.ReactNode) => (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
       <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
         <button
           onClick={() => navigate('/dashboard')}
@@ -109,7 +109,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
           <span>Kembali ke Dashboard</span>
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850]">
+          <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63]">
             <Heart className="w-3.5 h-3.5 fill-current" />
           </div>
           <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
@@ -141,7 +141,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
         </div>
         <button
           onClick={() => navigate('/dashboard')}
-          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
+          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#0C8F63] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
         >
           Kembali ke Dashboard Posko
         </button>
@@ -186,7 +186,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
         <button
           onClick={() => navigate('/dashboard')}
-          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
+          className="w-full py-2.5 px-4 rounded-full bg-[#1B3322] text-[#0C8F63] text-xs font-bold hover:bg-[#243E2C] transition-all shadow-xs"
         >
           Lihat Posko Lain di Dashboard
         </button>
@@ -279,7 +279,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#0C8F63] selection:text-white">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -292,7 +292,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850] shadow-xs">
+            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-xs">
               <Heart className="w-3.5 h-3.5 fill-current" />
             </div>
             <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
@@ -301,12 +301,12 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
       </header>
 
       {/* Main Flow Container */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <form onSubmit={handleSubmitTransaction} className="space-y-8">
           {/* Step Breadcrumb Indicator */}
           <div className="flex items-center justify-center gap-2 sm:gap-4 text-xs font-semibold">
-            <div className="flex items-center gap-2 text-emerald-800 font-bold">
-              <span className="w-6 h-6 rounded-full bg-[#1B3322] text-[#B2D850] flex items-center justify-center text-xs">
+            <div className="flex items-center gap-2 text-emerald-700 font-bold">
+              <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
                 1
               </span>
               <span>Nominal & Data Donasi</span>
@@ -327,51 +327,16 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
             </div>
           </div>
 
-          {/* Selected Posko Banner Card */}
-          {selectedDisaster && (
-            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                  <span>Posko Bencana Tanggap Darurat</span>
-                </div>
-                <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
-                  {selectedDisaster.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-600">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{selectedDisaster.location}</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Layers className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Kedalaman: {selectedDisaster.depth}</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{formatRelativeTime(selectedDisaster.eventTime)}</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col items-center justify-center font-mono shrink-0">
-                <span className="text-[10px] text-emerald-600 font-bold">MAG</span>
-                <span className="text-lg font-extrabold text-emerald-800 leading-none">
-                  {selectedDisaster.magnitude}
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* 2-Column Split: Donation Inputs (Left) & Payment / Summary (Right) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
             {/* Left Column: Nominal, Donor Details */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+              
               {/* Section 1: Nominal */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                     1. Pilih Nominal Donasi Tunai
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -380,7 +345,7 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                 </div>
 
                 {/* Preset Buttons */}
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 gap-3">
                   {presetAmounts.map((amt) => {
                     const isSelected = selectedAmount === amt && !customAmount;
                     return (
@@ -391,10 +356,10 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                           setSelectedAmount(amt);
                           setCustomAmount('');
                         }}
-                        className={`py-3 px-2 rounded-2xl text-xs font-bold transition-all border ${
+                        className={`py-3 px-2 rounded-xl text-sm font-semibold transition-all border ${
                           isSelected
-                            ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322] shadow-xs'
-                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-600 shadow-sm'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 hover:border-emerald-500'
                         }`}
                       >
                         {formatRupiah(amt)}
@@ -405,11 +370,11 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
                 {/* Custom Amount Field */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Atau Masukkan Nominal Bebas:
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-3 text-xs font-bold text-slate-400">Rp</span>
+                    <span className="absolute left-4 top-3 text-sm font-semibold text-slate-400">Rp</span>
                     <input
                       type="number"
                       min={10000}
@@ -419,16 +384,16 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                         setCustomAmount(e.target.value);
                       }}
                       placeholder="Contoh: 150000"
-                      className="w-full pl-11 pr-4 py-2.5 rounded-2xl border border-slate-200 text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                      className="w-full pl-11 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Section 2: Donor Data */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
                 <div className="space-y-1">
-                  <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                  <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                     2. Identitas Donatur
                   </h2>
                   <p className="text-xs text-slate-500">
@@ -437,9 +402,9 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                 </div>
 
                 {/* Anonymous Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/70">
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                   <div>
-                    <span className="font-bold text-xs text-slate-800 block">
+                    <span className="font-semibold text-sm text-slate-800 block">
                       Donasi sebagai Hamba Allah
                     </span>
                     <span className="text-[11px] text-slate-500">
@@ -450,13 +415,13 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                     type="checkbox"
                     checked={isAnonymous}
                     onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="w-4 h-4 accent-[#1B3322] cursor-pointer"
+                    className="w-4 h-4 accent-emerald-500 cursor-pointer"
                   />
                 </div>
 
                 {!isAnonymous && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Nama Lengkap:
                     </label>
                     <input
@@ -464,15 +429,15 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                       value={donorName}
                       onChange={(e) => setDonorName(e.target.value)}
                       placeholder="Masukkan nama donatur"
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       required={!isAnonymous}
                     />
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       Email Konfirmasi:
                     </label>
                     <input
@@ -480,12 +445,12 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                       value={donorEmail}
                       onChange={(e) => setDonorEmail(e.target.value)}
                       placeholder="email@domain.com"
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                       No. WhatsApp (Opsional):
                     </label>
                     <input
@@ -493,13 +458,13 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                       value={donorPhone}
                       onChange={(e) => setDonorPhone(e.target.value)}
                       placeholder="08123456789"
-                      className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Doa atau Pesan Solidaritas (Opsional):
                   </label>
                   <textarea
@@ -507,107 +472,105 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Tuliskan harapan dan doa untuk saudara kita di lokasi posko bencana..."
-                    className="w-full p-3 rounded-2xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#B2D850] resize-none"
+                    className="w-full p-3.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Right Column: Payment Method & Final Summary */}
-            <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
-              {/* Payment Method Selector — QRIS only */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-                <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                  3. Metode Pembayaran
-                </h2>
-
-                <div className="p-3.5 rounded-2xl border border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                      <QrCode className="w-5 h-5 text-[#B2D850]" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-xs text-slate-900 block">QRIS</span>
-                      <span className="text-[11px] text-slate-500">
-                        BCA, Mandiri, GoPay, OVO, ShopeePay, Dana — scan dari aplikasi bank/e-wallet
-                        Anda
-                      </span>
-                    </div>
+            {/* Right Column: Order Summary, QRIS, Posko Info */}
+            <div className="lg:col-span-5 xl:col-span-4 space-y-4 lg:sticky lg:top-24">
+              
+              {/* Posko Target Summary */}
+              {selectedDisaster && (
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Tujuan Donasi</span>
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                </div>
-
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Satu-satunya metode pembayaran yang tersedia. Nominal donasi Anda tetap utuh
-                  sebagai dana penggalangan — biaya administrasi 0,17% dibayar terpisah di atas
-                  nominal donasi.
-                </p>
-              </div>
-
-              {/* Order Total & Submit CTA */}
-              <div className="bg-[#1B3322] rounded-3xl p-6 text-white shadow-xl space-y-5">
-                <div className="space-y-2 border-b border-white/10 pb-4 text-xs">
-                  <div className="flex justify-between text-slate-300">
-                    <span>Donasi</span>
-                    <span className="font-mono font-bold text-white">{formatRupiah(finalAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-300">
-                    <span>Biaya Admin 0,17%</span>
-                    <span className="font-mono font-bold text-amber-300">{formatRupiah(adminFee)}</span>
+                  <h3 className="text-base font-bold text-slate-900 leading-snug">
+                    {selectedDisaster.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <span>{selectedDisaster.location}</span>
+                    </span>
+                    <span>•</span>
+                    <span className="font-semibold text-emerald-700">MAG {selectedDisaster.magnitude}</span>
                   </div>
                 </div>
+              )}
 
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-slate-300">Total Dibayar:</span>
-                  <span className="text-2xl font-extrabold font-mono text-[#B2D850]">
+              {/* Order Summary & Payment Method */}
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-5">
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-slate-900 tracking-tight">
+                    Rincian Pembayaran
+                  </h3>
+
+                  <div className="p-3 rounded-xl border border-[#0C8F63] bg-[#0C8F63] flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white/20 text-white flex items-center justify-center">
+                        <QrCode className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-xs text-white block">QRIS</span>
+                        <span className="text-[10px] text-white/90">
+                          BCA, Mandiri, GoPay, OVO, ShopeePay, Dana
+                        </span>
+                      </div>
+                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-slate-100 pt-4 text-sm">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Nominal Donasi</span>
+                    <span className="font-mono font-semibold text-slate-900">{formatRupiah(finalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <div className="flex items-center gap-1">
+                      <span>Biaya Admin (0,17%)</span>
+                      <div className="group relative flex items-center">
+                        <Info className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Biaya administrasi digunakan untuk memastikan nominal dana donasi yang tercatat tetap utuh.
+                        </div>
+                      </div>
+                    </div>
+                    <span className="font-mono font-semibold text-slate-900">{formatRupiah(adminFee)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-baseline border-t border-slate-100 pt-4">
+                  <span className="text-sm font-bold text-slate-900">Total Tagihan</span>
+                  <span className="text-2xl font-extrabold font-mono text-emerald-600">
                     {formatRupiah(totalPayment)}
                   </span>
-                </div>
-
-                {/* Transparent fee explainer */}
-                <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#B2D850]">
-                    <Info className="w-3.5 h-3.5 shrink-0" />
-                    <span>Kenapa ada biaya admin?</span>
-                  </div>
-                  <p className="text-[11px] text-slate-300 leading-relaxed">
-                    Biaya administrasi digunakan untuk memastikan nominal dana donasi yang
-                    tercatat dalam penggalangan tetap utuh setelah proses transaksi.
-                  </p>
-                  <div className="pt-1.5 border-t border-white/10 font-mono text-[10px] text-slate-400 space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>Donasi</span>
-                      <span>{formatRupiah(finalAmount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Biaya Admin 0,17%</span>
-                      <span>{formatRupiah(adminFee)}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-200 font-bold">
-                      <span>Total Dibayar</span>
-                      <span>{formatRupiah(totalPayment)}</span>
-                    </div>
-                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-full bg-[#B2D850] hover:bg-[#9CDE64] text-[#1B3322] font-extrabold text-xs shadow-lg transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+                  className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:hover:scale-100"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#1B3322]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                   ) : (
                     <Heart className="w-4 h-4 fill-current" />
                   )}
-                  <span>Bayar {formatRupiah(totalPayment)} via QRIS ➔</span>
+                  <span>Bayar Sekarang via QRIS ➔</span>
                 </button>
 
-                <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-300">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Donasi {formatRupiah(finalAmount)} tercatat utuh • biaya {formatRupiah(adminFee)} transparan</span>
+                <div className="flex justify-center">
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Pembayaran diverifikasi otomatis oleh gateway resmi.</span>
+                  </div>
                 </div>
               </div>
+
             </div>
           </div>
         </form>

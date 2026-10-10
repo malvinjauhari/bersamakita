@@ -56,7 +56,7 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
             Bencana Aktif
           </span>
           <span
-            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-lg border ${
               statusPill.className
             }`}
           >
@@ -66,7 +66,7 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
         </div>
 
         {/* Magnitude Chip */}
-        <div className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-50 border border-slate-200">
+        <div className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-slate-50 border border-slate-200">
           <span className="text-xs font-bold text-slate-600">M</span>
           <span className="text-sm font-extrabold text-emerald-700 font-mono">
             {disaster.magnitude}
@@ -127,7 +127,7 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
             e.stopPropagation();
             onAnalyze();
           }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
         >
           <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
           <span>Detail</span>
@@ -139,7 +139,7 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
             e.stopPropagation();
             onDonate();
           }}
-          className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
         >
           <Heart className="w-3.5 h-3.5 fill-current" />
           <span>Donasi Sekarang</span>

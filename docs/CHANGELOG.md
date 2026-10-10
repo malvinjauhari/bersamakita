@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added default values to `.env` file for Duitku and internal secrets.
 
 ### Changed
+- **Comprehensive UI/UX Overhaul**: Upgraded design aesthetics across multiple domains (Disaster Management, Donation Flows, Transparency Reports, Partner/Admin Dashboards) using modern styling, dynamic layouts, and consistent theming.
 - **QRIS-only payment gateway**: removed DANA/ShopeePay options from UI (`TransactionDonatePage`) and API (server whitelist `['SP']`, rejects `DA`/`SA`). `PaymentService` maps `qris → SP` exclusively.
 - **Withdrawal minimum**: pencairan raised from Rp50.000 to **Rp1.000.000** (`MIN_WITHDRAWAL`); the "Buat Pengajuan Pencairan" button is disabled while available balance is below the minimum, and the submit button validates amount + fee against the disaster's remaining cash.
 - **Role-synced data**: `getDistributionReports()` falls back to a `status in ['submitted','published']` query when the unfiltered list is denied by `firestore.rules`, so guests/users see the same reports as staff; regular authenticated users now also fetch `partnerAllocations` for the transparency monitoring section.

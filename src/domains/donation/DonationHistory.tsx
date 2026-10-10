@@ -26,7 +26,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2">
           <span className="text-xs font-semibold text-slate-500">Total Donasi Tersalurkan</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#1B3322] font-mono">
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono">
             {formatRupiah(totalPaid)}
           </div>
           <p className="text-xs text-slate-400">Tercatat secara sah dan transparan dalam sistem</p>
@@ -34,7 +34,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
 
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2">
           <span className="text-xs font-semibold text-slate-500">Frekuensi Kebaikan</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-[#1B3322] font-mono">
+          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono">
             {totalCount} Transaksi
           </div>
           <p className="text-xs text-slate-400">Setiap rupiah membantu korban bencana di lapangan</p>
@@ -50,7 +50,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
           </div>
           <button
             onClick={onOpenDonate}
-            className="px-4 py-2 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#0C8F63] text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
           >
             Donasi Baru
           </button>
@@ -65,7 +65,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
             </p>
             <button
               onClick={onOpenDonate}
-              className="mt-2 px-5 py-2.5 rounded-full bg-[#B2D850] text-[#1B3322] text-xs font-bold shadow-sm"
+              className="mt-2 px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-sm"
             >
               Mulai Donasi Pertama
             </button>
@@ -85,7 +85,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
                         {formatRupiah(donation.amount)}
                       </span>
                       <span
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-lg ${
                           isPaid
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : donation.status === 'pending_payment'
@@ -120,7 +120,7 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
                     {donation.status === 'pending_payment' && onResumePayment && (
                       <button
                         onClick={() => onResumePayment(donation.id)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm"
                       >
                         <Receipt className="w-3.5 h-3.5" />
                         <span>Lanjutkan Pembayaran</span>

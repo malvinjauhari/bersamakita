@@ -45,7 +45,7 @@ export const WideNavbar: React.FC = () => {
           onClick={() => navigate(user ? '/dashboard' : '/')}
           className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
         >
-          <div className="w-8 h-8 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850] shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-sm">
             <Heart className="w-4 h-4 fill-current" />
           </div>
           <div>
@@ -117,7 +117,7 @@ export const WideNavbar: React.FC = () => {
           ) : (
             <button
               onClick={() => navigate('/auth/login')}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] text-xs font-bold transition-all shadow-sm"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Masuk Donatur</span>

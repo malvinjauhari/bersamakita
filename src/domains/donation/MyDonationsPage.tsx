@@ -16,7 +16,7 @@ export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) =
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
       {/* Top Navbar */}
       <WideNavbar />
 
@@ -50,7 +50,7 @@ export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) =
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <button
               onClick={() => navigate('/')}
-              className="px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-sm transition-all hover:scale-[1.02] cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all hover:scale-[1.02] cursor-pointer"
             >
               + Mulai Donasi Baru
             </button>
@@ -73,7 +73,7 @@ export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) =
             </div>
             <button
               onClick={() => navigate('/auth/login?redirect=/my-donation')}
-              className="px-6 py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-md transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
             >
               <LogIn className="w-4 h-4" />
               <span>Masuk dengan Google</span>

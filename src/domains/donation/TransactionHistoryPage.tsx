@@ -72,7 +72,7 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
       <WideNavbar />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
@@ -105,7 +105,7 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
             </div>
             <button
               onClick={() => navigate('/auth/login?redirect=/cek-transaksi')}
-              className="px-6 py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-md transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
+              className="px-6 py-3 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-md transition-all hover:scale-105 cursor-pointer inline-flex items-center gap-2"
             >
               <LogIn className="w-4 h-4" />
               <span>Masuk dengan Google</span>
@@ -137,7 +137,7 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
 
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-2">
                 <span className="text-xs font-semibold text-slate-500">Total Donasi Berhasil</span>
-                <div className="text-2xl sm:text-3xl font-extrabold text-[#1B3322] font-mono">
+                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono">
                   {formatRupiah(totalPaid)}
                 </div>
                 <p className="text-xs text-slate-400">Tercatat sah dan transparan dalam sistem</p>
@@ -154,7 +154,7 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
                 </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="mt-2 px-5 py-2.5 rounded-full bg-[#B2D850] text-[#1B3322] text-xs font-bold shadow-sm"
+                  className="mt-2 px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-sm"
                 >
                   Mulai Donasi Pertama
                 </button>
@@ -204,7 +204,7 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
 
                             <button
                               onClick={() => handleRowAction(donation)}
-                              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm shrink-0"
+                              className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm shrink-0"
                             >
                               <Receipt className="w-3.5 h-3.5" />
                               <span>Lanjutkan Pembayaran</span>
@@ -263,9 +263,9 @@ export const TransactionHistoryPage: React.FC<TransactionHistoryPageProps> = ({ 
 
                           <button
                             onClick={() => handleRowAction(donation)}
-                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-sm shrink-0 ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 ${
                               isPending
-                                ? 'bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850]'
+                                ? 'bg-[#0C8F63] hover:bg-emerald-700 text-white'
                                 : 'border border-slate-200 hover:border-slate-300 text-slate-700 bg-white hover:bg-slate-50'
                             }`}
                           >

@@ -73,7 +73,7 @@ function UserDashboardPage({
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
       <WideNavbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6 sm:py-8">
@@ -325,7 +325,7 @@ function MainRoutes() {
     return (
       <div className="min-h-screen bg-[#F7F9F8] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-[#1B3322] border-t-[#B2D850] rounded-full animate-spin mx-auto" />
+          <div className="w-10 h-10 border-4 border-[#1B3322] border-t-[#0C8F63] rounded-full animate-spin mx-auto" />
           <p className="text-xs font-semibold text-slate-600">Memuat Bersama Kita...</p>
         </div>
       </div>

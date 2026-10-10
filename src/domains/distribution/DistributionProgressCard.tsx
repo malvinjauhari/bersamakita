@@ -286,7 +286,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
                 <span>Status Penyaluran</span>
               </div>
-              <div className="text-base font-extrabold text-[#1B3322] font-mono">
+              <div className="text-base font-extrabold text-slate-900 font-mono">
                 {completedKeys.size} dari {MILESTONE_DEFINITIONS.length} Tahap
               </div>
               <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
@@ -436,7 +436,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                       <CheckCircle2 className="w-5 h-5 text-white" />
                     </div>
                   ) : isCurrent ? (
-                    <div className="w-10 h-10 rounded-full bg-[#1B3322] text-[#B2D850] flex items-center justify-center shadow-lg ring-4 ring-emerald-200 animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-[#0C8F63] text-white flex items-center justify-center shadow-lg ring-4 ring-emerald-200 animate-pulse">
                       <StepIcon className="w-5 h-5" />
                     </div>
                   ) : (

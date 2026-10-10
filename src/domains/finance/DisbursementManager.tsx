@@ -343,7 +343,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
             Belum ada donasi masuk. Rekap per bencana akan tampil setelah donasi berstatus lunas.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100">
                 <tr>
@@ -358,16 +358,16 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {recapRows.map((row) => (
                   <tr key={row.disasterId} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-6 min-w-[200px]">
                       <div className="font-semibold text-slate-900 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>{row.disasterTitle}</span>
+                        <span className="break-words">{row.disasterTitle}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5 break-all">
                         {row.disasterId.startsWith('__') ? '-' : row.disasterId}
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-6 min-w-[180px]">
                       <div className="flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className={row.partnerAssigned ? 'text-slate-700' : 'text-rose-600 font-semibold'}>
@@ -396,32 +396,32 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       </div>
 
       {/* Main Section */}
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-base text-slate-900">Manajemen Pencairan &amp; Alokasi Dana</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
+        <div className="p-6 border-b border-slate-100 flex flex-col gap-4 w-full">
+          <div className="w-full">
+            <h3 className="font-bold text-base text-slate-900 w-full">Manajemen Pencairan &amp; Alokasi Dana</h3>
+            <p className="text-xs text-slate-500 mt-0.5 w-full">
               Admin mengajukan pencairan dana tunai kepada mitra resmi untuk logistik darurat
               lapangan. Minimal penarikan {formatRupiah(MIN_WITHDRAWAL)}.
             </p>
           </div>
-          <div className="flex flex-col items-start sm:items-end gap-1.5">
-            <button
-              onClick={() => setShowModal(true)}
-              disabled={!canRequestDisbursement}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Buat Pengajuan Pencairan</span>
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 w-full pt-2">
             {!canRequestDisbursement && (
-              <span className="text-[10px] text-rose-600 font-semibold">
+              <span className="text-[10px] text-rose-600 font-semibold w-full sm:w-auto text-right">
                 Saldo tersedia {formatRupiah(availableBalance)} — pencairan minimal{' '}
                 {formatRupiah(MIN_WITHDRAWAL)} + biaya admin{' '}
                 {formatRupiah(MIN_WITHDRAWAL_TOTAL - MIN_WITHDRAWAL)} ={' '}
                 {formatRupiah(MIN_WITHDRAWAL_TOTAL)}
               </span>
             )}
+            <button
+              onClick={() => setShowModal(true)}
+              disabled={!canRequestDisbursement}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] text-xs font-bold transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed shrink-0 w-fit"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Pengajuan Pencairan</span>
+            </button>
           </div>
         </div>
 
@@ -435,7 +435,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100">
                 <tr>
@@ -451,17 +451,17 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {disbursements.map((d) => (
                   <tr key={d.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-4 px-6 font-mono">
+                    <td className="py-4 px-6 font-mono min-w-[160px] break-all">
                       <div className="font-bold text-slate-800">{d.id}</div>
-                      <div className="text-[10px] text-slate-400">{formatDateIndo(d.requestedAt)}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">{formatDateIndo(d.requestedAt)}</div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-6 min-w-[200px]">
                       <div className="font-semibold text-slate-800 flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>{d.disasterTitle || 'Tanpa Bencana (Lama)'}</span>
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="break-words">{d.disasterTitle || 'Tanpa Bencana (Lama)'}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-4 px-6 min-w-[180px]">
                       <div className="font-semibold text-slate-800 flex items-center gap-1.5">
                         <Building2 className="w-3.5 h-3.5 text-slate-400" />
                         <span>{d.partnerName}</span>
@@ -553,7 +553,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                     setSelectedDisasterId(e.target.value);
                     setAmountStr('');
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] bg-white"
                   required
                 >
                   <option value="">-- Pilih Bencana --</option>
@@ -613,7 +613,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   value={amountStr}
                   onChange={(e) => setAmountStr(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="Contoh: 5000000"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] font-mono font-bold"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] font-mono font-bold"
                   required
                 />
                 {selectedRecap && (
@@ -679,7 +679,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Misal: Bantuan logistik darurat gempa, dapur umum..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                 />
               </div>
 
@@ -697,7 +697,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
                   previewAmount < MIN_WITHDRAWAL ||
                   exceedsMax
                 }
-                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>

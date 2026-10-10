@@ -12,7 +12,7 @@ export const WideFooter: React.FC = () => {
           {/* Column 1: Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850] shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-sm">
                 <Heart className="w-4 h-4 fill-current" />
               </div>
               <span className="font-extrabold text-base tracking-tight text-white">

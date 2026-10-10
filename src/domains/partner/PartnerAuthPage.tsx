@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Mail, Lock, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Heart, Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
+
+const CAROUSEL_IMAGES = [
+  'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1920&q=80',
+  'https://images.unsplash.com/photo-1532629345422-7515f3d16bb7?auto=format&fit=crop&w=1920&q=80',
+];
 
 export const PartnerAuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,8 +20,16 @@ export const PartnerAuthPage: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // If already logged in as partner in staff session, redirect to /partner
+  // Auto-scroll images
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, []);
+
   React.useEffect(() => {
     if (isPartnerAuthenticated) {
       navigate('/partner');
@@ -40,79 +55,95 @@ export const PartnerAuthPage: React.FC = () => {
     }
   };
 
-  const handleFillCredentials = () => {
-    // No longer auto-filling generic mock credentials. 
-    // Partner must use an account created via Admin Dashboard.
-  };
-
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between selection:bg-[#B2D850] selection:text-[#1B3322]">
-      {/* Top minimal back bar */}
-      <header className="p-4 sm:p-6 max-w-7xl mx-auto w-full flex items-center justify-between border-b border-slate-800">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-full hover:bg-slate-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Beranda Donatur</span>
+    <div className="min-h-screen flex flex-col md:flex-row font-sans selection:bg-[#0C8F63] selection:text-white bg-white">
+      
+      {/* Left Panel: Branding & Illustration with Carousel */}
+      <div className="w-full md:w-1/2 relative p-8 md:p-16 flex flex-col justify-between min-h-[30vh] md:min-h-screen overflow-hidden">
+        
+        {/* Background Image Carousel */}
+        {CAROUSEL_IMAGES.map((img, idx) => (
+          <div
+            key={idx}
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out transform scale-105 ${
+              idx === currentIndex ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{ backgroundImage: `url(${img})` }}
+          />
+        ))}
+        {/* Overlay to ensure text readability */}
+        <div className="absolute inset-0 bg-black/60" />
+
+        {/* Header / Logo */}
+        <button onClick={() => navigate('/')} className="flex items-center gap-3 relative z-10 text-left group">
+          <div className="w-10 h-10 rounded-xl bg-[#0C8F63] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+            <Heart className="w-5 h-5 fill-current" />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="font-bold text-white tracking-wide text-sm">BERSAMA KITA</span>
+            <span className="font-extrabold text-emerald-300 text-lg tracking-wider">CHARITY</span>
+          </div>
         </button>
-        <span className="text-[11px] font-mono text-slate-500">Route: /partner/auth</span>
-      </header>
 
-      {/* Main Login Card */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
-        <div className="bg-slate-800/90 border border-slate-700/80 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="text-center space-y-2">
-            <div className="w-14 h-14 rounded-full bg-indigo-900 text-indigo-300 mx-auto flex items-center justify-center shadow-lg border border-indigo-500/30">
-              <Building2 className="w-7 h-7" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">
-              Portal Mitra Lapangan
-            </h1>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-              Akses khusus organisasi mitra (PMI, BAZNAS, Tagana, Relawan) untuk konfirmasi penerimaan dana dan pengiriman laporan fisik distribusi posko.
-            </p>
-          </div>
+        {/* Main Illustration Area */}
+        <main className="relative z-10 flex-1 flex flex-col justify-center py-12 max-w-sm">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+            Portal Mitra<br/>Lapangan.
+          </h2>
+          <p className="text-white/80 font-medium text-sm">
+            Bantu salurkan donasi langsung ke lokasi bencana. Transparansi dan kecepatan adalah kunci.
+          </p>
+        </main>
 
-          {/* Authentication Note */}
-          <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-700 text-xs space-y-2">
-            <div className="font-mono text-[11px] text-slate-400 space-y-0.5">
-              <p>Gunakan kredensial akun yang telah didaftarkan oleh Admin Operasional.</p>
-            </div>
-          </div>
+        <footer className="relative z-10 text-[11px] text-white/70 font-medium hidden md:block">
+          <p>© 2026 Bersama Kita Charity. Powered by NOC</p>
+        </footer>
+      </div>
 
-          <form onSubmit={handlePartnerLogin} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1.5">Email Mitra Lapangan</label>
+      {/* Right Panel: Login Interaction (Solid White) */}
+      <div className="w-full md:w-1/2 bg-white flex flex-col justify-between p-8 md:p-16 min-h-[70vh] md:min-h-screen">
+        
+        {/* Spacer for vertical centering in flex-col */}
+        <div className="hidden md:block"></div>
+
+        <div className="w-full max-w-[360px] mx-auto flex flex-col justify-center">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
+            Partner Login
+          </h1>
+          <p className="text-sm text-gray-500 mb-8 font-medium">Masuk sebagai Mitra Lapangan Terdaftar</p>
+          
+          <form onSubmit={handlePartnerLogin} className="space-y-4 text-sm text-left">
+            <div className="space-y-1.5">
+              <label className="block text-gray-700 text-xs font-semibold">Email Mitra</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="partnerbersamakita@protonmail.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-xs font-mono"
+                  placeholder="partner@bersamakita.org"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] focus:border-transparent text-sm transition-all"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1.5">Kata Sandi</label>
+            <div className="space-y-1.5">
+              <label className="block text-gray-700 text-xs font-semibold">Kata Sandi</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-xs font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] focus:border-transparent text-sm transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3.5 top-3 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -122,19 +153,24 @@ export const PartnerAuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-2 mt-2 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
+              className="w-full py-3.5 px-4 mt-4 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-              <span>Masuk ke Dashboard Mitra</span>
+              <span>Masuk ke Dashboard</span>
             </button>
           </form>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="p-4 text-center text-slate-500 text-xs border-t border-slate-800">
-        © 2026 Bersama Kita. Sistem Pelaporan Mitra Terintegrasi.
-      </footer>
+        {/* Global Footer (Right Side Bottom) */}
+        <footer className="mt-16 md:mt-auto flex flex-col md:flex-row items-center md:items-end justify-between text-[11px] text-gray-400 font-medium">
+          <span className="mb-2 md:mb-0">Gunakan kredensial dari Admin</span>
+          <div className="text-center md:text-right">
+            Have a problem? Contact us at<br/>
+            <a href="mailto:info@bersamakita.org" className="underline hover:text-gray-600 transition-colors">info@bersamakita.org</a>
+          </div>
+        </footer>
+      </div>
+
     </div>
   );
 };

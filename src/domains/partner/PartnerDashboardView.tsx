@@ -307,23 +307,23 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-indigo-400 selection:text-slate-900">
+    <div className="min-h-screen bg-[#F9FAFB] text-slate-800 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-slate-800/95 backdrop-blur-md border-b border-slate-700/80 px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-indigo-900 flex items-center justify-center text-indigo-300 shadow-sm border border-indigo-500/30">
+          <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100">
             <Building2 className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-white tracking-tight">
+              <span className="font-extrabold text-sm text-slate-900 tracking-tight">
                 Bersama Kita — Portal Mitra Lapangan
               </span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
                 MITRA
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono">
+            <p className="text-[10px] text-slate-500 font-mono">
               {staffSession?.email || 'partnerbersamakita@protonmail.com'}
             </p>
           </div>
@@ -332,7 +332,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold transition-all border border-slate-600"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-900 text-xs font-semibold transition-all border border-transparent"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Lihat Tampilan Donatur</span>
@@ -343,7 +343,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
               logoutStaff();
               navigate('/partner/auth');
             }}
-            className="p-1.5 rounded-full text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
             title="Keluar / Logout Mitra"
           >
             <LogOut className="w-4 h-4" />
@@ -352,32 +352,32 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
       </header>
 
       {/* Main Container */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="flex-1 w-full max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header and Summary */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-slate-800">
-          <div>
+        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4 text-slate-800 w-full">
+          <div className="w-full">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 uppercase tracking-wider mb-1">
               <Building2 className="w-4 h-4 text-indigo-600" />
               <span>Dashboard Mitra Operasional & Distribusi</span>
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-slate-900 w-full">
               {staffSession?.name || 'Mitra Tanggap Bencana'}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5 w-full">
               Kelola penerimaan dana alokasi bantuan dan laporkan hasil penyaluran langsung dari lapangan.
             </p>
           </div>
         </div>
 
         {/* Partner Sub-Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-700/60 pb-3 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
           <button
             type="button"
             onClick={() => navigate('/partner')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                ? 'bg-slate-100 text-slate-900 font-bold'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
@@ -386,10 +386,10 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
           <button
             type="button"
             onClick={() => navigate('/partner/tasks')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'tasks'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                ? 'bg-slate-100 text-slate-900 font-bold'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <ListTodo className="w-3.5 h-3.5" />
@@ -398,10 +398,10 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
           <button
             type="button"
             onClick={() => navigate('/partner/distribution')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'distribution'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                ? 'bg-slate-100 text-slate-900 font-bold'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Package className="w-3.5 h-3.5" />
@@ -410,10 +410,10 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
           <button
             type="button"
             onClick={() => navigate('/partner/reports')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'reports'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                ? 'bg-slate-100 text-slate-900 font-bold'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <FileCheck2 className="w-3.5 h-3.5" />
@@ -466,19 +466,21 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
 
       {/* Donasi Masuk dari Donatur yang Siap Didistribusikan */}
       {(activeTab === 'all' || activeTab === 'distribution') && paidDonations.length > 0 && (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="font-bold text-base text-slate-900">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
+          <div className="p-6 border-b border-slate-100 flex flex-col gap-4 w-full">
+            <div className="w-full">
+              <h3 className="font-bold text-base text-slate-900 w-full">
                 Donasi Masuk Siap Didistribusikan
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 w-full">
                 Dana kontribusi donatur yang telah terverifikasi. Mitra dapat langsung memulai penyiapan logistik dan penyaluran lapangan.
               </p>
             </div>
-            <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 self-start sm:self-auto">
-              {paidDonations.length} Donasi Terkumpul
-            </span>
+            <div className="w-full flex justify-end">
+              <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {paidDonations.length} Donasi Terkumpul
+              </span>
+            </div>
           </div>
 
           <div className="divide-y divide-slate-100">
@@ -540,23 +542,25 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
 
       {/* Allocations Assigned to this Partner with Granular Stepper per task */}
       {(activeTab === 'all' || activeTab === 'tasks' || activeTab === 'distribution') && (
-        <div className="space-y-4">
-          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
+        <div className="space-y-4 w-full">
+          <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4 w-full">
+            <div className="w-full">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">
                 <ListTodo className="w-4 h-4" />
                 <span>Pelaksanaan Penyaluran Lapangan</span>
               </div>
-              <h3 className="font-bold text-base text-slate-900">
+              <h3 className="font-bold text-base text-slate-900 w-full">
                 Tugas Penyaluran & Checklist Progres Lapangan
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 w-full">
                 Perbarui setiap tahapan aktual secara real-time (dikemas, dalam perjalanan, tiba di posko, diserahkan ke warga). Donatur dan admin akan memantau progres Anda secara langsung.
               </p>
             </div>
-            <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700 self-start sm:self-auto">
-              {allocations.length} Tugas Alokasi
-            </span>
+            <div className="w-full flex justify-end">
+              <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+                {allocations.length} Tugas Alokasi
+              </span>
+            </div>
           </div>
 
           {allocations.length === 0 ? (
@@ -586,10 +590,10 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
 
       {/* Distribution Reports List */}
       {(activeTab === 'all' || activeTab === 'reports' || activeTab === 'distribution') && (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h3 className="font-bold text-base text-slate-900">Laporan Penyaluran yang Telah Dibuat</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden w-full">
+          <div className="p-6 border-b border-slate-100 flex flex-col gap-4 w-full">
+            <h3 className="font-bold text-base text-slate-900 w-full">Laporan Penyaluran yang Telah Dibuat</h3>
+            <p className="text-xs text-slate-500 mt-0.5 w-full">
               Laporan berstatus 'Submitted' langsung tampil pada pelacakan donatur untuk transparansi publik.
             </p>
           </div>
@@ -676,7 +680,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Misal: Posko Pengungsian Desa Sukamaju, Cianjur"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -687,7 +691,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
                   type="date"
                   value={distributionDate}
                   onChange={(e) => setDistributionDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] bg-white"
                   required
                 />
               </div>
@@ -750,7 +754,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Catatan pelaksanaan penyaluran, kondisi warga, dll..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                 />
               </div>
 
@@ -783,7 +787,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
                   type="button"
                   disabled={submitting || photoUploading}
                   onClick={() => handleSubmitReport(false)}
-                  className="flex-1 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  className="flex-1 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Kirim Laporan (Publik)</span>

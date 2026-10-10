@@ -96,16 +96,16 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
                 const el = document.getElementById('posko-section');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-white text-xs font-semibold shadow-xs transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-colors"
             >
-              <Eye className="w-3.5 h-3.5 text-[#B2D850]" />
+              <Eye className="w-3.5 h-3.5 text-emerald-100" />
               <span>Pantauan Bencana & Donasi</span>
             </button>
 
             <button
               type="button"
               onClick={onOpenDonationsTab}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold shadow-xs transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold shadow-xs transition-colors"
             >
               <Clock className="w-3.5 h-3.5 text-slate-600" />
               <span>Jejak Donasi Saya</span>
@@ -119,7 +119,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
             type="button"
             onClick={handleSyncBMKG}
             disabled={syncing}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold transition-all shadow-xs"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold transition-all shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${syncing ? 'animate-spin' : ''}`} />
             <span>{syncing ? 'Memperbarui...' : 'Perbarui Data BMKG'}</span>
@@ -176,7 +176,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
             <button
               onClick={handleSyncBMKG}
               disabled={syncing}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               <span>{syncing ? 'Memeriksa Pembaruan...' : 'Periksa Pembaruan Status'}</span>
@@ -184,7 +184,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
 
             <button
               onClick={onOpenDonationsTab}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold transition-all shadow-xs"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold transition-all shadow-xs"
             >
               <Clock className="w-3.5 h-3.5 text-slate-600" />
               <span>Riwayat Donasi Saya</span>
@@ -203,7 +203,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
               </p>
             </div>
 
-            <span className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 self-start sm:self-auto">
+            <span className="px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 shrink-0 self-start sm:self-auto">
               {publishedDisasters.length} Posko Terdata
             </span>
           </div>

@@ -49,7 +49,7 @@ export const UserDashboardOverview: React.FC<UserDashboardOverviewProps> = ({
       {/* Welcome & Primary CTA Banner per Section 6 */}
       <div className="bg-gradient-to-r from-[#1B3322] via-[#243E2C] to-[#1B3322] rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2 z-10 max-w-xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#B2D850]/20 text-[#B2D850] text-xs font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0C8F63]/20 text-[#0C8F63] text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Satu Kepedulian, untuk Mereka yang Membutuhkan</span>
           </div>
@@ -64,7 +64,7 @@ export const UserDashboardOverview: React.FC<UserDashboardOverviewProps> = ({
         {/* Primary CTA Button: Mulai Donasi per Section 6 */}
         <button
           onClick={onOpenDonate}
-          className="z-10 px-7 py-3.5 rounded-full bg-[#B2D850] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-sm transition-all shadow-lg shadow-[#B2D850]/20 flex items-center gap-2 hover:scale-105 active:scale-95 shrink-0"
+          className="z-10 px-7 py-3.5 rounded-full bg-[#0C8F63] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-sm transition-all shadow-lg shadow-[#0C8F63]/20 flex items-center gap-2 hover:scale-105 active:scale-95 shrink-0"
         >
           <Heart className="w-4 h-4 fill-current" />
           <span>Mulai Donasi</span>
@@ -151,7 +151,7 @@ export const UserDashboardOverview: React.FC<UserDashboardOverviewProps> = ({
           {latestDisaster && (
             <button
               onClick={onOpenDonate}
-              className="w-full py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-colors shadow-sm"
+              className="w-full py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] text-xs font-bold transition-colors shadow-sm"
             >
               Kirim Donasi Bantuan
             </button>

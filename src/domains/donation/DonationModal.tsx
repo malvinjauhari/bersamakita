@@ -249,7 +249,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <div className="flex items-center gap-1.5">
                   <div
                     className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all ${
-                      isPassed ? 'bg-[#1B3322] text-[#B2D850]' : 'bg-slate-100 text-slate-400'
+                      isPassed ? 'bg-[#1B3322] text-[#0C8F63]' : 'bg-slate-100 text-slate-400'
                     }`}
                   >
                     {idx + 1}
@@ -285,7 +285,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     onClick={() => handleSelectAmount(val)}
                     className={`py-3 px-3 rounded-2xl text-xs font-bold border transition-all ${
                       amount === val && !isCustom
-                        ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322] shadow-sm'
+                        ? 'bg-[#1B3322] text-[#0C8F63] border-[#1B3322] shadow-sm'
                         : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -307,7 +307,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   value={customAmountStr}
                   onChange={handleCustomAmountChange}
                   placeholder="Min. 10.000"
-                  className="w-full pl-12 pr-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] text-sm font-semibold text-slate-800"
+                  className="w-full pl-12 pr-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] text-sm font-semibold text-slate-800"
                 />
               </div>
             </div>
@@ -321,7 +321,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <select
                   value={disasterId}
                   onChange={(e) => setDisasterId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] text-xs font-medium text-slate-700 bg-white"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] text-xs font-medium text-slate-700 bg-white"
                 >
                   <option value="">Semua Bencana Darurat Terverifikasi</option>
                   {disasters.map((d) => (
@@ -343,7 +343,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                   placeholder="Nama Lengkap"
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] text-xs disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] text-xs disabled:bg-slate-100 disabled:text-slate-400"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   type="checkbox"
                   checked={isAnonymous}
                   onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="rounded border-slate-300 text-[#1B3322] focus:ring-[#B2D850] w-4 h-4"
+                  className="rounded border-slate-300 text-[#1B3322] focus:ring-[#0C8F63] w-4 h-4"
                 />
                 <span className="text-xs font-medium text-slate-600">
                   Donasikan sebagai Hamba Allah (Anonim)
@@ -366,7 +366,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   onChange={(e) => setMessage(e.target.value)}
                   rows={2}
                   placeholder="Tuliskan doa atau pesan penyemangat..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] text-xs"
+                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] text-xs"
                 />
               </div>
             </div>
@@ -374,7 +374,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             {/* Next CTA */}
             <button
               onClick={proceedToVerify}
-              className="w-full py-3.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+              className="w-full py-3.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
             >
               <span>Lanjut ke Verifikasi</span>
               <ArrowRight className="w-4 h-4" />
@@ -428,7 +428,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 type="checkbox"
                 checked={confirmedCorrect}
                 onChange={(e) => setConfirmedCorrect(e.target.checked)}
-                className="mt-0.5 rounded border-amber-300 text-[#1B3322] focus:ring-[#B2D850] w-4 h-4"
+                className="mt-0.5 rounded border-amber-300 text-[#1B3322] focus:ring-[#0C8F63] w-4 h-4"
               />
               <span className="text-xs text-amber-900 leading-relaxed font-medium">
                 Saya memastikan data donasi sudah benar dan menyetujui penyaluran dana sesuai evaluasi kebutuhan darurat mitra di lapangan.
@@ -448,7 +448,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 type="button"
                 disabled={loading || !confirmedCorrect}
                 onClick={proceedToPayment}
-                className="flex-1 py-3.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 py-3.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                 <span>Lanjutkan Pembayaran</span>
@@ -552,7 +552,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
             {/* Tracking shortcut card */}
             <div className="p-4 rounded-2xl bg-[#1B3322] text-white text-left space-y-2">
-              <div className="flex items-center gap-2 text-[#B2D850] text-xs font-bold">
+              <div className="flex items-center gap-2 text-[#0C8F63] text-xs font-bold">
                 <Sparkles className="w-4 h-4" />
                 <span>Pelacakan Transparan Aktif</span>
               </div>
@@ -564,7 +564,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-3.5 rounded-full bg-[#B2D850] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-xs transition-colors shadow-md"
+              className="w-full py-3.5 rounded-full bg-[#0C8F63] hover:bg-[#9CDE64] text-[#1B3322] font-bold text-xs transition-colors shadow-md"
             >
               Lihat Riwayat & Pelacakan
             </button>

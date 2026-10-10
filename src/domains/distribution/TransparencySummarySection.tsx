@@ -109,9 +109,9 @@ export const TransparencySummarySection: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilterDisasterId('')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                 !filterDisasterId
-                  ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322]'
+                  ? 'bg-[#0C8F63] text-white border-[#0C8F63]'
                   : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
               }`}
             >
@@ -122,9 +122,9 @@ export const TransparencySummarySection: React.FC = () => {
                 key={d.disasterId || d.disasterTitle}
                 type="button"
                 onClick={() => setFilterDisasterId(d.disasterId || '__none__')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                   filterDisasterId === (d.disasterId || '__none__')
-                    ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322]'
+                    ? 'bg-[#0C8F63] text-white border-[#0C8F63]'
                     : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -147,7 +147,7 @@ export const TransparencySummarySection: React.FC = () => {
             <button
               type="button"
               onClick={fetchData}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold hover:bg-[#243E2C] transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0C8F63] text-white text-xs font-bold hover:bg-emerald-700 transition-all"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Coba Lagi</span>
@@ -175,7 +175,7 @@ export const TransparencySummarySection: React.FC = () => {
                     <div className="font-bold text-sm text-slate-900 truncate">{t.donorName}</div>
                     <div className="text-xs text-slate-600 truncate">{t.keterangan}</div>
                   </div>
-                  <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-slate-900 text-[#B2D850] text-[11px] font-bold">
+                  <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-[#0C8F63] text-white text-[11px] font-bold">
                     {t.paymentMethod}
                   </span>
                 </div>
@@ -240,14 +240,14 @@ export const TransparencySummarySection: React.FC = () => {
           <>
             {/* Global totals */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-[#1B3322] p-5 rounded-3xl shadow-lg space-y-1">
-                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <div className="bg-emerald-50 p-5 rounded-3xl border border-emerald-100 shadow-sm space-y-1">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Total Dana yang Telah Didonasikan
                 </span>
-                <div className="text-xl font-bold text-[#B2D850] font-mono">
+                <div className="text-xl font-bold text-emerald-700 font-mono">
                   {formatRupiah(data.totalReceived)}
                 </div>
-                <span className="text-[11px] text-slate-300">
+                <span className="text-[11px] text-slate-500">
                   Nominal donasi utuh, tanpa potongan biaya admin
                 </span>
               </div>
@@ -299,7 +299,7 @@ export const TransparencySummarySection: React.FC = () => {
                           setFilterDisasterId(d.disasterId || '__none__');
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="shrink-0 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-all"
+                        className="shrink-0 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-all"
                       >
                         Lihat Riwayat
                       </button>

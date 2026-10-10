@@ -74,13 +74,13 @@ export const TransactionStatusPage: React.FC = () => {
           <div className="flex flex-col items-center gap-2 pt-2">
             <button
               onClick={() => navigate('/cek-transaksi')}
-              className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+              className="px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold"
             >
               Lihat Transaksi Saya
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+              className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
             >
               Kembali ke Beranda
             </button>
@@ -94,7 +94,7 @@ export const TransactionStatusPage: React.FC = () => {
   const isPending = donation.status === 'pending_payment';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#0C8F63] selection:text-white">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -102,7 +102,7 @@ export const TransactionStatusPage: React.FC = () => {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 cursor-pointer select-none"
           >
-            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850] shadow-xs">
+            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-xs">
               <Heart className="w-3.5 h-3.5 fill-current" />
             </div>
             <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
@@ -139,7 +139,7 @@ export const TransactionStatusPage: React.FC = () => {
           <div className={`flex items-center gap-2 ${isPaid ? 'text-emerald-800 font-bold' : 'text-slate-400'}`}>
             <span
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
-                isPaid ? 'bg-[#1B3322] text-[#B2D850]' : 'bg-slate-200 text-slate-600'
+                isPaid ? 'bg-[#0C8F63] text-white' : 'bg-slate-200 text-slate-600'
               }`}
             >
               3
@@ -256,7 +256,7 @@ export const TransactionStatusPage: React.FC = () => {
               <>
                 <button
                   onClick={() => navigate('/my-donation')}
-                  className="w-full py-4 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-4 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span>Pantau Status Penyaluran di Donasi Saya</span>
                   <ArrowRight className="w-4 h-4" />
@@ -264,7 +264,7 @@ export const TransactionStatusPage: React.FC = () => {
 
                 <button
                   onClick={() => navigate('/')}
-                  className="w-full py-3 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
                 >
                   Kembali ke Beranda
                 </button>
@@ -273,7 +273,7 @@ export const TransactionStatusPage: React.FC = () => {
               <>
                 <button
                   onClick={() => navigate(`/transaction/checkout/${donationId}`)}
-                  className="w-full py-4 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-4 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span>Selesaikan Pembayaran</span>
                   <ArrowRight className="w-4 h-4" />
@@ -281,7 +281,7 @@ export const TransactionStatusPage: React.FC = () => {
 
                 <button
                   onClick={() => navigate('/cek-transaksi')}
-                  className="w-full py-3 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
                 >
                   Lihat Transaksi Saya
                 </button>
@@ -290,7 +290,7 @@ export const TransactionStatusPage: React.FC = () => {
               <>
                 <button
                   onClick={() => navigate('/')}
-                  className="w-full py-4 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-4 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span>Mulai Donasi Baru</span>
                   <ArrowRight className="w-4 h-4" />
@@ -298,7 +298,7 @@ export const TransactionStatusPage: React.FC = () => {
 
                 <button
                   onClick={() => navigate('/cek-transaksi')}
-                  className="w-full py-3 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+                  className="w-full py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs transition-colors"
                 >
                   Lihat Transaksi Saya
                 </button>

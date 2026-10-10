@@ -82,32 +82,34 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
   });
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+    <div className="space-y-6 w-full">
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4 w-full">
+        <div className="w-full">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B3322] uppercase tracking-wider mb-1">
             <CreditCard className="w-4 h-4 text-emerald-600" />
             <span>Manajemen Keuangan Transaksi</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Seluruh Transaksi Donasi Masuk</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-xl font-bold text-slate-900 w-full">Seluruh Transaksi Donasi Masuk</h2>
+          <p className="text-xs text-slate-500 mt-0.5 w-full">
             Daftar transaksi terintegrasi dengan status gateway pembayaran Duitku.
           </p>
         </div>
 
-        {/* Cleanup Failed History */}
-        <button
-          onClick={() => setShowCleanupModal(true)}
-          disabled={failedCount === 0 || cleaning}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-          title={failedCount === 0 ? 'Tidak ada transaksi gagal' : 'Hapus permanen semua transaksi gagal dari histori user'}
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          Hapus Riwayat Transaksi Gagal ({failedCount})
-        </button>
+        {/* Action Row */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 w-full pt-2 border-t border-slate-50">
+          {/* Cleanup Failed History */}
+          <button
+            onClick={() => setShowCleanupModal(true)}
+            disabled={failedCount === 0 || cleaning}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 w-fit"
+            title={failedCount === 0 ? 'Tidak ada transaksi gagal' : 'Hapus permanen semua transaksi gagal dari histori user'}
+          >
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+            <span>Hapus Riwayat Transaksi Gagal ({failedCount})</span>
+          </button>
 
-        {/* Search & Filter */}
-        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Search & Filter */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full xl:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-3" />
             <input
@@ -115,7 +117,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari ID / Nama / Email..."
-              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 text-xs focus:ring-2 focus:ring-[#B2D850] focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 rounded-full border border-slate-200 text-xs focus:ring-2 focus:ring-[#0C8F63] focus:outline-none"
             />
           </div>
 
@@ -126,7 +128,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
                 onClick={() => setStatusFilter(s)}
                 className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-full text-xs font-semibold capitalize border transition-all ${
                   statusFilter === s
-                    ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322]'
+                    ? 'bg-[#1B3322] text-[#0C8F63] border-[#1B3322]'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
               >
@@ -134,6 +136,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
               </button>
             ))}
           </div>
+        </div>
         </div>
       </div>
 
@@ -144,7 +147,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
             {donations.length === 0 ? 'Belum ada transaksi donasi yang tercatat.' : 'Tidak ada transaksi yang cocok dengan filter pencarian.'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100">
                 <tr>
@@ -162,20 +165,20 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
                   const isPaid = d.status === 'paid';
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-4 px-6 font-mono font-bold text-slate-800">
+                      <td className="py-4 px-6 font-mono font-bold text-slate-800 break-all min-w-[200px]">
                         {d.id}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-6 min-w-[180px]">
                         <div className="font-semibold text-slate-900">{d.donorName}</div>
                         <div className="text-[11px] text-slate-400">{d.donorEmail}</div>
                       </td>
                       <td className="py-4 px-6 font-mono font-bold text-slate-900 text-sm">
                         {formatRupiah(d.amount)}
                       </td>
-                      <td className="py-4 px-6 text-slate-600 max-w-xs truncate">
+                      <td className="py-4 px-6 text-slate-600 max-w-[200px] truncate">
                         {resolveDisasterTitle(d)}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-4 px-6 min-w-[180px]">
                         <div className="flex items-center gap-1.5 text-slate-700">
                           <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span className="truncate">{resolvePartnerName(d)}</span>

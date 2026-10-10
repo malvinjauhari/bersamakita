@@ -205,13 +205,13 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           <div className="flex flex-col items-center gap-2 pt-2">
             <button
               onClick={() => navigate('/cek-transaksi')}
-              className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+              className="px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold"
             >
               Lihat Transaksi Saya
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+              className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
             >
               Kembali ke Beranda
             </button>
@@ -224,7 +224,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
   const isExpired = timeLeft === 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between selection:bg-[#0C8F63] selection:text-white">
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <button
@@ -236,7 +236,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#B2D850] shadow-xs">
+            <div className="w-7 h-7 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-xs">
               <Heart className="w-3.5 h-3.5 fill-current" />
             </div>
             <span className="font-extrabold text-sm text-[#1B3322]">Bersama Kita</span>
@@ -253,7 +253,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
           </div>
           <span className="w-8 h-0.5 bg-emerald-600" />
           <div className="flex items-center gap-2 text-emerald-800 font-bold">
-            <span className="w-6 h-6 rounded-full bg-[#1B3322] text-[#B2D850] flex items-center justify-center text-xs">
+            <span className="w-6 h-6 rounded-full bg-[#0C8F63] text-white flex items-center justify-center text-xs">
               2
             </span>
             <span>Pembayaran</span>
@@ -349,7 +349,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
                     href={payment.paymentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full inline-flex max-w-xs mx-auto py-3.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-extrabold text-xs shadow-lg transition-all items-center justify-center gap-2"
+                    className="w-full inline-flex max-w-xs mx-auto py-3.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition-all items-center justify-center gap-2"
                   >
                     Lanjutkan Pembayaran
                   </a>
@@ -368,7 +368,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
                     type="button"
                     onClick={handleSimulatePaid}
                     disabled={checkingStatus}
-                    className="w-full max-w-xs py-3 rounded-full bg-[#B2D850] hover:bg-[#a4cc45] text-[#1B3322] font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-60"
+                    className="w-full max-w-xs py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-60"
                   >
                     {checkingStatus ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -384,7 +384,7 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
                   type="button"
                   onClick={handleCheckStatus}
                   disabled={checkingStatus}
-                  className="w-full max-w-xs py-3 rounded-full border border-emerald-600 text-emerald-700 font-extrabold text-xs transition-all flex items-center justify-center gap-2 hover:bg-emerald-50 disabled:opacity-60"
+                  className="w-full max-w-xs py-3 rounded-xl border border-emerald-600 text-emerald-700 font-extrabold text-xs transition-all flex items-center justify-center gap-2 hover:bg-emerald-50 disabled:opacity-60"
                 >
                   {checkingStatus ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -407,13 +407,13 @@ export const TransactionCheckoutPage: React.FC<TransactionCheckoutPageProps> = (
               <div className="flex flex-col items-center gap-2">
                 <button
                   onClick={() => navigate('/cek-transaksi')}
-                  className="px-5 py-2.5 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+                  className="px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold"
                 >
                   Lihat Transaksi Saya
                 </button>
                 <button
                   onClick={() => navigate('/')}
-                  className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
+                  className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50"
                 >
                   Mulai Donasi Baru
                 </button>

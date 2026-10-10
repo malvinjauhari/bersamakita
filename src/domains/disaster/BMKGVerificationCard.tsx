@@ -293,7 +293,7 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
             onClick={() => setFilter(tab.id as any)}
             className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${
               filter === tab.id
-                ? 'bg-[#1B3322] text-[#B2D850] shadow-sm'
+                ? 'bg-[#0C8F63] text-white shadow-sm'
                 : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
@@ -335,7 +335,7 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
             return (
               <div
                 key={disaster.id}
-                className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4 hover:shadow-md transition-shadow"
+                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
@@ -373,51 +373,40 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
                 </div>
 
                 {/* Location & Time info */}
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span className="truncate">{disaster.location}</span>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="flex items-start gap-2 text-slate-600">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" title={`Koordinat: ${disaster.coordinates?.latitude}, ${disaster.coordinates?.longitude}`} />
+                    <span className="leading-tight font-medium text-slate-800">{disaster.location}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-                    <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Waktu Gempa: {disaster.eventTime}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-                    <Activity className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Koordinat: {disaster.coordinates?.latitude}, {disaster.coordinates?.longitude}</span>
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0" title={`Waktu asli: ${disaster.eventTime}`} />
+                    <span>{ageHours < 1 ? `${Math.round(ageHours * 60)} menit lalu` : `${Math.floor(ageHours)} jam lalu`}</span>
                   </div>
 
-                  {/* 24-Hour Timer Status */}
-                  <div className="pt-2 border-t border-slate-200/80 space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Usia data dalam antrean:</span>
-                      <span className="font-mono font-bold text-slate-700">
-                        {ageHours < 1 ? `${Math.round(ageHours * 60)} menit` : `${ageHours.toFixed(1)} jam`}
-                      </span>
-                    </div>
-
+                  {/* Status Info (tanpa kotak background) */}
+                  <div className="pt-3 flex flex-col gap-1 text-xs">
                     {isPending ? (
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-amber-700 font-medium">Batas auto-approve:</span>
-                        <span className="font-mono font-bold text-amber-800">
+                      <div className="flex items-center gap-2">
+                        <span className="text-orange-400/80 font-medium">Batas auto-approve:</span>
+                        <span className="font-semibold text-orange-500/90">
                           {remainingHours > 0 ? `Sisa ${remainingHours.toFixed(1)} jam` : 'Siap Auto-Approve'}
                         </span>
                       </div>
                     ) : isArchived ? (
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-600 font-medium">Status di User:</span>
-                        <span className="font-semibold text-slate-700">Penggalangan Ditutup — Tidak Tampil</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 font-medium">Status di User:</span>
+                        <span className="font-semibold text-slate-500">Penggalangan Ditutup — Tidak Tampil</span>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-emerald-700 font-medium">Status di User:</span>
-                        <span className="font-semibold text-emerald-800">Tampil di Dashboard User</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 font-medium">Status di User:</span>
+                        <span className="font-semibold text-slate-900">Tampil di Dashboard User</span>
                       </div>
                     )}
                   </div>
 
                   {disaster.notes && (
-                    <div className="pt-1.5 border-t border-slate-200 text-[11px] text-slate-600 italic">
+                    <div className="pt-1 text-xs text-slate-500 italic">
                       Catatan: {disaster.notes}
                     </div>
                   )}
@@ -425,15 +414,14 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
 
                 {/* Admin Actions */}
                 {isPending && (
-                  <div className="pt-2 border-t border-slate-100 space-y-3">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-700">Pilih Mitra Lapangan (Wajib)</label>
+                  <div className="pt-4 mt-2 border-t border-slate-100 space-y-4">
+                    <div className="flex items-center gap-3">
                       <select
-                        className="w-full text-xs p-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        className="flex-1 text-sm font-semibold text-slate-900 bg-transparent border-b border-slate-300 pb-1 focus:outline-none focus:border-slate-900 appearance-none cursor-pointer"
                         value={selectedPartners[disaster.id] || ''}
                         onChange={(e) => setSelectedPartners(prev => ({ ...prev, [disaster.id]: e.target.value }))}
                       >
-                        <option value="" disabled>-- Pilih Mitra --</option>
+                        <option value="" disabled>Pilih Mitra Lapangan +</option>
                         {partners.filter(p => p.status === 'active').map(p => (
                           <option key={p.id} value={p.id}>{p.name}</option>
                         ))}
@@ -444,16 +432,16 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
                       <button
                         onClick={() => handleApprove(disaster)}
                         disabled={isProcessing || !selectedPartners[disaster.id]}
-                        className="flex-1 py-2 px-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] disabled:opacity-50 disabled:cursor-not-allowed text-[#B2D850] text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <CheckCircle2 className="w-4 h-4" />
                         <span>Approve Manual</span>
                       </button>
 
                       <button
                         onClick={() => handleReject(disaster)}
                         disabled={isProcessing}
-                        className="py-2 px-3 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition-all"
+                        className="py-2.5 px-4 rounded-xl bg-transparent hover:bg-slate-100 text-slate-500 hover:text-slate-900 text-xs font-bold transition-all"
                       >
                         Tolak
                       </button>
@@ -463,49 +451,39 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
 
                 {/* Approved / Closed: Partner info, partner edit, close-reopen controls */}
                 {isApproved && (
-                  <div className="pt-2 border-t border-slate-100 space-y-3">
-                    <div className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <label className="text-xs font-bold text-slate-700">
-                        Mitra Lapangan Penanggung Jawab
-                      </label>
-                    </div>
-
+                  <div className="pt-4 mt-2 border-t border-slate-100 space-y-4">
                     {assignedPartner ? (
-                      <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+                      <div className="flex items-center gap-3">
                         {assignedPartner.logo ? (
                           <img
                             src={assignedPartner.logo}
                             alt={assignedPartner.name}
-                            className="w-9 h-9 rounded-xl object-cover bg-white border border-emerald-100 shrink-0"
+                            className="w-10 h-10 rounded-full object-cover bg-slate-50 border border-slate-200 shrink-0"
                           />
                         ) : (
-                          <div className="w-9 h-9 rounded-xl bg-[#1B3322] text-[#B2D850] flex items-center justify-center text-xs font-extrabold shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-extrabold shrink-0 border border-slate-200">
                             {assignedPartner.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="text-xs font-bold text-emerald-900 truncate">
+                          <p className="text-sm font-bold text-slate-900 truncate">
                             {assignedPartner.name}
                           </p>
-                          <p className="text-[10px] text-emerald-700 truncate">
+                          <p className="text-xs text-slate-500 truncate">
                             {assignedPartner.organization || assignedPartner.location || 'Mitra Lapangan'}
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-800">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <div className="flex items-center gap-2 text-xs font-medium text-orange-500/90">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
                         <span>Belum ada mitra — pilih mitra di bawah lalu simpan.</span>
                       </div>
                     )}
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-bold text-slate-700">
-                        Ubah Mitra Lapangan (Wajib)
-                      </label>
+                    <div className="flex items-center gap-3">
                       <select
-                        className="w-full text-xs p-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                        className="flex-1 text-sm font-semibold text-slate-900 bg-transparent border-b border-slate-300 pb-1 focus:outline-none focus:border-slate-900 appearance-none cursor-pointer"
                         value={editPartnerValue}
                         onChange={(e) =>
                           setSelectedPartners((prev) => ({ ...prev, [disaster.id]: e.target.value }))
@@ -513,7 +491,7 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
                         disabled={isProcessing}
                       >
                         <option value="" disabled>
-                          -- Pilih Mitra --
+                          Ubah Mitra Lapangan +
                         </option>
                         {partnerOptions.map((p) => (
                           <option key={p.id} value={p.id}>
@@ -527,7 +505,7 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
                       <button
                         onClick={() => handleUpdatePartner(disaster)}
                         disabled={isProcessing || !canSavePartner}
-                        className="flex-1 py-2 px-3 rounded-full bg-white border border-slate-200 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2 px-3 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
                       >
                         <Save className="w-3.5 h-3.5" />
                         <span>Simpan Mitra</span>
@@ -537,16 +515,16 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
                         <button
                           onClick={() => handleReopenFundraising(disaster)}
                           disabled={isProcessing}
-                          className="flex-1 py-2 px-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] disabled:opacity-50 disabled:cursor-not-allowed text-[#B2D850] text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
-                          <span>Buka Kembali Penggalangan</span>
+                          <span>Buka Kembali</span>
                         </button>
                       ) : (
                         <button
                           onClick={() => handleCloseFundraising(disaster)}
                           disabled={isProcessing}
-                          className="flex-1 py-2 px-3 rounded-full bg-rose-50 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed text-rose-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2 px-3 rounded-xl bg-transparent hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                         >
                           <Ban className="w-3.5 h-3.5" />
                           <span>Tutup Penggalangan</span>

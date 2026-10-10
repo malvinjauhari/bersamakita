@@ -161,26 +161,28 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+    <div className="space-y-6 w-full">
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-4 w-full">
+        <div className="w-full">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B3322] uppercase tracking-wider mb-1">
             <Building2 className="w-4 h-4 text-emerald-600" />
             <span>Manajemen Mitra Operasional Lapangan</span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Mitra Penyaluran Resmi</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="text-xl font-bold text-slate-900 w-full">Mitra Penyaluran Resmi</h2>
+          <p className="text-xs text-slate-500 mt-0.5 w-full">
             Organisasi kemanusiaan dan relawan resmi yang menerima alokasi pencairan dana untuk penyaluran bantuan.
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-sm shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Mitra Baru</span>
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-end w-full pt-2 border-t border-slate-50">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] text-xs font-bold transition-all shadow-sm shrink-0 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Mitra Baru</span>
+          </button>
+        </div>
       </div>
 
       {partners.length === 0 ? (
@@ -280,7 +282,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Misal: Posko Tanggap Gempa Cianjur"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -292,7 +294,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="partner@domain.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -304,7 +306,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimal 6 karakter"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                   minLength={6}
                 />
@@ -317,7 +319,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={org}
                   onChange={(e) => setOrg(e.target.value)}
                   placeholder="Misal: Badan Penanggulangan Daerah"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -329,7 +331,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                   placeholder="Nomor HP / Email resmi"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -341,7 +343,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   placeholder="Misal: Jawa Barat / Banten"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -349,7 +351,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#0C8F63] font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
               >
                 {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                 <span>Daftarkan Mitra</span>
@@ -382,7 +384,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                   required
                 />
               </div>
@@ -395,7 +397,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   placeholder="Ceritakan visi atau lingkup operasi mitra ini..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850] min-h-[80px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63] min-h-[80px]"
                 />
               </div>
 
@@ -406,7 +408,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                   value={editLocation}
                   onChange={(e) => setEditLocation(e.target.value)}
                   placeholder="Misal: Jl. Raya Puncak Km 10"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#B2D850]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0C8F63]"
                 />
               </div>
 
@@ -429,7 +431,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                 <button
                   type="submit"
                   disabled={submitting || logoUploading}
-                  className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] disabled:bg-slate-300 disabled:text-slate-500 text-[#B2D850] font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] disabled:bg-slate-300 disabled:text-slate-500 text-[#0C8F63] font-bold text-xs transition-colors flex items-center justify-center gap-2"
                 >
                   {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   <span>{submitting ? 'Menyimpan Perubahan...' : 'Simpan Perubahan'}</span>

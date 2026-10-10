@@ -39,7 +39,7 @@ export const SituationAnalysisPage: React.FC<SituationAnalysisPageProps> = ({
           <p className="text-slate-600 text-sm">Data bencana tidak ditemukan.</p>
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-4 py-2 rounded-full bg-[#1B3322] text-[#B2D850] text-xs font-bold"
+            className="px-4 py-2 rounded-xl bg-[#0C8F63] text-white text-xs font-bold"
           >
             Kembali ke Dashboard
           </button>
@@ -54,7 +54,7 @@ export const SituationAnalysisPage: React.FC<SituationAnalysisPageProps> = ({
   const isShallow = depthNum <= 50;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
       <WideNavbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
@@ -217,7 +217,7 @@ export const SituationAnalysisPage: React.FC<SituationAnalysisPageProps> = ({
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => navigate(`/transaction/${selectedDisaster.id}`)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0C8F63] hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Heart className="w-3.5 h-3.5 fill-current" />
             <span>Donasi untuk Posko Ini</span>
@@ -225,7 +225,7 @@ export const SituationAnalysisPage: React.FC<SituationAnalysisPageProps> = ({
 
           <button
             onClick={() => navigate(`/dashboard/katalog`)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
             <span>Lihat Data Bencana Lainnya</span>
