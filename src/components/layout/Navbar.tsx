@@ -24,8 +24,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDonate }) => {
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       {/* Brand */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-sm">
-          <Heart className="w-5 h-5 fill-current" />
+        <div className="w-9 h-9 flex items-center justify-center shadow-sm">
+          <img src="/assets/images/logo.svg" alt="Logo" className="w-9 h-9" />
         </div>
         <div>
           <span className="font-extrabold text-base tracking-tight text-[#1B3322]">
@@ -45,7 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDonate }) => {
             onClick={onOpenDonate}
             className="hidden sm:flex items-center gap-2 px-5 py-2 rounded-full bg-[#0C8F63] hover:bg-[#9CDE64] text-[#1B3322] text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
           >
-            <Heart className="w-3.5 h-3.5 fill-current" />
+            <img src="/assets/images/logo.svg" alt="Logo" className="w-3.5 h-3.5" />
             <span>Mulai Donasi</span>
           </button>
         )}

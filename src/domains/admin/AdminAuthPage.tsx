@@ -78,8 +78,8 @@ export const AdminAuthPage: React.FC = () => {
 
         {/* Header / Logo */}
         <button onClick={() => navigate('/')} className="flex items-center gap-3 relative z-10 text-left group">
-          <div className="w-10 h-10 rounded-xl bg-[#0C8F63] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-            <Heart className="w-5 h-5 fill-current" />
+          <div className="w-10 h-10 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <img src="/assets/images/logo.svg" alt="Logo" className="w-10 h-10" />
           </div>
           <div className="flex flex-col leading-tight">
             <span className="font-bold text-white tracking-wide text-sm">BERSAMA KITA</span>

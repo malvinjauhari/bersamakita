@@ -61,8 +61,8 @@ export const MinimalistLanding: React.FC = () => {
         {/* Header */}
         <header className="flex items-center justify-between mb-16">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#0C8F63] flex items-center justify-center text-white">
-              <Heart className="w-5 h-5 fill-current" />
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src="/assets/images/logo.svg" alt="Logo" className="w-10 h-10" />
             </div>
             <div className="flex flex-col leading-tight">
               <span className="font-bold text-slate-800 tracking-tight">Bersama Kita</span>

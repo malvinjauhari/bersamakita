@@ -45,8 +45,8 @@ export const WideNavbar: React.FC = () => {
           onClick={() => navigate(user ? '/dashboard' : '/')}
           className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
         >
-          <div className="w-8 h-8 rounded-full bg-[#1B3322] flex items-center justify-center text-[#0C8F63] shadow-sm">
-            <Heart className="w-4 h-4 fill-current" />
+          <div className="w-8 h-8 flex items-center justify-center shadow-sm">
+            <img src="/assets/images/logo.svg" alt="Logo" className="w-8 h-8" />
           </div>
           <div>
             <span className="font-extrabold text-base tracking-tight text-[#1B3322] block leading-none">
