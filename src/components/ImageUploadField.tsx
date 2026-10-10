@@ -5,7 +5,7 @@ import {
   MAX_IMAGE_SIZE_BYTES,
   uploadImageToCloudinary,
   validateImageFile,
-} from '../integrations/cloudinary/upload';
+} from '../services/cloudinary';
 
 export interface ImageUploadFieldProps {
   /** Field label rendered above the control. */

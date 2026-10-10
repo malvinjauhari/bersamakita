@@ -10,11 +10,11 @@
     "jose": "^5.10.0"
   },
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx server/app.ts",
     "build": "vite build",
-    "start": "NODE_ENV=production tsx server.ts",
+    "start": "NODE_ENV=production tsx server/app.ts",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "rm -rf dist server/app.js",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

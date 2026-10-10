@@ -7,7 +7,7 @@ import {
   Loader2,
   LogIn,
 } from 'lucide-react';
-import { useAuth } from '../../domains/access/AuthContext';
+import { useAuth } from '../../features/auth/AuthContext';
 import { useToast } from '../feedback/Toast';
 
 const CAROUSEL_IMAGES = [
@@ -157,7 +157,7 @@ export const MinimalistLanding: React.FC = () => {
           />
         ))}
         {/* Simple Gradient for Indicator Visibility */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute bottom-0 inset-x-0 h-32 bg-linear-to-t from-black/50 to-transparent" />
         
         {/* Carousel Indicators */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">

@@ -14,7 +14,7 @@ import {
   Sliders,
   Sparkles,
 } from 'lucide-react';
-import { useAuth } from '../../domains/access/AuthContext';
+import { useAuth } from '../../features/auth/AuthContext';
 
 interface SidebarProps {
   currentTab: string;
@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange, onOpe
       </div>
 
       {/* Bottom Promo Card per LawnBuster theme */}
-      <div className="mt-6 p-4 rounded-3xl bg-gradient-to-br from-[#1B3322] to-[#243E2C] text-white space-y-3">
+      <div className="mt-6 p-4 rounded-3xl bg-linear-to-br from-[#1B3322] to-[#243E2C] text-white space-y-3">
         <div className="flex items-center gap-2 text-[#0C8F63] text-xs font-bold">
           <Sparkles className="w-4 h-4" />
           <span>Transparansi Nyata</span>

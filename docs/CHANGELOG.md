@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added default values to `.env` file for Duitku and internal secrets.
 
 ### Changed
+- **Massive Folder Structure Refactoring (Feature-Driven Architecture)**: Migrated `src/domains/` to `src/features/` and `src/integrations/` to `src/services/` to follow a scalable, modular architecture without altering functionality or routing.
+- **Backend Monolith Splitting**: Refactored the single `server.ts` monolith (900+ lines) into a modular `server/` directory, introducing individual route handlers (`server/routes/bmkg.ts`, `server/routes/payments.ts`, `server/routes/transparency.ts`, `server/routes/admin.ts`, `server/routes/images.ts`) and a clean entry point (`server/app.ts`).
+- **Tailwind CSS v4 Upgrade**: Automated the syntax migration across all frontend components (e.g. `max-w-[400px]` to `max-w-100`, `bg-gradient-to-r` to `bg-linear-to-r`) using `@tailwindcss/upgrade`.
 - **Comprehensive UI/UX Overhaul**: Upgraded design aesthetics across multiple domains (Disaster Management, Donation Flows, Transparency Reports, Partner/Admin Dashboards) using modern styling, dynamic layouts, and consistent theming.
 - **QRIS-only payment gateway**: removed DANA/ShopeePay options from UI (`TransactionDonatePage`) and API (server whitelist `['SP']`, rejects `DA`/`SA`). `PaymentService` maps `qris → SP` exclusively.
 - **Withdrawal minimum**: pencairan raised from Rp50.000 to **Rp1.000.000** (`MIN_WITHDRAWAL`); the "Buat Pengajuan Pencairan" button is disabled while available balance is below the minimum, and the submit button validates amount + fee against the disaster's remaining cash.

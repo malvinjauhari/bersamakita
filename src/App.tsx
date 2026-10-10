@@ -6,32 +6,32 @@ import {
   Navigate,
   useNavigate,
 } from 'react-router-dom';
-import { AuthProvider, useAuth } from './domains/access/AuthContext';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { ToastProvider, useToast } from './components/feedback/Toast';
 import { MinimalistLanding } from './components/landing/MinimalistLanding';
 import { WideNavbar } from './components/layout/WideNavbar';
-import { WideDisasterDashboard } from './domains/disaster/WideDisasterDashboard';
+import { WideDisasterDashboard } from './features/disaster/WideDisasterDashboard';
 import { WideFooter } from './components/layout/WideFooter';
-import { UserLoginPage } from './domains/access/UserLoginPage';
-import { MyDonationsPage } from './domains/donation/MyDonationsPage';
-import { SituationAnalysisPage } from './domains/disaster/SituationAnalysisPage';
-import { TransparansiReportsPage } from './domains/distribution/TransparansiReportsPage';
-import { KatalogBMKGPage } from './domains/disaster/KatalogBMKGPage';
-import { TransactionUniversalDispatcher } from './domains/donation/TransactionUniversalDispatcher';
-import { TransactionDonatePage } from './domains/donation/TransactionDonatePage';
-import { TransactionCheckoutPage } from './domains/donation/TransactionCheckoutPage';
-import { TransactionStatusPage } from './domains/donation/TransactionStatusPage';
-import { TransactionHistoryPage } from './domains/donation/TransactionHistoryPage';
-import { AdminAuthPage } from './domains/admin/AdminAuthPage';
-import { AdminPortalView } from './domains/admin/AdminPortalView';
-import { PartnerAuthPage } from './domains/partner/PartnerAuthPage';
-import { PartnerDashboardView } from './domains/partner/PartnerDashboardView';
+import { UserLoginPage } from './features/auth/UserLoginPage';
+import { MyDonationsPage } from './features/donation/MyDonationsPage';
+import { SituationAnalysisPage } from './features/disaster/SituationAnalysisPage';
+import { TransparansiReportsPage } from './features/distribution/TransparansiReportsPage';
+import { KatalogBMKGPage } from './features/disaster/KatalogBMKGPage';
+import { TransactionUniversalDispatcher } from './features/donation/TransactionUniversalDispatcher';
+import { TransactionDonatePage } from './features/donation/TransactionDonatePage';
+import { TransactionCheckoutPage } from './features/donation/TransactionCheckoutPage';
+import { TransactionStatusPage } from './features/donation/TransactionStatusPage';
+import { TransactionHistoryPage } from './features/donation/TransactionHistoryPage';
+import { AdminAuthPage } from './features/admin/AdminAuthPage';
+import { AdminPortalView } from './features/admin/AdminPortalView';
+import { PartnerAuthPage } from './features/partner/PartnerAuthPage';
+import { PartnerDashboardView } from './features/partner/PartnerDashboardView';
 import { CardSkeleton } from './components/feedback/Skeleton';
 import { HackathonBanner } from './components/layout/HackathonBanner';
-import { FaqPage } from './domains/public/FaqPage';
-import { RefundPolicyPage } from './domains/public/RefundPolicyPage';
-import { TermsPage } from './domains/public/TermsPage';
-import { ContactPage } from './domains/public/ContactPage';
+import { FaqPage } from './features/public/FaqPage';
+import { RefundPolicyPage } from './features/public/RefundPolicyPage';
+import { TermsPage } from './features/public/TermsPage';
+import { ContactPage } from './features/public/ContactPage';
 import {
   getDisasters,
   getUserDonations,
@@ -42,8 +42,8 @@ import {
   getDistributionReports,
   getAuditLogs,
   saveBMKGDisaster,
-} from './integrations/firebase/firestore';
-import { fetchAutogempa, fetchGempaterkini } from './integrations/bmkg/client';
+} from './services/firebase/firestore';
+import { fetchAutogempa, fetchGempaterkini } from './services/bmkg';
 import {
   Disaster,
   Donation,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, LogOut, Shield, User, Building2 } from 'lucide-react';
-import { useAuth } from '../../domains/access/AuthContext';
+import { useAuth } from '../../features/auth/AuthContext';
 import { UserRole } from '../../types';
 
 interface NavbarProps {

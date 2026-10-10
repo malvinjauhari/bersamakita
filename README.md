@@ -18,3 +18,50 @@ View your app in AI Studio: https://ai.studio/apps/edabad6e-de7d-4c2a-bb6c-d8dda
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Project Structure (Refactored)
+
+This codebase has been restructured into a modular, feature-driven architecture:
+
+```text
+src/
+├── assets/
+├── components/
+│   ├── common/
+│   └── layout/
+├── context/
+│   └── AuthContext.tsx
+├── features/
+│   ├── auth/
+│   ├── disaster/
+│   ├── donation/
+│   ├── distribution/
+│   ├── admin/
+│   ├── finance/
+│   ├── operations/
+│   ├── partner/
+│   └── public/
+├── services/
+│   ├── firebase/
+│   ├── bmkg.ts
+│   ├── duitku.ts
+│   └── cloudinary.ts
+├── types/
+├── hooks/
+├── lib/
+├── App.tsx
+├── main.tsx
+└── index.css
+
+server/
+├── routes/
+│   ├── bmkg.ts
+│   ├── payments.ts
+│   ├── transparency.ts
+│   ├── admin.ts
+│   └── images.ts
+├── controllers/
+├── services/
+├── middleware/
+└── app.ts
+```

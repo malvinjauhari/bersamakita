@@ -10,7 +10,7 @@ import {
   LogIn,
   Receipt,
 } from 'lucide-react';
-import { useAuth } from '../../domains/access/AuthContext';
+import { useAuth } from '../../features/auth/AuthContext';
 
 export const WideNavbar: React.FC = () => {
   const navigate = useNavigate();
