@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, ArrowRight, ShieldCheck, Users, MapPin, Phone } from 'lucide-react';
 import { Disaster, Partner } from '../../types';
-import { formatRupiah } from '../../lib/utils';
+import { formatRupiah, FUNDRAISING_TARGET } from '../../lib/utils';
 
 interface SelectedDisasterSectionProps {
   disaster: Disaster;
@@ -18,7 +18,7 @@ export const SelectedDisasterSection: React.FC<SelectedDisasterSectionProps> = (
   partner,
   onDonateNow,
 }) => {
-  const targetNeed = 50000000; // Rp 50.000.000 target posko tanggap darurat
+  const targetNeed = FUNDRAISING_TARGET;
   const percentage = Math.min(100, Math.round((collectedAmount / targetNeed) * 100));
 
   return (
@@ -82,13 +82,13 @@ export const SelectedDisasterSection: React.FC<SelectedDisasterSectionProps> = (
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-6 text-slate-900 shadow-2xl flex flex-col justify-between space-y-4">
             <div className="space-y-1">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
                 Aksi Nyata Cepat
               </span>
               <h3 className="font-extrabold text-base text-slate-900 leading-snug">
                 Berdonasi untuk Posko Ini
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Bebas pilih nominal donasi, mulai Rp10.000.
               </p>
             </div>
@@ -103,7 +103,7 @@ export const SelectedDisasterSection: React.FC<SelectedDisasterSectionProps> = (
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-slate-500 leading-tight">
+            <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[11px] text-slate-600 leading-tight">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>Escrow terproteksi • Rincian alokasi fisik dilaporkan transparan di Lacak Bantuan.</span>
             </div>

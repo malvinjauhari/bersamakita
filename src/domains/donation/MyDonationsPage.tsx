@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Heart, ArrowLeft, ShieldCheck, Clock, Layers, LogIn, UserCheck } from 'lucide-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Heart, LogIn, UserCheck } from 'lucide-react';
 import { Donation } from '../../types';
 import { DonationHistory } from './DonationHistory';
-import { TrackingTimeline } from '../tracking/TrackingTimeline';
 import { WideNavbar } from '../../components/layout/WideNavbar';
 import { WideFooter } from '../../components/layout/WideFooter';
 import { useAuth } from '../access/AuthContext';
@@ -14,19 +13,7 @@ interface MyDonationsPageProps {
 
 export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) => {
   const navigate = useNavigate();
-  const { donationId } = useParams<{ donationId?: string }>();
   const { user } = useAuth();
-  const [selectedDonationId, setSelectedDonationId] = useState<string | undefined>(
-    donationId || donations[0]?.id
-  );
-
-  useEffect(() => {
-    if (donationId) {
-      setSelectedDonationId(donationId);
-    } else if (!selectedDonationId && donations.length > 0) {
-      setSelectedDonationId(donations[0].id);
-    }
-  }, [donationId, donations, selectedDonationId]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
@@ -97,17 +84,9 @@ export const MyDonationsPage: React.FC<MyDonationsPageProps> = ({ donations }) =
           <div className="space-y-10">
             <DonationHistory
               donations={donations}
-              onOpenTracking={(donId) => setSelectedDonationId(donId)}
               onOpenDonate={() => navigate('/')}
               onResumePayment={(donId) => navigate(`/transaction/checkout/${donId}`)}
             />
-
-            <div className="pt-6 border-t border-slate-200/80">
-              <TrackingTimeline
-                donations={donations}
-                selectedDonationId={selectedDonationId}
-              />
-            </div>
           </div>
         )}
       </main>

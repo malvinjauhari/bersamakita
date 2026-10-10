@@ -379,6 +379,7 @@ function MainRoutes() {
         element={
           <KatalogBMKGPage
             disasters={disasters}
+            donations={donations}
             partners={partners}
             onRefreshBMKG={handleUserRefreshBMKG}
           />

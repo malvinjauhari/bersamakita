@@ -34,7 +34,7 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
             <span>Transparansi Penyaluran Publik & Mitra</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">Laporan Aktual & Progres Lapangan</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Laporan riil pelaksanaan bantuan di lapangan yang dilaporkan oleh mitra resmi secara bertahap dan transparan.
           </p>
         </div>
@@ -48,7 +48,7 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
               <ListTodo className="w-4 h-4 text-emerald-600" />
               <span>Monitoring Tahapan Aktual Mitra Lapangan</span>
             </div>
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-mono text-slate-600">
               {allocations.length} Tugas Alokasi Terpantau
             </span>
           </div>
@@ -77,7 +77,7 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
         <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
           <FileCheck2 className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-sm font-bold text-slate-700">Belum Ada Laporan Penyaluran</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <p className="text-xs text-slate-600 max-w-sm mx-auto">
             Laporan penyaluran beserta rincian item bantuan dan dokumentasi akan diunggah oleh mitra setelah proses distribusi lapangan selesai.
           </p>
         </div>
@@ -109,25 +109,25 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
                       <Building2 className="w-4 h-4 text-emerald-600" />
                       <span>{report.partnerName}</span>
                     </div>
-                    <span className="text-slate-400 font-mono text-[11px] flex items-center gap-1">
+                    <span className="text-slate-600 font-mono text-xs flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       <span>{report.distributionDate}</span>
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span>{report.location}</span>
                   </div>
 
-                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                  <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
                     "{report.notes}"
                   </p>
 
                   {/* Items list */}
                   {report.items && report.items.length > 0 && (
                     <div className="space-y-1.5 pt-2 border-t border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
                         Item Bantuan Tersalurkan:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -147,7 +147,7 @@ export const PublicReportsView: React.FC<PublicReportsViewProps> = ({
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-mono flex justify-between items-center">
+                <div className="pt-3 border-t border-slate-100 text-xs text-slate-600 font-mono flex justify-between items-center">
                   <span>Diverifikasi pada {formatDateIndo(report.submittedAt)}</span>
                   <span className="font-bold text-emerald-700">✓ Sah & Terbuka</span>
                 </div>

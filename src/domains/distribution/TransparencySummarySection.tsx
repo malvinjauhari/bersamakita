@@ -91,13 +91,13 @@ export const TransparencySummarySection: React.FC = () => {
               <span>Riwayat Dana Masuk</span>
             </div>
             <h2 className="text-xl font-bold text-slate-900">Riwayat Transaksi Donasi</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               Setiap pembayaran yang tercatat beserta biaya administrasi 0,17% — ditampilkan apa
               adanya untuk semua pengunjung.
             </p>
           </div>
           {data && (
-            <span className="text-xs font-mono text-slate-400 shrink-0">
+            <span className="text-xs font-mono text-slate-600 shrink-0">
               {transactions.length} transaksi ditampilkan
             </span>
           )}
@@ -109,10 +109,10 @@ export const TransparencySummarySection: React.FC = () => {
             <button
               type="button"
               onClick={() => setFilterDisasterId('')}
-              className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
                 !filterDisasterId
                   ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322]'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                  : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
               }`}
             >
               Semua Bencana
@@ -122,10 +122,10 @@ export const TransparencySummarySection: React.FC = () => {
                 key={d.disasterId || d.disasterTitle}
                 type="button"
                 onClick={() => setFilterDisasterId(d.disasterId || '__none__')}
-                className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all ${
                   filterDisasterId === (d.disasterId || '__none__')
                     ? 'bg-[#1B3322] text-[#B2D850] border-[#1B3322]'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                 }`}
               >
                 {d.disasterTitle}
@@ -137,13 +137,13 @@ export const TransparencySummarySection: React.FC = () => {
         {loading ? (
           <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#1B3322] mx-auto" />
-            <p className="text-xs text-slate-500 font-semibold">Memuat riwayat dana masuk...</p>
+            <p className="text-xs text-slate-600 font-semibold">Memuat riwayat dana masuk...</p>
           </div>
         ) : error ? (
           <div className="bg-white p-10 rounded-3xl border border-slate-100 text-center space-y-3">
             <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
             <h3 className="text-sm font-bold text-slate-700">Data Transparansi Tidak Termuat</h3>
-            <p className="text-xs text-slate-500">{error}</p>
+            <p className="text-xs text-slate-600">{error}</p>
             <button
               type="button"
               onClick={fetchData}
@@ -157,7 +157,7 @@ export const TransparencySummarySection: React.FC = () => {
           <div className="bg-white p-12 rounded-3xl border border-slate-100 text-center space-y-3">
             <Banknote className="w-10 h-10 text-slate-300 mx-auto" />
             <h3 className="text-sm font-bold text-slate-700">Belum Ada Dana Masuk</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-slate-600 max-w-sm mx-auto">
               Riwayat pembayaran donasi akan muncul di sini setelah pembayaran pertama tercatat
               dalam sistem.
             </p>
@@ -167,26 +167,26 @@ export const TransparencySummarySection: React.FC = () => {
             {transactions.map((t) => (
               <div
                 key={t.id}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 space-y-3"
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-7 space-y-4"
               >
                 {/* Donatur + waktu */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-bold text-sm text-slate-900 truncate">{t.donorName}</div>
-                    <div className="text-[11px] text-slate-500 truncate">{t.keterangan}</div>
+                    <div className="text-xs text-slate-600 truncate">{t.keterangan}</div>
                   </div>
-                  <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-slate-900 text-[#B2D850] text-[10px] font-bold">
+                  <span className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-full bg-slate-900 text-[#B2D850] text-[11px] font-bold">
                     {t.paymentMethod}
                   </span>
                 </div>
 
                 {/* Rincian biaya */}
-                <div className="space-y-1 text-xs font-mono bg-slate-50 rounded-2xl p-3 border border-slate-100">
-                  <div className="flex justify-between text-slate-600">
+                <div className="space-y-1 text-xs font-mono bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                  <div className="flex justify-between text-slate-700">
                     <span>Donasi</span>
                     <span className="font-bold text-slate-900">{formatRupiah(t.amount)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600">
+                  <div className="flex justify-between text-slate-700">
                     <span>Biaya Admin 0,17%</span>
                     <span className="font-bold text-amber-600">{formatRupiah(t.adminFee)}</span>
                   </div>
@@ -199,7 +199,7 @@ export const TransparencySummarySection: React.FC = () => {
                 </div>
 
                 {/* Waktu + metode */}
-                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-[11px] text-slate-500">
+                <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 text-xs text-slate-600">
                   <span>
                     Metode Pembayaran:{' '}
                     <strong className="text-slate-700">{t.paymentMethod}</strong>
@@ -222,7 +222,7 @@ export const TransparencySummarySection: React.FC = () => {
             <span>Informasi Penggalangan Dana</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">Total Donasi Terhimpun</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Angka berasal dari transaksi berstatus lunas yang benar-benar tercatat dalam sistem.
           </p>
         </div>
@@ -241,35 +241,35 @@ export const TransparencySummarySection: React.FC = () => {
             {/* Global totals */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-[#1B3322] p-5 rounded-3xl shadow-lg space-y-1">
-                <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                   Total Dana yang Telah Didonasikan
                 </span>
                 <div className="text-xl font-bold text-[#B2D850] font-mono">
                   {formatRupiah(data.totalReceived)}
                 </div>
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[11px] text-slate-300">
                   Nominal donasi utuh, tanpa potongan biaya admin
                 </span>
               </div>
 
               <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-1">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Total Biaya Admin 0,17% Terkumpul
                 </span>
                 <div className="text-xl font-bold text-amber-600 font-mono">
                   {formatRupiah(data.totalAdminFees)}
                 </div>
-                <span className="text-[10px] text-slate-400">Dicatat terpisah dari dana donasi</span>
+                <span className="text-[11px] text-slate-600">Dicatat terpisah dari dana donasi</span>
               </div>
 
               <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-1">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
                   Jumlah Transaksi Donasi
                 </span>
                 <div className="text-xl font-bold text-slate-900 font-mono">
                   {data.totalTransactions}
                 </div>
-                <span className="text-[10px] text-slate-400">Pembayaran lunas tercatat</span>
+                <span className="text-[11px] text-slate-600">Pembayaran lunas tercatat</span>
               </div>
             </div>
 
@@ -278,7 +278,7 @@ export const TransparencySummarySection: React.FC = () => {
               <div className="bg-white p-10 rounded-3xl border border-slate-100 text-center space-y-2">
                 <Wallet className="w-9 h-9 text-slate-300 mx-auto" />
                 <h3 className="text-sm font-bold text-slate-700">Belum Ada Penggalangan Aktif</h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600">
                   Total donasi per bencana akan tampil setelah donasi pertama tercatat lunas.
                 </p>
               </div>
@@ -299,20 +299,20 @@ export const TransparencySummarySection: React.FC = () => {
                           setFilterDisasterId(d.disasterId || '__none__');
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="shrink-0 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                        className="shrink-0 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-all"
                       >
                         Lihat Riwayat
                       </button>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-[11px] text-slate-500 block">
+                      <span className="text-xs text-slate-600 block">
                         Total Donasi Terkumpul
                       </span>
                       <span className="text-lg font-extrabold font-mono text-slate-900 block">
                         {formatRupiah(d.totalCollected)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
                       <Users className="w-3.5 h-3.5 text-emerald-600" />
                       <span>
                         <strong className="text-slate-700">{d.donationCount}</strong> donatur
@@ -325,7 +325,7 @@ export const TransparencySummarySection: React.FC = () => {
             )}
           </>
         ) : (
-          <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-xs text-slate-500">
+          <div className="bg-white p-8 rounded-3xl border border-slate-100 text-center text-xs text-slate-600">
             Data penggalangan tidak tersedia.
           </div>
         )}

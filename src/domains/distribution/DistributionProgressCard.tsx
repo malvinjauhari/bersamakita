@@ -18,6 +18,7 @@ import {
   Eye,
   X,
   Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import { PartnerAllocation, DistributionMilestoneKey, DistributionMilestone, Donation } from '../../types';
 import { updateAllocationMilestone, addAuditLog } from '../../integrations/firebase/firestore';
@@ -32,6 +33,7 @@ export interface DistributionProgressCardProps {
   actorEmail?: string;
   actorName?: string;
   onUpdated?: () => void;
+  defaultExpanded?: boolean;
 }
 
 export interface MilestoneDef {
@@ -144,8 +146,10 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
   actorEmail,
   actorName,
   onUpdated,
+  defaultExpanded = false,
 }) => {
   const { showToast } = useToast();
+  const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [updatingStage, setUpdatingStage] = useState<DistributionMilestoneKey | null>(null);
   const [inputDetail, setInputDetail] = useState<string>('');
   const [inputLocation, setInputLocation] = useState<string>('');
@@ -225,20 +229,28 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
   );
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-6">
-      {/* Header Info & Progress Bar */}
-      <div className="pb-5 border-b border-slate-100 space-y-4">
+    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm transition-all duration-300 overflow-hidden">
+      {/* Header Info & Progress Bar (Collapsible Toggle) */}
+      <div 
+        className={`p-6 sm:p-7 space-y-4 cursor-pointer hover:bg-slate-50/50 transition-colors ${
+          isExpanded ? 'border-b border-slate-100' : ''
+        }`}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-slate-400">
-                Alokasi: {allocation.id}
+              <span
+                className="font-mono text-xs font-bold text-slate-600"
+                title={`ID Alokasi: ${allocation.id}`}
+              >
+                ID: …{allocation.id.slice(-5)}
               </span>
               <span
                 className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                   allocation.status === 'completed'
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-indigo-100 text-indigo-700'
                 }`}
               >
                 {allocation.status === 'completed'
@@ -251,15 +263,15 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                 ? `Donasi Anda: ${formatRupiah(donorDonation.amount)}`
                 : `Alokasi Bantuan: ${formatRupiah(allocation.amount)}`}
             </h4>
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            <p className="text-xs text-slate-600 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-slate-500" />
               <span>
                 Mitra Penyalur Resmi:{' '}
                 <strong className="text-slate-800">{allocation.partnerName}</strong>
               </span>
             </p>
             {allocation.disasterTitle && (
-              <p className="text-xs text-slate-500 flex items-center gap-1.5">
+              <p className="text-xs text-slate-600 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-emerald-600" />
                 <span>
                   Bencana Tujuan: <strong className="text-slate-800">{allocation.disasterTitle}</strong>
@@ -268,20 +280,29 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
             )}
           </div>
 
-          <div className="sm:text-right space-y-1 bg-slate-50 p-3 sm:p-3.5 rounded-2xl border border-slate-100 min-w-[200px]">
-            <div className="flex items-center sm:justify-end gap-1.5 text-xs text-slate-500">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Status Penyaluran</span>
+          <div className="flex items-center gap-4 sm:justify-end">
+            <div className="sm:text-right space-y-1 bg-slate-50 p-3 sm:p-3.5 rounded-2xl border border-slate-100 min-w-[200px]">
+              <div className="flex items-center sm:justify-end gap-1.5 text-xs text-slate-600">
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Status Penyaluran</span>
+              </div>
+              <div className="text-base font-extrabold text-[#1B3322] font-mono">
+                {completedKeys.size} dari {MILESTONE_DEFINITIONS.length} Tahap
+              </div>
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${percentCompleted}%` }}
+                />
+              </div>
             </div>
-            <div className="text-base font-extrabold text-[#1B3322] font-mono">
-              {completedKeys.size} dari {MILESTONE_DEFINITIONS.length} Tahap
-            </div>
-            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${percentCompleted}%` }}
-              />
-            </div>
+            
+            <button 
+              className="w-10 h-10 flex shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+              aria-label="Toggle Accordion"
+            >
+              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+            </button>
           </div>
         </div>
 
@@ -295,8 +316,16 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
         )}
       </div>
 
-      {/* Partner Quick Action Bar (Top Shortcut) */}
-      {(mode === 'partner' || mode === 'admin') && allocation.status !== 'completed' && (
+      {/* Collapsible Content Body */}
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="p-6 sm:p-7 pt-0 space-y-6">
+            {/* Partner Quick Action Bar (Top Shortcut) */}
+            {(mode === 'partner' || mode === 'admin') && allocation.status !== 'completed' && (
         <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 via-slate-50 to-emerald-50 border border-indigo-100 space-y-2.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
             <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
@@ -348,11 +377,11 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
             <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
               Alur Perjalanan Penyaluran Bantuan
             </span>
-            <span className="text-[11px] text-slate-500 block">
+            <span className="text-xs text-slate-600 block">
               Dilacak secara kronologis berurutan dari atas ke bawah
             </span>
           </div>
-          <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+          <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
             {percentCompleted}% Berjalan
           </span>
         </div>
@@ -431,7 +460,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
+                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
                           Tahap 0{step.stepNumber}
                         </span>
                         <h5
@@ -450,24 +479,24 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
 
                     <div className="flex items-center gap-2 flex-wrap">
                       {isCompleted ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
                           <span>Selesai Terverifikasi</span>
                         </span>
                       ) : isCurrent ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
                           <span>Sedang Berlangsung</span>
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                           Menunggu Giliran
                         </span>
                       )}
 
                       {recordedMilestone?.completedAt && (
-                        <span className="text-[11px] font-mono text-slate-500 flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                          <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs font-mono text-slate-600 flex items-center gap-1 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                          <Clock className="w-3 h-3 text-slate-500" />
                           <span>{formatDateIndo(recordedMilestone.completedAt)}</span>
                         </span>
                       )}
@@ -478,7 +507,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                   <div className="pt-3 space-y-3 text-xs">
                     <p
                       className={`leading-relaxed font-medium ${
-                        isCompleted || isCurrent ? 'text-slate-800' : 'text-slate-500'
+                        isCompleted || isCurrent ? 'text-slate-800' : 'text-slate-700'
                       }`}
                     >
                       {detailText}
@@ -486,13 +515,13 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
 
                     {/* Location Badge */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-medium text-[11px]">
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-medium text-xs">
                         <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                         <span>Lokasi: {locationText}</span>
                       </div>
 
                       {isCompleted && (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100/60 border border-emerald-200 text-emerald-800 font-medium text-[11px]">
+                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100/80 text-emerald-800 font-medium text-xs">
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                           <span>Divalidasi Koordinator Posko</span>
                         </div>
@@ -502,7 +531,7 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
                     {/* Photo Documentation Thumbnail if Available */}
                     {photoUrl && (
                       <div className="pt-2">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1.5">
                           Bukti Dokumentasi Aktual Lapangan:
                         </span>
                         <div className="relative inline-block group/img">
@@ -542,6 +571,9 @@ export const DistributionProgressCard: React.FC<DistributionProgressCardProps> =
               </div>
             );
           })}
+        </div>
+      </div>
+          </div>
         </div>
       </div>
 

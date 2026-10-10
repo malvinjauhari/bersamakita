@@ -261,7 +261,7 @@ export const BMKGVerificationCard: React.FC<BMKGVerificationCardProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Sync BMKG Button */}
+          {/* Perbarui Data BMKG Button (admin) */}
           <button
             onClick={handleManualRefresh}
             disabled={refreshing}

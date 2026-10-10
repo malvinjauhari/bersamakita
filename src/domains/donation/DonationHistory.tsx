@@ -1,18 +1,16 @@
 import React from 'react';
-import { HeartHandshake, Route, Clock, CheckCircle2, XCircle, ArrowUpRight, Receipt } from 'lucide-react';
+import { HeartHandshake, Receipt } from 'lucide-react';
 import { Donation } from '../../types';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
 
 interface DonationHistoryProps {
   donations: Donation[];
-  onOpenTracking: (donationId: string) => void;
   onOpenDonate: () => void;
   onResumePayment?: (donationId: string) => void;
 }
 
 export const DonationHistory: React.FC<DonationHistoryProps> = ({
   donations,
-  onOpenTracking,
   onOpenDonate,
   onResumePayment,
 }) => {
@@ -126,17 +124,6 @@ export const DonationHistory: React.FC<DonationHistoryProps> = ({
                       >
                         <Receipt className="w-3.5 h-3.5" />
                         <span>Lanjutkan Pembayaran</span>
-                      </button>
-                    )}
-
-                    {isPaid && (
-                      <button
-                        onClick={() => onOpenTracking(donation.id)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all shadow-sm shrink-0"
-                      >
-                        <Route className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Lacak Penyaluran</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
                       </button>
                     )}
                   </div>

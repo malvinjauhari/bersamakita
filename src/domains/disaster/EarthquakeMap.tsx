@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Maximize2, Minus, Plus } from 'lucide-react';
 import { Disaster } from '../../types';
+import { formatRelativeTime } from '../../lib/utils';
 import {
   MAP_CENTER,
   MAP_MAX_X,
@@ -515,20 +516,20 @@ export const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
         <div className="font-bold text-[10px] uppercase tracking-wider text-slate-700">
           Pantauan Seismik
         </div>
-        <div className="space-y-1.5 font-medium text-slate-600">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0" />
-            <span>Bantuan Mendesak (M ≥ 5.5)</span>
+<div className="space-y-1.5 font-medium text-slate-700">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shrink-0" />
+              <span>Bantuan Mendesak (M ≥ 5.5)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+              <span>Menunggu Verifikasi</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
+              <span>Terverifikasi Aktif</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-            <span>Menunggu Verifikasi</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0" />
-            <span>Terverifikasi Aktif</span>
-          </div>
-        </div>
       </div>
 
       {/* Center Top Callout of Selected Disaster matching screenshot */}
@@ -537,21 +538,21 @@ export const EarthquakeMap: React.FC<EarthquakeMapProps> = ({
           <div className="font-bold text-slate-900 leading-snug line-clamp-2">
             {selectedDisaster.location || selectedDisaster.title}
           </div>
-          <div className="text-[11px] text-slate-500 flex flex-wrap items-center gap-x-2">
+          <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-2">
             <span>
-              Kedalaman: <strong className="text-slate-700">{selectedDisaster.depth}</strong>
+              Kedalaman: <strong className="text-slate-800">{selectedDisaster.depth}</strong>
             </span>
             <span>•</span>
             <span>
-              Waktu: <strong className="text-slate-700">{selectedDisaster.eventTime}</strong>
+              Terjadi: <strong className="text-slate-800">{formatRelativeTime(selectedDisaster.eventTime)}</strong>
             </span>
           </div>
           <div className="pt-1">
             <span
               className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 selectedDisaster.status === 'pending_verification'
-                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                  : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
               }`}
             >
               {selectedDisaster.status === 'pending_verification'

@@ -1,16 +1,13 @@
 import React from 'react';
 import {
   MapPin,
-  Layers,
-  Clock,
-  Building,
-  BarChart3,
   Heart,
-  CheckCircle2,
-  AlertTriangle,
+  CircleAlert,
+  BarChart3,
+  Users,
 } from 'lucide-react';
 import { Disaster } from '../../types';
-import { formatRupiah } from '../../lib/utils';
+import { formatRupiah, FUNDRAISING_TARGET, summarizeDisasterImpact } from '../../lib/utils';
 
 interface EarthquakeCardProps {
   disaster: Disaster;
@@ -33,123 +30,120 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
 }) => {
   const magNum = parseFloat(disaster.magnitude) || 5.0;
   const isUrgent = magNum >= 5.5;
-  const isPending = disaster.status === 'pending_verification';
+  const isHandled = magNum >= 5.0 && magNum < 5.5;
+  const percentage = Math.min(100, Math.round((collectedAmount / FUNDRAISING_TARGET) * 100));
+
+  const statusPill = isUrgent
+    ? { label: 'Mendesak', className: 'bg-rose-100 text-rose-800 border-rose-200' }
+    : isHandled
+    ? { label: 'Dalam Penanganan', className: 'bg-amber-100 text-amber-900 border-amber-200' }
+    : { label: 'Perlu Perhatian', className: 'bg-sky-100 text-sky-800 border-sky-200' };
 
   return (
     <div
       onClick={onSelect}
-      className={`bg-white rounded-3xl p-5 border transition-all cursor-pointer relative shadow-xs hover:shadow-md ${
+      className={`bg-white rounded-3xl p-5 sm:p-6 border transition-all cursor-pointer relative shadow-xs hover:shadow-md ${
         isSelected
           ? 'border-emerald-500 ring-2 ring-emerald-500/20'
           : 'border-slate-200/80 hover:border-slate-300'
       }`}
     >
-      {/* Header Badges & Magnitude Pill */}
-      <div className="flex items-start justify-between gap-2 mb-2.5">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {/* Priority Badge */}
-          {isUrgent ? (
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-              Bantuan Mendesak
-            </span>
-          ) : magNum >= 5.0 ? (
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-              Dalam Penanganan
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
-              Perlu Perhatian
-            </span>
-          )}
-
-          {/* Verification Badge */}
-          {!isPending ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              <span>Terverifikasi & Aktif</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-              <AlertTriangle className="w-3 h-3 text-amber-600" />
-              <span>Menunggu Verifikasi & Pemilihan Mitra</span>
-            </span>
-          )}
+      {/* Header: Status Label + Region */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Bencana Aktif
+          </span>
+          <span
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+              statusPill.className
+            }`}
+          >
+            {isUrgent && <CircleAlert className="w-3 h-3" />}
+            <span>{statusPill.label}</span>
+          </span>
         </div>
 
-        {/* Magnitude Circle */}
-        <div className="w-11 h-8 rounded-full border border-slate-200 bg-slate-50/80 flex items-center justify-center font-mono text-xs font-bold text-slate-800 shrink-0">
-          <span className="text-[10px] text-slate-400 mr-0.5">M</span>
-          <span className="text-emerald-700 font-extrabold">{disaster.magnitude}</span>
+        {/* Magnitude Chip */}
+        <div className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-50 border border-slate-200">
+          <span className="text-xs font-bold text-slate-600">M</span>
+          <span className="text-sm font-extrabold text-emerald-700 font-mono">
+            {disaster.magnitude}
+          </span>
         </div>
       </div>
 
-      {/* Title */}
-      <h3 className="font-extrabold text-slate-900 text-sm leading-snug mb-3 line-clamp-2">
-        {disaster.title}
+      {/* Nama / Lokasi Bencana */}
+      <h3 className="font-extrabold text-slate-900 text-lg leading-snug mb-1 line-clamp-2">
+        {disaster.location}
       </h3>
+      <p className="text-xs text-slate-600 mb-4 line-clamp-1">
+        {disaster.title}
+      </p>
 
-      {/* 4-Item Grid Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-3 text-xs text-slate-500 mb-4 bg-slate-50/60 p-3 rounded-2xl border border-slate-100">
-        <div className="flex items-center gap-2 truncate">
-          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="truncate">{disaster.location}</span>
-        </div>
+      {/* Ringkasan Singkat Dampak */}
+      <p className="text-xs sm:text-sm text-slate-700 leading-relaxed mb-4 bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+        {summarizeDisasterImpact(disaster.magnitude, disaster.depth, disaster.location)}
+      </p>
 
-        <div className="flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span>Kedalaman: <strong className="text-slate-700">{disaster.depth}</strong></span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="truncate">Waktu: <strong className="text-slate-700">{disaster.eventTime}</strong></span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span className="truncate">Data resmi dihimpun BMKG</span>
-        </div>
-      </div>
-
-      {/* Bottom Row: Stats & Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
-        <div>
-          <span className="text-[10px] text-slate-400 block font-medium">Total Dana Terkumpul:</span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-xs font-extrabold text-slate-900">
+      {/* Progress Bar Dana */}
+      <div className="space-y-2 mb-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <span className="text-[11px] font-semibold text-slate-500 block">
+              Dana Terkumpul
+            </span>
+            <span className="font-mono text-base font-extrabold text-slate-900">
               {formatRupiah(collectedAmount)}
             </span>
-            <span className="text-[10px] text-slate-400 font-medium">
-              Partisipasi: <strong className="text-slate-700">{donorCount} Donatur</strong>
-            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold text-slate-700">{percentage}%</span>
+            <span className="text-[11px] text-slate-600 block">dari {formatRupiah(FUNDRAISING_TARGET)}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAnalyze();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
-            <span>Analisis Situasi</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDonate();
-            }}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Heart className="w-3.5 h-3.5 fill-current" />
-            <span>Donasi Sekarang</span>
-          </button>
+        <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${Math.max(4, percentage)}%` }}
+          />
         </div>
+
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 pt-0.5">
+          <Users className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>
+            <strong className="text-slate-800">{donorCount} donatur</strong> telah berpartisipasi
+          </span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAnalyze();
+          }}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+        >
+          <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
+          <span>Detail</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDonate();
+          }}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Heart className="w-3.5 h-3.5 fill-current" />
+          <span>Donasi Sekarang</span>
+        </button>
       </div>
     </div>
   );

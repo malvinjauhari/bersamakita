@@ -1,19 +1,20 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  BarChart3,
   ArrowLeft,
   Heart,
-  AlertTriangle,
-  Package,
-  ShieldCheck,
   MapPin,
   Clock,
   Layers,
   Activity,
   CheckCircle2,
+  Package,
+  AlertTriangle,
+  ExternalLink,
+  BarChart3,
 } from 'lucide-react';
 import { Disaster } from '../../types';
+import { formatShortDateIndo, formatRelativeTime, summarizeDisasterImpact } from '../../lib/utils';
 import { WideNavbar } from '../../components/layout/WideNavbar';
 import { WideFooter } from '../../components/layout/WideFooter';
 
@@ -58,132 +59,177 @@ export const SituationAnalysisPage: React.FC<SituationAnalysisPageProps> = ({
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
         {/* Back Button & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
-          <div className="space-y-1.5">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors mb-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke Dashboard Bencana</span>
-            </button>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-              <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Rule-Based Situation Analysis</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Analisis Situasi: {selectedDisaster.title}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
-              Asesmen cepat dampak seismik dan rekomendasi alokasi kebutuhan logistik darurat menggunakan formula logika deterministik aturan JavaScript.
-            </p>
-          </div>
-
+        <div className="flex flex-col gap-3 border-b border-slate-200/80 pb-6">
           <button
-            onClick={() => navigate(`/transaction/${selectedDisaster.id}`)}
-            className="px-6 py-3 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-md transition-all flex items-center gap-2 self-start sm:self-auto hover:scale-[1.02]"
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit"
           >
-            <Heart className="w-4 h-4 fill-current" />
-            <span>Donasi untuk Posko Ini</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali ke Dashboard Bencana</span>
           </button>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Analisis Situasi: {selectedDisaster.location}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
+            Asesmen cepat dampak seismik berdasarkan data parameter gempa yang telah terverifikasi.
+          </p>
         </div>
 
         {/* Quick Disaster Metric Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
               Magnitudo Seismik
             </span>
             <div className="text-2xl font-mono font-extrabold text-slate-900">
               {selectedDisaster.magnitude} SR
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               {mag >= 5.5 ? 'Guncangan Kuat (Bantuan Mendesak)' : 'Guncangan Menengah'}
             </p>
           </div>
 
           <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
               Klasifikasi Kedalaman
             </span>
             <div className="text-2xl font-mono font-extrabold text-slate-900">
               {selectedDisaster.depth}
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               {isShallow ? 'Gempa Dangkal (≤ 50 km) - Berpotensi Rusak' : 'Gempa Menengah (> 50 km)'}
             </p>
           </div>
 
           <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
+              Waktu Kejadian
+            </span>
+            <div className="text-lg font-extrabold text-slate-900">
+              {formatRelativeTime(selectedDisaster.eventTime)}
+            </div>
+            <p className="text-xs text-slate-600">
+              {formatShortDateIndo(selectedDisaster.eventTime)}
+            </p>
+          </div>
+
+          <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
               Status Verifikasi
             </span>
             <div className="text-lg font-bold text-emerald-700 capitalize flex items-center gap-1.5 pt-1">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
               <span>{selectedDisaster.status === 'pending_verification' ? 'Pending Verifikasi' : 'Terverifikasi & Aktif'}</span>
             </div>
-            <p className="text-xs text-slate-500 font-mono">
-              Waktu: {selectedDisaster.eventTime}
+            <p className="text-xs text-slate-600">
+              Data resmi BMKG
             </p>
           </div>
         </div>
 
-        {/* Evaluation Formula Card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-5">
-          <div className="space-y-1">
-            <h2 className="text-base font-extrabold text-slate-900">
-              Rekomendasi Paket Kebutuhan Darurat Lapangan
-            </h2>
-            <p className="text-xs text-slate-500">
-              Dihitung berdasarkan tingkat magnitudo dan karakteristik kedalaman hiposenter.
-            </p>
-          </div>
+        {/* Ringkasan Dampak */}
+        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-2">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+            <Activity className="w-4 h-4 text-emerald-600" />
+            <span>Ringkasan Dampak</span>
+          </span>
+          <p className="text-sm text-slate-800 leading-relaxed">
+            {summarizeDisasterImpact(selectedDisaster.magnitude, selectedDisaster.depth, selectedDisaster.location)}
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800">
-                <Package className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-xs text-slate-900">Pasokan Air Bersih & Sanitasi</h3>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Prioritas darurat pasca-gempa untuk mencegah wabah penyakit dan memenuhi kebutuhan dasar pengungsi.
-              </p>
-              <span className="inline-block text-[10px] font-bold text-emerald-700 uppercase">Prioritas Utama</span>
+        {/* Informasi Teknis Lengkap */}
+        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+            <BarChart3 className="w-4 h-4 text-emerald-600" />
+            <span>Data Teknis Bencana</span>
+          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="space-y-1.5">
+              <span className="text-slate-600 block">Lokasi / Wilayah</span>
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-rose-500 shrink-0" />
+                <span>{selectedDisaster.location}</span>
+              </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800">
-                <Package className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-xs text-slate-900">Sembako & Dapur Umum</h3>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Beras, makanan instan, minyak goreng, dan susu bayi untuk posko pengungsian terdekat.
-              </p>
-              <span className="inline-block text-[10px] font-bold text-emerald-700 uppercase">Kebutuhan Pokok</span>
+            <div className="space-y-1.5">
+              <span className="text-slate-600 block">Koordinat (Lintang, Bujur)</span>
+              <span className="font-bold text-slate-900 font-mono">
+                {selectedDisaster.coordinates
+                  ? `${selectedDisaster.coordinates.latitude.toFixed(4)}, ${selectedDisaster.coordinates.longitude.toFixed(4)}`
+                  : '-'}
+              </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-2">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800">
-                <Package className="w-4 h-4" />
-              </div>
-              <h3 className="font-bold text-xs text-slate-900">Terpal, Tenda & Selimut</h3>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Perlindungan hunian sementara bagi warga yang rumahnya mengalami kerusakan fisik.
-              </p>
-              <span className="inline-block text-[10px] font-bold text-emerald-700 uppercase">Tempat Tinggal</span>
+            <div className="space-y-1.5">
+              <span className="text-slate-600 block">Waktu Kejadian Detail</span>
+              <span className="font-bold text-slate-900 font-mono">
+                {selectedDisaster.eventTime || '-'}
+              </span>
             </div>
-          </div>
 
-          {/* Rule-Based Transparency Notice per Section 4 */}
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold">Otomatisasi Penilaian Berbasis Aturan (Rule-Based)</p>
-              <p className="text-[11px] text-amber-800/90 leading-relaxed">
-                Sistem analisis situasi Bersama Kita menggunakan logika deterministik aturan matematika JavaScript (Rule-Based Automation), bukan generative model AI atau machine learning. Hal ini menjamin konsistensi evaluasi tanpa risiko halusinasi data.
-              </p>
+            <div className="space-y-1.5">
+              <span className="text-slate-600 block">Kedalaman Gempa</span>
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-slate-500 shrink-0" />
+                <span>{selectedDisaster.depth}</span>
+              </span>
             </div>
           </div>
+        </div>
+
+        {/* Rekomendasi Paket Kebutuhan Darurat */}
+        <div className="space-y-2">
+          <span className="font-bold text-slate-800 block text-sm">
+            Rekomendasi Paket Kebutuhan Darurat Lapangan
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 text-center space-y-1">
+              <Package className="w-5 h-5 text-emerald-600 mx-auto" />
+              <span className="font-bold text-slate-800 block text-sm">Pasokan Air & Sanitasi</span>
+              <span className="text-xs text-slate-600">Prioritas Utama</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 text-center space-y-1">
+              <Package className="w-5 h-5 text-emerald-600 mx-auto" />
+              <span className="font-bold text-slate-800 block text-sm">Sembako & Dapur Umum</span>
+              <span className="text-xs text-slate-600">Kebutuhan Pokok</span>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 text-center space-y-1">
+              <Package className="w-5 h-5 text-emerald-600 mx-auto" />
+              <span className="font-bold text-slate-800 block text-sm">Terpal & Selimut</span>
+              <span className="text-xs text-slate-600">Tempat Pengungsian</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <span>
+              Catatan: Analisis situasi dan estimasi kebutuhan logistik dihitung secara otomatis menggunakan formula aturan matematika JavaScript (Rule-Based), bukan melalui generative model AI.
+            </span>
+          </div>
+        </div>
+
+        {/* Donate CTA — compact, below analysis */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => navigate(`/transaction/${selectedDisaster.id}`)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Heart className="w-3.5 h-3.5 fill-current" />
+            <span>Donasi untuk Posko Ini</span>
+          </button>
+
+          <button
+            onClick={() => navigate(`/dashboard/katalog`)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            <span>Lihat Data Bencana Lainnya</span>
+          </button>
         </div>
       </main>
 

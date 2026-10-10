@@ -30,32 +30,32 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ reports }) => {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#B2D850] selection:text-[#1B3322]">
       <WideNavbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-10 space-y-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
-          <div className="space-y-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200/60 pb-8">
+          <div className="space-y-3">
             <button
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors mb-2"
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-slate-500 hover:text-slate-900 transition-colors mb-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke Dashboard Bencana</span>
+              <span>Kembali ke Dashboard</span>
             </button>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold shadow-xs">
               <Package className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Transparansi Penyaluran Posko</span>
+              <span>Transparansi Penyaluran</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Laporan Penyaluran & Alokasi Bantuan Fisik
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Laporan & Alokasi Bantuan Fisik
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+            <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
               Seluruh bukti fisik penyerahan bantuan, logistik terdistribusi, dan dokumentasi foto posko yang diverifikasi oleh mitra lapangan (PMI, BAZNAS, Tagana).
             </p>
           </div>
 
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-5 py-2.5 rounded-full bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-xs font-bold shadow-sm transition-all self-start sm:self-auto hover:scale-[1.02]"
+            className="px-6 py-3 rounded-2xl bg-[#1B3322] hover:bg-[#243E2C] text-[#B2D850] text-sm font-bold shadow-lg shadow-[#1B3322]/20 transition-all self-start sm:self-auto hover:-translate-y-0.5 active:translate-y-0"
           >
             Berdonasi ke Posko
           </button>
@@ -63,86 +63,93 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({ reports }) => {
 
         {/* Content */}
         {publicReports.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 mx-auto flex items-center justify-center">
-              <Clock className="w-6 h-6 animate-pulse" />
+          <div className="bg-white rounded-[2rem] p-16 text-center border border-slate-200/60 shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-full bg-slate-50 text-slate-400 mx-auto flex items-center justify-center border border-slate-100 shadow-inner">
+              <Clock className="w-7 h-7" />
             </div>
-            <h3 className="font-bold text-base text-slate-900">
-              Dokumentasi Sedang Dihimpun oleh Mitra
+            <h3 className="font-bold text-lg text-slate-900">
+              Dokumentasi Sedang Dihimpun
             </h3>
-            <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
-              Mitra di lapangan saat ini sedang dalam proses distribusi fisik dan pendataan penerima manfaat. Laporan resmi beserta foto dokumentasi akan tampil di sini segera setelah disetujui.
+            <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+              Mitra di lapangan saat ini sedang dalam proses distribusi fisik dan pendataan penerima manfaat. Laporan akan tampil segera setelah disetujui.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {publicReports.map((report) => (
               <div
                 key={report.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4 hover:shadow-md transition-shadow"
+                className="bg-white rounded-[2rem] p-8 border border-slate-200/60 shadow-sm space-y-5 hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col justify-between group"
               >
-                <div className="flex items-center justify-between text-xs border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2 font-bold text-slate-900">
-                    <Building2 className="w-4 h-4 text-emerald-600" />
-                    <span>{report.partnerName}</span>
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between text-xs border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-2.5 font-bold text-slate-900">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100 text-emerald-600">
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      <span className="text-sm">{report.partnerName}</span>
+                    </div>
+                    <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 shadow-xs">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Terverifikasi Lapangan</span>
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Terverifikasi Lapangan</span>
-                  </span>
+
+                  <p className="text-sm text-slate-600 leading-relaxed italic bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
+                    "{report.notes}"
+                  </p>
+
+                  {report.items && report.items.length > 0 && (
+                    <div className="space-y-2.5 pt-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block flex items-center gap-1.5">
+                        <Package className="w-3.5 h-3.5" />
+                        Barang Kebutuhan Disalurkan
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {report.items.map((it, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold shadow-xs hover:bg-slate-100 transition-colors"
+                          >
+                            <span>{it.name}</span>
+                            <span className="text-slate-400 font-normal">|</span>
+                            <span className="text-emerald-700">{it.quantity} {it.unit}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {report.photoUrls && report.photoUrls.length > 0 && (
+                    <div className="space-y-2.5 pt-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block flex items-center gap-1.5">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Dokumentasi Penyerahan
+                      </span>
+                      <div className="grid grid-cols-3 gap-3">
+                        {report.photoUrls.map((photo: string, pIdx: number) => (
+                          <div
+                            key={pIdx}
+                            className="h-28 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 group-hover:shadow-md transition-all duration-300"
+                          >
+                            <img
+                              src={photo}
+                              alt="Dokumentasi Penyerahan"
+                              className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <p className="text-xs text-slate-700 leading-relaxed italic">
-                  "{report.notes}"
-                </p>
-
-                {report.items && report.items.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                      Barang Kebutuhan Disalurkan:
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {report.items.map((it, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200"
-                        >
-                          <Package className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>{it.name}: {it.quantity} {it.unit}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {report.photoUrls && report.photoUrls.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                      Dokumentasi Penyerahan:
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {report.photoUrls.map((photo: string, pIdx: number) => (
-                        <div
-                          key={pIdx}
-                          className="h-24 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100"
-                        >
-                          <img
-                            src={photo}
-                            alt="Dokumentasi Penyerahan"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1 font-mono">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{new Date(report.createdAt).toLocaleDateString('id-ID')}</span>
+                <div className="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Calendar className="w-4 h-4 text-slate-300" />
+                    <span>{new Date(report.createdAt).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </span>
-                  <span className="font-mono text-slate-500">ID: {report.id}</span>
+                  <span className="font-mono text-[10px] text-slate-400/80 uppercase tracking-wider">ID: {report.id.substring(0, 8)}</span>
                 </div>
               </div>
             ))}

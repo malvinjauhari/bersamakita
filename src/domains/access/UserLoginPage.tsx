@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, ShieldCheck, ArrowLeft, Loader2, User, Users, CheckCircle2 } from 'lucide-react';
+import { Heart, ArrowLeft, Loader2 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 
@@ -12,10 +12,6 @@ export const UserLoginPage: React.FC = () => {
   const { user, loginGoogle, loginAsUser } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-
-  const [customName, setCustomName] = useState('');
-  const [customEmail, setCustomEmail] = useState('');
-  const [showCustomForm, setShowCustomForm] = useState(false);
 
   // If already logged in, redirect to dashboard or redirectPath
   React.useEffect(() => {
@@ -35,34 +31,6 @@ export const UserLoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTestUserLogin = async (
-    uid: string,
-    email: string,
-    displayName: string
-  ) => {
-    setLoading(true);
-    try {
-      await loginAsUser({ uid, email, displayName });
-      showToast(`Berhasil masuk sebagai ${displayName} (${email})`, 'success');
-      navigate(redirectPath);
-    } catch (err: any) {
-      showToast('Gagal masuk: ' + (err.message || 'Silakan coba lagi'), 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCustomLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!customEmail.trim() || !customName.trim()) {
-      showToast('Mohon isi nama dan email donatur', 'warning');
-      return;
-    }
-    const cleanEmail = customEmail.trim().toLowerCase();
-    const cleanUid = 'usr-' + cleanEmail.replace(/[^a-z0-9]/g, '-');
-    await handleTestUserLogin(cleanUid, cleanEmail, customName.trim());
   };
 
   return (
@@ -134,115 +102,7 @@ export const UserLoginPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Quick Multi-User Test Accounts (Verifikasi Pemisahan Data User A vs User B) */}
-          <div className="pt-2 border-t border-slate-100 space-y-3">
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-              <span className="flex items-center gap-1 text-slate-700 font-bold">
-                <Users className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Uji Coba Cepat Pemisahan Akun (Multi-User):</span>
-              </span>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() =>
-                  handleTestUserLogin(
-                    'user-budi-pratama',
-                    'budi.pratama@gmail.com',
-                    'Budi Pratama (Donatur A)'
-                  )
-                }
-                className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/70 text-left transition-all cursor-pointer group"
-              >
-                <div className="font-bold text-emerald-950 flex items-center justify-between">
-                  <span>Donatur A</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 opacity-60 group-hover:opacity-100" />
-                </div>
-                <div className="text-[11px] text-emerald-800 font-medium">Budi Pratama</div>
-                <div className="text-[10px] text-emerald-600/80 font-mono truncate">budi@gmail.com</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  handleTestUserLogin(
-                    'user-siti-rahma',
-                    'siti.rahma@gmail.com',
-                    'Siti Rahma (Donatur B)'
-                  )
-                }
-                className="p-3 rounded-2xl border border-indigo-200 bg-indigo-50/60 hover:bg-indigo-100/70 text-left transition-all cursor-pointer group"
-              >
-                <div className="font-bold text-indigo-950 flex items-center justify-between">
-                  <span>Donatur B</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 opacity-60 group-hover:opacity-100" />
-                </div>
-                <div className="text-[11px] text-indigo-800 font-medium">Siti Rahma</div>
-                <div className="text-[10px] text-indigo-600/80 font-mono truncate">siti@gmail.com</div>
-              </button>
-            </div>
-
-            {/* Custom Donor Input Accordion */}
-            <div className="pt-1">
-              {!showCustomForm ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCustomForm(true)}
-                  className="w-full text-center text-[11px] text-slate-500 hover:text-slate-800 font-medium py-1"
-                >
-                  + Atau Masuk dengan Nama/Email Donatur Kustom
-                </button>
-              ) : (
-                <form onSubmit={handleCustomLogin} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
-                  <div className="font-bold text-slate-700 text-[11px]">Masuk dengan Akun Donatur Kustom:</div>
-                  <input
-                    type="text"
-                    placeholder="Nama Lengkap Donatur"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs"
-                    required
-                  />
-                  <input
-                    type="email"
-                    placeholder="Email Donatur (contoh: user@gmail.com)"
-                    value={customEmail}
-                    onChange={(e) => setCustomEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs"
-                    required
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomForm(false)}
-                      className="px-3 py-1.5 text-slate-500 text-[11px]"
-                    >
-                      Batal
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="px-4 py-1.5 rounded-xl bg-[#1B3322] text-[#B2D850] font-bold text-[11px] cursor-pointer"
-                    >
-                      Masuk Akun Ini
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-
-          {/* Transparansi Guarantee */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 text-xs text-emerald-900 space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-emerald-800 text-[11px]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Transparansi Dana & Keamanan Donatur</span>
-            </div>
-            <p className="text-[11px] text-emerald-700 leading-relaxed">
-              Setiap donasi memiliki kode alokasi operasional terverifikasi, dilacak secara berurutan ke bawah, dan hanya dapat dilihat oleh pemilik akun donatur.
-            </p>
-          </div>
         </div>
       </main>
 

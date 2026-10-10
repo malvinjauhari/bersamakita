@@ -207,7 +207,7 @@ export const AdminPartnersView: React.FC<AdminPartnersViewProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-base text-slate-900">{partner.name}</span>
-                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                           <ShieldCheck className="w-3 h-3 text-emerald-600" />
                           <span>Terverifikasi</span>
                         </span>

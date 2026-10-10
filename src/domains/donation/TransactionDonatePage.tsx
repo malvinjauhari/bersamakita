@@ -18,7 +18,7 @@ import {
 import { useAuth } from '../access/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Disaster, Donation } from '../../types';
-import { formatRupiah } from '../../lib/utils';
+import { formatRupiah, formatRelativeTime } from '../../lib/utils';
 import { calculateAdminFee, calculateTotalPayment } from '../../lib/fees';
 import {
   createDonation,
@@ -168,16 +168,16 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
         </div>
 
         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs text-left">
-          <div className="flex items-center gap-2 text-slate-600">
-            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2 text-slate-700">
+            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span className="truncate">{selectedDisaster.location}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>Waktu Gempa: {selectedDisaster.eventTime}</span>
+          <div className="flex items-center gap-2 text-slate-600">
+            <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span>Terjadi: {formatRelativeTime(selectedDisaster.eventTime)}</span>
           </div>
-          <div className="flex items-center gap-2 text-slate-500 font-mono text-[11px]">
-            <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2 text-slate-600">
+            <Layers className="w-3.5 h-3.5 text-slate-500 shrink-0" />
             <span>
               M {selectedDisaster.magnitude} — Kedalaman {selectedDisaster.depth}
             </span>
@@ -337,20 +337,20 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                 <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug">
                   {selectedDisaster.title}
                 </h1>
-                <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-x-3 text-xs text-slate-600">
                   <span className="flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <MapPin className="w-3.5 h-3.5 text-slate-500" />
                     <span>{selectedDisaster.location}</span>
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <Layers className="w-3.5 h-3.5 text-slate-400" />
+                    <Layers className="w-3.5 h-3.5 text-slate-500" />
                     <span>Kedalaman: {selectedDisaster.depth}</span>
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{selectedDisaster.eventTime}</span>
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{formatRelativeTime(selectedDisaster.eventTime)}</span>
                   </span>
                 </div>
               </div>

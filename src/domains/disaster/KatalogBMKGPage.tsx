@@ -1,19 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Radio, ArrowLeft, RefreshCw } from 'lucide-react';
-import { Disaster, Partner } from '../../types';
+import { Disaster, Donation, Partner } from '../../types';
 import { DisasterList } from './DisasterList';
 import { WideNavbar } from '../../components/layout/WideNavbar';
 import { WideFooter } from '../../components/layout/WideFooter';
 
 interface KatalogBMKGPageProps {
   disasters: Disaster[];
+  donations: Donation[];
   partners: Partner[];
   onRefreshBMKG: () => Promise<void>;
 }
 
 export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
   disasters,
+  donations,
   partners,
   onRefreshBMKG,
 }) => {
@@ -46,7 +48,7 @@ export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Katalog Seismik BMKG & Posko Tanggap Bencana
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               Arsip data seismik terkini dari BMKG yang dinormalisasi ke model bencana Bersama Kita untuk penggalangan dana darurat posko.
             </p>
           </div>
@@ -55,10 +57,10 @@ export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all shadow-xs"
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold transition-all shadow-xs"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>{refreshing ? 'Menyinkronkan...' : 'Sync BMKG'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${refreshing ? 'animate-spin' : ''}`} />
+              <span>{refreshing ? 'Memperbarui...' : 'Perbarui Data BMKG'}</span>
             </button>
           </div>
         </div>
@@ -66,6 +68,7 @@ export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
         {/* Disaster List */}
         <DisasterList
           disasters={disasters}
+          donations={donations}
           partners={partners}
           onDonateForDisaster={(disasterId) => {
             navigate(`/transaction/donate/${disasterId}`);
