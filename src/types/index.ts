@@ -377,3 +377,63 @@ export interface DisasterTimelineEvent {
   actorName?: string;
   createdAt: string;
 }
+
+/** Laporan akhir per bencana — `GET /api/fundraising/report/:disasterId`. */
+export interface FundraisingReportDisbursement {
+  id: string;
+  amount: number;
+  fee: number;
+  totalAmount: number;
+  status: string;
+  partnerName: string;
+  requestedAt: string;
+  processedAt?: string;
+  completedAt?: string;
+  notes?: string;
+}
+
+export interface FundraisingReportAllocation {
+  id: string;
+  disbursementId: string;
+  partnerName: string;
+  amount: number;
+  status: string;
+  allocatedAt: string;
+  receivedAt?: string;
+  currentMilestone?: string | null;
+}
+
+export interface FundraisingReport {
+  disasterId: string;
+  disasterTitle: string;
+  status: string;
+  fundingTarget: number;
+  partnerId: string | null;
+  partnerName: string | null;
+  generatedAt: string;
+  adminFeeRate: number;
+  summary: {
+    totalCollected: number;
+    adminFeeTotal: number;
+    donationCount: number;
+    disbursed: number;
+    inflight: number;
+    remaining: number;
+    donorCount: number;
+    reportsTotal: number;
+    reportsPublished: number;
+  };
+  disbursements: FundraisingReportDisbursement[];
+  allocations: FundraisingReportAllocation[];
+  timeline: {
+    id: string;
+    type: string;
+    title: string;
+    description: string;
+    location: string | null;
+    amount: number | null;
+    actorRole: string;
+    actorName: string | null;
+    createdAt: string;
+  }[];
+}

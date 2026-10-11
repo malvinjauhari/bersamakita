@@ -96,6 +96,15 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
    - **Body**: `{ disasterId, amount, notes? }`. **Validasi**: `amount >= Rp1.000.000`, bencana ada, mitra sudah ditugaskan, `amount <= maxWithdrawable(remaining)` (nominal + biaya admin 0,17% harus muat di sisa kas).
    - **Response**: `{ success: true, data: { disbursementId, allocationId } }`.
 
+3. **`GET /api/fundraising/report/:disasterId`**
+   - **Description**: **Laporan AKHIR satu bencana** — setiap angka di-derive dari data transaksi nyata (donasi paid + fee pembayaran, pencairan, alokasi, laporan distribusi, timeline). Publik (tanpa auth). Tanpa PII donatur (hanya jumlah + jumlah donatur publik unik). Bencana tidak ditemukan → `404`.
+   - **Response data**: `disasterTitle`, `status`, `fundingTarget`, `partnerName`, `summary { totalCollected, adminFeeTotal, donationCount, disbursed, inflight, remaining, donorCount, reportsTotal, reportsPublished }`, plus array `disbursements` (dengan `fee`/`totalAmount`), `allocations`, dan `timeline` (30 event terbaru).
+
+4. **`POST /api/fundraising/admin/close`**
+   - **Description**: Menutup penggalangan satu bencana → `disasters.status = 'archived'` + `archivedAt` + `auditLogs` + event timeline `fundraising_closed` (kolektif utk semua donatur), dalam satu transaksi atomik. Idempoten: jika sudah `archived`, balas `alreadyClosed: true` tanpa mutasi.
+   - **Auth**: `Authorization: Bearer <Firebase ID Token>` + role admin (`403` tanpa token, `401` invalid).
+   - **Body**: `{ disasterId }`. Response: `{ success: true, data: { disasterId, status: 'archived', alreadyClosed } }`.
+
 ### Admin Endpoints (`/api/admin`)
 
 1. **`POST /api/admin/create-partner`**

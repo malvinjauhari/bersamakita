@@ -29,6 +29,7 @@ import {
   getDisasterById,
 } from '../../services/firebase/firestore';
 import { paymentService } from '../../services/duitku';
+import { FinalReportSection } from '../distribution/FinalReportSection';
 
 declare global {
   interface Window {
@@ -156,7 +157,8 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
   if (isClosed) {
     return renderPageChrome(
-      <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-5 shadow-sm">
+      <div className="w-full max-w-2xl space-y-4">
+      <div className="max-w-md w-full mx-auto bg-white rounded-3xl p-8 border border-slate-200/80 text-center space-y-5 shadow-sm">
         <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center mx-auto border border-slate-200">
           <PauseCircle className="w-7 h-7" />
         </div>
@@ -195,6 +197,10 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
         >
           Lihat Posko Lain di Dashboard
         </button>
+        </div>
+
+        {/* Laporan akhir publik — derive dari transaksi nyata (server-side) */}
+        <FinalReportSection disasterId={selectedDisaster.id} />
       </div>
     );
   }

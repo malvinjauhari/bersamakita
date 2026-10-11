@@ -16,6 +16,7 @@ import { useAuth } from '../auth/AuthContext';
 import { BMKGVerificationCard } from '../disaster/BMKGVerificationCard';
 import { AdminTransactionsView } from '../finance/AdminTransactionsView';
 import { DisbursementManager } from '../finance/DisbursementManager';
+import { AdminFinalReportPanel } from '../distribution/AdminFinalReportPanel';
 import { AdminPartnersView } from '../partner/AdminPartnersView';
 import { PublicReportsView } from '../distribution/PublicReportsView';
 import { AuditLogsView } from '../operations/AuditLogsView';
@@ -204,12 +205,18 @@ export const AdminPortalView: React.FC<AdminPortalViewProps> = ({
           )}
 
           {activeTab === 'disbursements' && (
-            <DisbursementManager
-              disbursements={disbursements}
-              disasters={disasters}
-              partners={partners}
-              onDataChanged={onDataChanged}
-            />
+            <div className="space-y-5">
+              <DisbursementManager
+                disbursements={disbursements}
+                disasters={disasters}
+                partners={partners}
+                onDataChanged={onDataChanged}
+              />
+              <AdminFinalReportPanel
+                disasters={disasters}
+                onClosed={onDataChanged}
+              />
+            </div>
           )}
 
           {activeTab === 'transactions' && (

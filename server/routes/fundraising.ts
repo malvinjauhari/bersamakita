@@ -342,4 +342,259 @@ router.post('/admin/disbursements', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// GET /api/fundraising/report/:disasterId
+// LAPORAN AKHIR satu bencana — SETIAP angka di-derive dari data transaksi nyata
+// (Admin SDK), bukan input manual/statis: donasi paid, biaya admin 0,17%,
+// pencairan, alokasi, laporan distribusi, dan timeline penyaluran.
+// ---------------------------------------------------------------------------
+router.get('/report/:disasterId', async (req, res) => {
+  try {
+    if (!adminDb) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+    const { disasterId } = req.params;
+    if (!disasterId) {
+      return res.status(400).json({ success: false, message: 'disasterId diperlukan.' });
+    }
+
+    const disasterSnap = await adminDb.collection('disasters').doc(disasterId).get();
+    if (!disasterSnap.exists) {
+      return res.status(404).json({ success: false, message: 'Bencana tidak ditemukan.' });
+    }
+    const disaster = disasterSnap.data() || {};
+
+    const [paidSnap, paymentsSnap, disbSnap, allocSnap, reportSnap, timelineSnap] =
+      await Promise.all([
+        adminDb.collection('donations').where('status', '==', 'paid').get(),
+        adminDb.collection('payments').where('status', '==', 'paid').get(),
+        adminDb.collection('disbursements').get(),
+        adminDb.collection('partnerAllocations').get(),
+        adminDb.collection('distributionReports').get(),
+        adminDb
+          .collection('disasterTimeline')
+          .doc(disasterId)
+          .collection('events')
+          .orderBy('createdAt', 'desc')
+          .limit(30)
+          .get(),
+      ]);
+
+    // Join pembayaran → donasi
+    const paymentByDonationId = new Map<string, any>();
+    for (const doc of paymentsSnap.docs) {
+      const p = doc.data();
+      if (p.donationId) paymentByDonationId.set(p.donationId, p);
+    }
+
+    // Donasi paid bencana ini
+    let totalCollected = 0;
+    let adminFeeTotal = 0;
+    let donationCount = 0;
+    const donorNames: string[] = [];
+    for (const doc of paidSnap.docs) {
+      const don = doc.data();
+      if (don.disasterId !== disasterId) continue;
+      totalCollected += Number(don.amount || 0);
+      const fee = Number(paymentByDonationId.get(don.id || doc.id)?.fee || 0);
+      adminFeeTotal += fee || Math.round(Number(don.amount || 0) * ADMIN_FEE_RATE);
+      donationCount += 1;
+      if (don.donorName && don.isAnonymous !== true) donorNames.push(String(don.donorName));
+    }
+
+    // Pencairan bencana ini
+    const disbursements: any[] = [];
+    let totalDisbursed = 0;
+    let totalInflight = 0;
+    for (const doc of disbSnap.docs) {
+      const d = doc.data();
+      if (d.disasterId !== disasterId) continue;
+      const outflow = disbursementOutflow(d);
+      const row = {
+        id: d.id || doc.id,
+        amount: Number(d.amount || 0),
+        fee: Number(d.fee || 0),
+        totalAmount: Number(d.totalAmount ?? d.amount + (d.fee ?? 0)),
+        status: d.status || 'unknown',
+        partnerName: d.partnerName || '',
+        requestedAt: d.requestedAt || '',
+        processedAt: d.processedAt || '',
+        completedAt: d.completedAt || '',
+        notes: d.notes || '',
+      };
+      disbursements.push(row);
+      if (d.status === 'success') totalDisbursed += outflow;
+      else if (d.status === 'submitted' || d.status === 'processing') totalInflight += outflow;
+    }
+    disbursements.sort((a, b) => String(b.requestedAt).localeCompare(String(a.requestedAt)));
+
+    // Alokasi bencana ini
+    const allocIds = new Set<string>();
+    const allocations: any[] = [];
+    for (const doc of allocSnap.docs) {
+      const a = doc.data();
+      if (a.disasterId !== disasterId) continue;
+      allocIds.add(a.id || doc.id);
+      allocations.push({
+        id: a.id || doc.id,
+        disbursementId: a.disbursementId || '',
+        partnerName: a.partnerName || '',
+        amount: Number(a.amount || 0),
+        status: a.status || 'allocated',
+        allocatedAt: a.allocatedAt || a.createdAt || '',
+        receivedAt: a.receivedAt || '',
+        currentMilestone: a.currentMilestone || null,
+      });
+    }
+    allocations.sort((a, b) => String(b.allocatedAt).localeCompare(String(a.allocatedAt)));
+
+    // Laporan distribusi (join via allocationId)
+    let reportsTotal = 0;
+    let reportsPublished = 0;
+    for (const doc of reportSnap.docs) {
+      const r = doc.data();
+      if (r.allocationId && allocIds.has(r.allocationId)) {
+        reportsTotal += 1;
+        if (r.status === 'published') reportsPublished += 1;
+      }
+    }
+
+    // Timeline terbaru
+    const timeline = timelineSnap.docs.map((doc) => ({
+      id: doc.id,
+      type: doc.data().type || 'system',
+      title: doc.data().title || '',
+      description: doc.data().description || '',
+      location: doc.data().location || null,
+      amount: doc.data().amount || null,
+      actorRole: doc.data().actorRole || 'system',
+      actorName: doc.data().actorName || null,
+      createdAt: doc.data().createdAt || '',
+    }));
+
+    const remaining = Math.max(0, totalCollected - totalDisbursed - totalInflight);
+
+    return res.json({
+      success: true,
+      data: {
+        disasterId,
+        disasterTitle: disaster.title || '',
+        status: disaster.status || 'unknown',
+        fundingTarget: Number(disaster.fundingTarget) || FUNDRAISING_TARGET,
+        partnerId: disaster.partnerId || null,
+        partnerName: disaster.partnerName || null,
+        generatedAt: new Date().toISOString(),
+        adminFeeRate: ADMIN_FEE_RATE,
+        summary: {
+          totalCollected,
+          adminFeeTotal,
+          donationCount,
+          disbursed: totalDisbursed,
+          inflight: totalInflight,
+          remaining,
+          donorCount: new Set(donorNames).size,
+          reportsTotal,
+          reportsPublished,
+        },
+        disbursements,
+        allocations,
+        timeline,
+      },
+    });
+  } catch (error: any) {
+    console.error('Fundraising report error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/fundraising/admin/close
+// Menutup penggalangan satu bencana (status → 'archived') + audit + event
+// timeline `fundraising_closed` (kolektif utk semua donatur).
+// Auth: Bearer <Firebase ID Token> + role admin.
+// ---------------------------------------------------------------------------
+router.post('/admin/close', async (req, res) => {
+  try {
+    if (!adminDb || !adminAuth) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+    const db = adminDb;
+    const fbAuth = adminAuth;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(403).json({ success: false, message: 'Forbidden: No token provided.' });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    let adminEmail: string;
+    try {
+      const decoded = await fbAuth.verifyIdToken(token);
+      const userDoc = await db.collection('users').doc(decoded.uid).get();
+      const isAdmin =
+        decoded.email === 'admin_backend@bersamakita.org' ||
+        decoded.email === 'contohasdf@gmail.com' ||
+        decoded.email === 'bersamakita.my.id@protonmail.com' ||
+        (userDoc.exists && userDoc.data()?.role === 'admin');
+      if (!isAdmin) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Bukan admin.' });
+      }
+      adminEmail = decoded.email || decoded.uid;
+    } catch (err: any) {
+      return res.status(401).json({ success: false, message: 'Token tidak valid: ' + err.message });
+    }
+
+    const { disasterId } = req.body || {};
+    if (!disasterId) {
+      return res.status(400).json({ success: false, message: 'disasterId diperlukan.' });
+    }
+
+    const disasterSnap = await db.collection('disasters').doc(disasterId).get();
+    if (!disasterSnap.exists) {
+      return res.status(404).json({ success: false, message: 'Bencana tidak ditemukan.' });
+    }
+    const current = disasterSnap.data() || {};
+    if (current.status === 'archived') {
+      return res.json({ success: true, data: { disasterId, status: 'archived', alreadyClosed: true } });
+    }
+
+    const now = new Date().toISOString();
+    const timelineId = `tl-${Date.now()}`;
+
+    await db.runTransaction(async (t) => {
+      t.update(db.collection('disasters').doc(disasterId), {
+        status: 'archived',
+        archivedAt: now,
+        updatedAt: now,
+      });
+      t.set(db.collection('auditLogs').doc(`audit-${Date.now()}`), {
+        id: `audit-${Date.now()}`,
+        actorId: adminEmail,
+        actorRole: 'admin',
+        action: 'FUNDRAISING_CLOSED',
+        entityType: 'disaster',
+        entityId: disasterId,
+        before: { status: current.status },
+        after: { status: 'archived', archivedAt: now },
+        timestamp: now,
+      });
+      t.set(db.doc(`disasterTimeline/${disasterId}/events/${timelineId}`), {
+        id: timelineId,
+        disasterId,
+        disasterTitle: current.title || '',
+        type: 'fundraising_closed',
+        title: 'Penggalangan Ditutup',
+        description: `Penggalangan dana untuk "${current.title}" resmi ditutup pada ${now}. Semua dana tercatat telah/tengah disalurkan; laporan akhir tersedia.`,
+        actorRole: 'admin',
+        actorName: adminEmail,
+        createdAt: now,
+      });
+    });
+
+    return res.json({ success: true, data: { disasterId, status: 'archived', alreadyClosed: false } });
+  } catch (error: any) {
+    console.error('Fundraising close error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
