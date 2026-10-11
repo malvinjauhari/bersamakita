@@ -30,11 +30,19 @@
   - Split the `server.ts` monolith into `server/app.ts` + `server/routes/*`.
   - Upgraded to TailwindCSS v4; comprehensive UI/UX overhaul.
   - Documentation (`docs/`, `README.md`) synchronized with the actual code.
+- **Phase 8: Refactor Donasi Kolektif — progres/pencairan/timeline laporan SINKRON per `disasterId`**
+  - **Fase 1**: `GET /api/fundraising/summary` — agregasi server-side (Admin SDK) donasi+payment `paid` + pencairan per bencana + total (semantik `DisbursementManager`).
+  - **Fase 2**: `useFundraisingSummary` + `getDisasterStats` — progres KOLEKTIF identik utk semua akun di dashboard/katalog/halaman donasi (target fungsi `FUNDRAISING_TARGET`).
+  - **Fase 3**: `POST /api/fundraising/admin/disbursements` (validasi saldo + transaksi atomik server); koleksi `disasterTimeline/{disasterId}/events` — SATU timeline utk SEMUA donatur; event otomatis (pencairan, dana diterima mitra, milestone).
+  - **Fase 4**: `GET /api/fundraising/report/:disasterId` (laporan akhir derive dari transaksi nyata, publik, tanpa PII) + `POST /api/fundraising/admin/close` (status `archived`, atomik & idempoten) + UI laporan akhir & tombol "Tutup Penggalangan".
+  - **Fase 5**: Hardening `firestore.rules` (write kolektif → least privilege) + `POST /api/bmkg/refresh` (ingest BMKG server-side utk user biasa; earthquake/disasters write = admin/partner).
+  - **Fase 6**: Docs sinkron (`API.md`/`CHANGELOG.md`/`DATABASE.md`) + **QA sandbox 2 akun Firebase** (`scripts/qa-phase6.ts`, user dibuat & dihapus otomatis): summary & report IDENTIK antar-akun; user biasa ditolak menulis koleksi operasional.
 
 ## Outstanding Issues
 
 - **None currently identified for the core flows.** The system is fully aligned with strict verification, security, and administrative compliance.
 - Known operational notes (not bugs): `CRON_SECRET` should be set in the Vercel project for the `expire-sweep` cron; `DUITKU_ENVIRONMENT` must be flipped to `production` only when ready for live payments.
+- **Security (user action needed)**: rotasi token GitHub lama yang pernah terekspos di percakapan, dan revoke token Vercel lama (`vcp_6vDoVjQh...`) bila tak terpakai.
 
 ## Environment Variables Requirement
 See `.env.example` for the required configuration. Backend requires `FIREBASE_SERVICE_ACCOUNT_JSON`, `DUITKU_MERCHANT_CODE`, `DUITKU_API_KEY`, `ADMIN_SECRET_KEY`, `CRON_SECRET` (for cron), and optionally `CLOUDINARY_*`.

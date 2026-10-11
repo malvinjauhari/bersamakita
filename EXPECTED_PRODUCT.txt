@@ -1,0 +1,763 @@
+================================================================================
+                    BERSAMA KITA - EXPECTED PRODUCT SPECIFICATION
+       AUDIT PRODUK EKSISTING, SPESIFIKASI FITUR, DAN RENCANA HASIL AKHIR
+           DOKUMEN PENDUKUNG PROPOSAL HACKATHON TINGKAT NASIONAL
+================================================================================
+
+1. JUDUL DOKUMEN DAN METADATA AUDIT
+--------------------------------------------------------------------------------
+Nama Produk          : Bersama Kita (Platform Tanggap Bencana & Donasi Terverifikasi)
+Repositori           : malvinjauhari/bersamakita web
+Tanggal Audit        : 11 Oktober 2026
+Versi Dokumen        : 1.0.0-PROPOSAL
+Status Verifikasi    : Audited from Codebase (Static Code & Architecture Inspection)
+Target Dokumen       : Dokumen Acuan Bab "Expected Product" Proposal Hackathon Nasional
+Klasifikasi Dokumen  : Spesifikasi Fungsional, Audit Produk, dan Metrik Keberhasilan
+
+Cakupan Komponen yang Diaudit:
+- Frontend Client    : React 19, TypeScript, Vite 6, Tailwind CSS 4, Lucide React
+- Backend Service    : Node.js, Express 4, TypeScript, Firebase Admin SDK
+- Database & Storage : Google Cloud Firebase Firestore, Cloudinary Media Storage
+- Integrasi Eksternal: BMKG Open Data API, Duitku Payment Gateway (Direct API QRIS)
+- Keamanan & Auth    : Firebase Client Auth, Custom Role-Based Access Control (RBAC),
+                       HMAC-SHA256 Signature Verification, Firestore Security Rules
+
+
+2. RINGKASAN PRODUK (PRODUCT OVERVIEW)
+--------------------------------------------------------------------------------
+2.1 Apa Itu Bersama Kita?
+Bersama Kita adalah platform tanggap darurat bencana dan penggalangan donasi 
+digital terintegrasi yang menjembatani data peringatan dini bencana resmi (BMKG), 
+verifikasi administratif oleh otoritas berwenang, penugasan mitra lapangan lokal 
+terakreditasi, serta transaksi donasi instan berbasis QRIS dengan sistem pelacakan 
+distribusi logistik bantuan 6 tahap yang transparan dan dapat diverifikasi publik.
+
+2.2 Masalah Utama yang Ingin Diselesaikan
+Penggalangan dana bencana konvensional di Indonesia menghadapi 4 kendala kritis:
+1. Krisis Kepercayaan & Risiko Hoaks:
+   Banyaknya penggalangan dana liar atau fiktif pascabencana yang dibuka oleh pihak 
+   tidak bertanggung jawab tanpa verifikasi faktual lapangan, memicu keraguan publik 
+   dalam menyalurkan bantuan pada masa tanggap darurat ("golden hours").
+2. Fenomena "Black Box Donation" (Ketiadaan Transparansi Pasca-Transfer):
+   Donatur hanya menerima konfirmasi bahwa dana telah terpotong dari rekening mereka, 
+   namun tidak pernah mengetahui kapan dana dicairkan, apakah barang kebutuhan 
+   telah dibeli, dan apakah bantuan benar-benar sampai kepada korban bencana.
+3. Keterputusan Data Kebencanaan Resmi dengan Tindakan Lapangan:
+   Data resmi dari BMKG mengenai gempa dan cuaca ekstrem hanya menjadi informasi 
+   mentah konsumsi publik, tanpa adanya saluran langsung yang mengonversi data 
+   peringatan darurat tersebut menjadi aksi mobilisasi bantuan kemanusiaan terkoordinasi.
+4. Fragmentasi dan Lemahnya Standar Pelaporan Mitra Lapangan:
+   Organisasi relawan lokal di lapangan sering kesulitan melaporkan progres logistik 
+   secara terstruktur, akuntabel, dan berlandaskan bukti visual yang valid kepada publik.
+
+2.3 Mengapa Masalah Tersebut Penting?
+Indonesia berada pada wilayah Cincin Api Pasifik (Ring of Fire) dengan frekuensi 
+bencana hidrometeorologis dan tektonik yang sangat tinggi. Kecepatan dan ketepatan 
+penyaluran bantuan logistik pada 72 jam pertama pascabencana sangat menentukan 
+keselamatan jiwa para penyintas. Hilangnya kepercayaan donatur akibat maraknya 
+kasus penyelewengan dana donasi menurunkan partisipasi publik secara drastis. 
+Pemulihan kepercayaan hanya dapat dicapai melalui transparansi radikal yang 
+didukung verifikasi berlapis dan audit jejak penyaluran yang nyata.
+
+2.4 Bagaimana Bersama Kita Menyelesaikannya?
+Bersama Kita memadukan integrasi data resmi dan tata kelola terverifikasi:
+- Staged Disaster Ingestion: Data bencana dari BMKG ditarik otomatis ke dalam sistem 
+  isolasi internal (`pending_verification`) dan tidak pernah langsung tayang ke publik.
+- Mandatory Partner Assignment: Sebelum bencana dipublikasikan, Administrator wajib 
+  menetapkan Mitra Lapangan resmi sebagai penanggung jawab operasional di lokasi.
+- QRIS Direct Gateway: Donasi diproses instan melalui QRIS Duitku Direct API dengan 
+  pembagian biaya admin transparan (0,17%) dan validasi signature anti-pemalsuan.
+- Controlled Atomic Disbursement: Dana donasi hanya dapat dicairkan oleh persetujuan 
+  admin dan wajib dikonfirmasi penerimaannya oleh mitra lapangan melalui mutasi ledger atomik.
+- 6-Stage Milestone Tracking: Mitra lapangan wajib memperbarui 6 tahapan penyaluran 
+  bantuan dengan melampirkan lokasi, catatan logistik, dan bukti foto dokumentasi.
+- Collective Public Timeline & Final Report: Donatur dan publik dapat memantau garis 
+  waktu kolektif bantuan secara terbuka tanpa membocorkan data privasi donatur.
+
+2.5 Nilai Utama Pembeda (Unique Value Proposition)
+1. Integrasi BMKG dengan Sistem Karantina Data Anti-Hoaks:
+   Mencegah kampanye fiktif dengan memastikan setiap bencana berakar pada data seismik/
+   resmi dan wajib disetujui admin terverifikasi sebelum muncul di katalog publik.
+2. Akuntabilitas Mitra Lapangan Tunggal per Bencana:
+   Menghilangkan perantara liar; penyaluran bantuan diikat langsung kepada organisasi 
+   mitra lapangan yang kredensial dan kinerjanya diawasi sistem.
+3. Pelacakan Logistik Bertahap Berbukti Visual (Foto & Geolokasi):
+   Bukan sekadar status "Selesai", tetapi rekaman berurutan: Dana Diterima -> 
+   Barang Dikemas -> Logistik Bergerak -> Tiba di Posko -> Penyerahan Penyintas -> Selesai.
+4. Keamanan Transaksi Finansial Idempoten:
+   Pencegahan callback ganda (double-crediting) dan manipulasi status dari sisi klien 
+   menggunakan arsitektur webhook server-side ber-tanda tangan HMAC-SHA256.
+
+2.6 Hasil Konkret yang Ingin Dicapai pada Akhir Hackathon
+Menghasilkan prototipe aplikasi web fungsional penuh (end-to-end working prototype) 
+yang siap didemonstrasikan dalam skenario live demo tanggap bencana: mulai dari 
+ingesti data BMKG, persetujuan admin & penugasan mitra, transaksi donasi QRIS sandbox 
+real-time, pencairan dana terkendali, pembaruan 6 milestone distribusi oleh mitra, 
+hingga publikasi laporan pertanggungjawaban final di katalog donasi publik.
+
+
+3. MASALAH YANG DISELESAIKAN DAN NILAI UTAMA
+--------------------------------------------------------------------------------
+3.1 Pemilahan: Masalah Faktual, Asumsi Teruji, dan Manfaat Ditargetkan
+
++-------------------+-----------------------------------+--------------------------------+
+| Dimensi Masalah   | Kondisi Faktual / Asumsi Desain   | Solusi & Manfaat Ditargetkan   |
++-------------------+-----------------------------------+--------------------------------+
+| Verifikasi        | Faktual: Data bencana liar rawan  | Karantina data BMKG; wajib ada |
+| Bencana           | dimanipulasi untuk penggalangan   | persetujuan admin & penetapan  |
+|                   | dana fiktif tanpa konfirmasi resmi| mitra sebelum kampanye aktif.  |
++-------------------+-----------------------------------+--------------------------------+
+| Transparansi      | Faktual: Donatur mengalami krisis | Timeline kolektif 6 milestone  |
+| Penyaluran        | kepercayaan karena bantuan        | logistik berbukti foto & rincian|
+|                   | tidak diketahui jejak akhirnya.   | penerima manfaat di posko.     |
++-------------------+-----------------------------------+--------------------------------+
+| Integritas Dana   | Faktual: Sering terjadi selisih   | Ledger pencairan berbasis      |
+| & Pencairan       | pencatatan antara uang terkumpul  | transaksi Firestore atomik;    |
+|                   | dan uang yang diserahkan ke mitra.| konfirmasi dua arah (admin-mitra)|
++-------------------+-----------------------------------+--------------------------------+
+| Kemudahan Donasi  | Asumsi: Donatur membutuhkan metode| Pembayaran instan via QRIS     |
+|                   | bayar lintas bank/e-wallet tanpa  | Duitku Direct API (0,17% fee   |
+|                   | hambatan registrasi manual rumit. | transparan di atas donasi).    |
++-------------------+-----------------------------------+--------------------------------+
+| Efisiensi Relawan | Asumsi: Mitra lapangan memerlukan | Portal mitra terdedikasi untuk |
+| Lapangan          | alat pelaporan cepat via ponsel   | pembaruan status logistik      |
+|                   | di lokasi posko bencana.          | langsung dari lokasi bencana.  |
++-------------------+-----------------------------------+--------------------------------+
+
+
+4. TARGET PENGGUNA DAN MANFAAT
+--------------------------------------------------------------------------------
+Sistem Bersama Kita membagi hak akses dan pengalaman pengguna ke dalam 3 entitas:
+
+4.1 Donatur (Masyarakat Umum)
+- Kebutuhan:
+  * Memperoleh informasi bencana yang valid, cepat, dan terpercaya.
+  * Menyalurkan donasi secara instan melalui metode pembayaran digital (QRIS).
+  * Memastikan dana donasi 100% dialokasikan untuk penanganan bencana.
+  * Memantau perkembangan penyaluran bantuan secara real-time dan transparan.
+  * Mengakses bukti dokumentasi dan laporan pertanggungjawaban akhir.
+- Peran dalam Sistem:
+  * Konsumen informasi bencana terverifikasi.
+  * Inisiator transaksi donasi digital.
+  * Pemantau publik atas jalannya distribusi bantuan.
+- Manfaat yang Ditargetkan:
+  * Kepastian bahwa bencana yang dibantu adalah riil dan memiliki mitra penanggung jawab.
+  * Pengalaman donasi cepat (<1 menit) tanpa harus registrasi akun terlebih dahulu.
+  * Ketenangan pikiran (peace of mind) melalui notifikasi status dan visual timeline.
+- Batasan Akses:
+  * Hanya dapat melihat bencana dengan status `admin_approved`.
+  * Tidak dapat melihat data pribadi donatur lain (nama donatur disamarkan/anonim).
+  * Tidak memiliki akses ke dashboard pengelolaan atau mutasi keuangan backend.
+
+4.2 Administrator (Pengelola Platform / Otoritas Bencana)
+- Kebutuhan:
+  * Mengontrol dan memverifikasi data bencana yang masuk dari BMKG.
+  * Menyeleksi dan mendaftarkan mitra lapangan resmi yang terakreditasi.
+  * Menugaskan mitra lapangan yang tepat sesuai zona wilayah bencana.
+  * Mengawasi arus kas donasi masuk, menyetujui pencairan, dan memvalidasi laporan.
+  * Mengarsipkan atau menutup kampanye bencana yang telah selesai ditangani.
+- Peran dalam Sistem:
+  * Gatekeeper verifikasi informasi bencana.
+  * Manajer alokasi mitra lapangan dan tata kelola akun mitra.
+  * Pengawas keuangan donasi dan otorisator pencairan dana.
+  * Auditor laporan pertanggungjawaban akhir sebelum dipublikasikan.
+- Manfaat yang Ditargetkan:
+  * Kontrol penuh terhadap validitas kampanye yang tayang ke publik.
+  * Pencegahan kebocoran dana melalui validasi saldo atomik sebelum pencairan.
+  * Visibilitas audit log atas seluruh aksi administratif dan finansial.
+- Batasan Akses:
+  * Wajib terautentikasi melalui kredensial Firebase Auth dengan role `admin`.
+  * Tidak dapat memalsukan status pembayaran tanpa verifikasi webhook gateway.
+
+4.3 Mitra Lapangan (Field Partners / Lembaga Relawan Terakreditasi)
+- Kebutuhan:
+  * Menerima mandat resmi penugasan bencana di wilayah operasionalnya.
+  * Mengetahui nominal dana bantuan yang dialokasikan dan siap dicairkan.
+  * Mengonfirmasi penerimaan dana transfer logistik secara akuntabel.
+  * Mengunggah pembaruan status distribusi bertahap dari posko secara mudah.
+  * Menyusun laporan distribusi final dengan bukti kuitansi dan foto penerima manfaat.
+- Peran dalam Sistem:
+  * Eksekutor operasional bantuan logistik dan evakuasi di posko bencana.
+  * Pengonfirmasi penerimaan dana donasi dari platform.
+  * Pelapor utama progres 6 milestone distribusi bantuan.
+- Manfaat yang Ditargetkan:
+  * Kepastian sumber pendanaan yang sah dan tercatat transparan.
+  * Saluran pelaporan terstandarisasi yang langsung dapat diakses publik.
+  * Peningkatan kredibilitas lembaga mitra di mata publik dan donatur.
+- Batasan Akses:
+  * Akun mitra HANYA dapat dibuat oleh Administrator melalui backend terverifikasi.
+  * Mitra hanya dapat mengelola bencana yang ditugaskan khusus kepada organisasinya.
+  * Tidak dapat mengubah parameter donasi, target nominal, atau data bencana BMKG.
+
+
+5. INVENTARIS FITUR DAN STATUS IMPLEMENTASI
+--------------------------------------------------------------------------------
+Klasifikasi Status:
+- IMPLEMENTED           : Fitur telah terimplementasi penuh dengan bukti kode yang valid.
+- PARTIALLY IMPLEMENTED : UI dan logika dasar ada, namun integrasi lanjutan belum lengkap.
+- PLANNED / NOT VERIFIED: Fitur direncanakan dalam roadmap, belum ada implementasi runtime.
+
++----+--------------------------------+-----------------------+-----------------------------+
+| No | Nama Fitur                     | Status Implementasi   | Lokasi File Implementasi    |
++----+--------------------------------+-----------------------+-----------------------------+
+| 1  | Staged BMKG Disaster Ingestion | IMPLEMENTED           | server/routes/bmkg.ts       |
+|    | & Anti-Hoax Quarantine Gate    |                       | src/pages/AdminPortalView   |
++----+--------------------------------+-----------------------+-----------------------------+
+| 2  | Role-Based Access Control      | IMPLEMENTED           | src/contexts/AuthContext.tsx|
+|    | (Admin, Partner, Public Donor) |                       | firestore.rules, server auth|
++----+--------------------------------+-----------------------+-----------------------------+
+| 3  | Donasi QRIS Instan             | IMPLEMENTED           | server/routes/duitku.ts     |
+|    | (Duitku Direct API Method SP)  |                       | src/pages/Transaction*      |
++----+--------------------------------+-----------------------+-----------------------------+
+| 4  | Validasi Webhook & Idempotensi | IMPLEMENTED           | server/routes/duitku.ts     |
+|    | Transaksi (HMAC-SHA256)        |                       | src/lib/fees.ts             |
++----+--------------------------------+-----------------------+-----------------------------+
+| 5  | Dashboard & Portal Admin       | IMPLEMENTED           | src/pages/AdminPortalView   |
+|    | Komprehensif                   |                       | src/components/admin/*      |
++----+--------------------------------+-----------------------+-----------------------------+
+| 6  | Manajemen Akun Mitra Lapangan  | IMPLEMENTED           | server/routes/admin.ts      |
+|    | (Restricted Creation Workflow) |                       | src/components/admin/Partn* |
++----+--------------------------------+-----------------------+-----------------------------+
+| 7  | Mandatory Mitra Assignment     | IMPLEMENTED           | src/components/admin/BMKG*  |
+|    | Sebelum Persetujuan Bencana    |                       | server/routes/fundraising.ts|
++----+--------------------------------+-----------------------+-----------------------------+
+| 8  | Disbursement Manager           | IMPLEMENTED           | server/routes/fundraising.ts|
+|    | (Pencairan Dana Atomik)        |                       | src/components/admin/Disb*  |
++----+--------------------------------+-----------------------+-----------------------------+
+| 9  | Konfirmasi Penerimaan Dana     | IMPLEMENTED           | server/routes/fundraising.ts|
+|    | oleh Mitra Lapangan            |                       | src/pages/PartnerDashboard* |
++----+--------------------------------+-----------------------+-----------------------------+
+| 10 | 6-Stage Milestone Distribution | IMPLEMENTED           | src/pages/PartnerDashboard* |
+|    | Tracker dengan Bukti Cloudinary|                       | src/components/partner/Dist*|
++----+--------------------------------+-----------------------+-----------------------------+
+| 11 | Timeline Bencana Kolektif      | IMPLEMENTED           | src/pages/WideDisasterDash* |
+|    | Publik (Privacy-Preserving)    |                       | src/pages/SituationAnalysis*|
++----+--------------------------------+-----------------------+-----------------------------+
+| 12 | Riwayat Transaksi Donatur      | IMPLEMENTED           | src/pages/MyDonationsPage   |
+|    | & Status Real-time Polling     |                       | src/pages/TransactionStat*  |
++----+--------------------------------+-----------------------+-----------------------------+
+| 13 | Penutupan Kampanye & Laporan   | IMPLEMENTED           | server/routes/fundraising.ts|
+|    | Pertanggungjawaban Final (LPJ) |                       | src/components/admin/Final* |
++----+--------------------------------+-----------------------+-----------------------------+
+| 14 | Responsive Mobile UI & UX      | IMPLEMENTED           | src/components/layout/*     |
+|    | (Glassmorphism & Micro-inter.) |                       | src/index.css               |
++----+--------------------------------+-----------------------+-----------------------------+
+| 15 | Analisis Dampak Bencana        | PARTIALLY IMPLEMENTED | src/lib/utils.ts            |
+|    | Otomatis (Heuristic vs LLM)    |                       | (Rule-based aktif, SDK idle)|
++----+--------------------------------+-----------------------+-----------------------------+
+| 16 | Notifikasi Email Transaksi     | PLANNED / NOT VERIFIED| Model `payments` memiliki   |
+|    | Otomatis (SMTP/Resend/Sendgrid)|                       | flag notificationSent: false|
++----+--------------------------------+-----------------------+-----------------------------+
+| 17 | Integrasi Transfer Otomatis    | PLANNED / NOT VERIFIED| Ledger sistem aktif; mutasi |
+|    | Bank Mitra (Disbursement API)  |                       | perbankan riil via manual TT|
++----+--------------------------------+-----------------------+-----------------------------+
+
+Rincian Bukti Implementasi Fitur Utama:
+
+5.1 Katalog Bencana Terverifikasi (Status: IMPLEMENTED)
+- Tujuan: Menampilkan daftar bencana aktif terverifikasi beserta kebutuhan donasi.
+- Masalah yang Diselesaikan: Mencegah publik melihat kampanye fiktif atau data mentah BMKG 
+  yang belum dianalisis kelayakan poskonya.
+- Cara Kerja: Frontend memfilter `disasters` di Firestore hanya dengan kondisi `status == 'admin_approved'`. 
+  Jika belum disetujui atau masih kosong, tampilan menampilkan empty state elegan.
+- Bukti Implementasi:
+  * File: `src/pages/WideDisasterDashboard.tsx`, baris query Firestore:
+    `where('status', '==', 'admin_approved')`.
+  * File: `src/pages/KatalogBMKGPage.tsx`.
+
+5.2 Staged Ingestion & Anti-Hoax Quarantine Gate (Status: IMPLEMENTED)
+- Tujuan: Menarik data gempabumi terkini BMKG sebagai kandidat draft tanpa langsung tayang.
+- Masalah yang Diselesaikan: Data BMKG adalah data ilmiah, bukan persetujuan penggalangan dana.
+- Cara Kerja: Endpoint Express `/api/bmkg/gempa-terkini` memetakan payload XML/JSON BMKG 
+  dan menyimpannya ke koleksi Firestore dengan status `pending_verification`.
+- Bukti Implementasi:
+  * File: `server/routes/bmkg.ts` (`saveDisasterCandidates()`).
+  * File: `src/components/admin/BMKGVerificationCard.tsx`.
+
+5.3 Donasi Digital QRIS via Duitku Direct API (Status: IMPLEMENTED)
+- Tujuan: Memfasilitasi pembayaran donasi instan melalui QRIS nasional.
+- Masalah yang Diselesaikan: Hambatan transfer manual (harus unggah bukti transfer/konfirmasi admin).
+- Cara Kerja: Donatur memilih nominal di `TransactionDonatePage`. Frontend memanggil 
+  `POST /api/duitku/create-invoice` dengan `paymentMethod: 'SP'`. Backend menghitung signature 
+  MD5/SHA256, memanggil Duitku Sandbox Direct API, dan mengembalikan `qrString`. Frontend 
+  me-render kode QR menggunakan komponen canvas/SVG di `TransactionCheckoutPage`.
+- Bukti Implementasi:
+  * File: `server/routes/duitku.ts` (`createInvoiceHandler()`).
+  * File: `src/pages/TransactionDonatePage.tsx`, `TransactionCheckoutPage.tsx`.
+
+5.4 Validasi Webhook, Signature HMAC-SHA256 & Idempotensi (Status: IMPLEMENTED)
+- Tujuan: Memastikan keaslian notifikasi pembayaran dan mencegah pencatatan donasi ganda.
+- Masalah yang Diselesaikan: Serangan fake-callback dan duplikasi penambahan saldo kampanye.
+- Cara Kerja: Endpoint callback `POST /api/duitku/callback` memvalidasi signature dari 
+  Duitku. Jika status transaksi di database sudah `PAID`, endpoint langsung keluar 
+  dengan sukses tanpa memutasi ulang nilai `collectedAmount` di dokumen bencana.
+- Bukti Implementasi:
+  * File: `server/routes/duitku.ts` (`callbackHandler()`, baris pengecekan `existingPayment.status === 'PAID'`).
+  * File: `src/lib/fees.ts` (Kalkulasi biaya admin 0,17% transparan).
+
+5.5 Mandatory Mitra Assignment Sebelum Persetujuan Bencana (Status: IMPLEMENTED)
+- Tujuan: Menjamin setiap bencana aktif memiliki penanggung jawab lapangan berbadan hukum.
+- Masalah yang Diselesaikan: Dana terkumpul tanpa ada relawan yang mengeksekusi logistik.
+- Cara Kerja: Di dashboard admin, tombol "Approve & Publish" dinonaktifkan (disabled) 
+  hingga admin memilih salah satu mitra aktif dari daftar dropdown mitra terverifikasi.
+- Bukti Implementasi:
+  * File: `src/components/admin/BMKGVerificationCard.tsx` (Validasi `!selectedPartnerId`).
+  * File: `server/routes/fundraising.ts` (Pengecekan `partnerId` wajib ada).
+
+5.6 Disbursement Manager dengan Proteksi Saldo Atomik (Status: IMPLEMENTED)
+- Tujuan: Mengontrol pencairan dana bantuan dari saldo kampanye yang terkumpul.
+- Masalah yang Diselesaikan: Risiko over-disbursement atau pencairan dana melebihi saldo.
+- Cara Kerja: Admin memasukkan jumlah pencairan di `DisbursementManager`. Backend mengeksekusi 
+  Firestore `db.runTransaction()`, memverifikasi bahwa `disbursedAmount + amount <= collectedAmount`. 
+  Dokumen pencairan dibuat di `disbursements` dengan status `pending` atau `approved`.
+- Bukti Implementasi:
+  * File: `server/routes/fundraising.ts` (`POST /api/fundraising/admin/disbursements`).
+  * File: `src/components/admin/DisbursementManager.tsx`.
+
+5.7 Konfirmasi Penerimaan Dana & Pelaporan 6 Milestone Mitra (Status: IMPLEMENTED)
+- Tujuan: Merekam serah terima dana dan mengalirkan status logistik ke publik.
+- Masalah yang Diselesaikan: Laporan relawan yang tidak beraturan dan minim bukti visual.
+- Cara Kerja: Mitra lapangan login ke portal, melihat pencairan yang disetujui, dan 
+  mengeklik "Konfirmasi Penerimaan Dana". Setelah status menjadi `received`, mitra 
+  dapat memperbarui 6 tahapan distribusi (Dana Diterima -> Pengemasan Barang -> 
+  Pengiriman Logistik -> Tiba di Posko -> Penyerahan ke Korban -> Distribusi Tuntas) 
+  dilengkapi unggahan foto Cloudinary dan keterangan lokasi.
+- Bukti Implementasi:
+  * File: `src/pages/PartnerDashboardView.tsx`.
+  * File: `src/components/partner/DistributionProgressCard.tsx`.
+  * File: `server/routes/fundraising.ts` (`POST /api/fundraising/partner/disbursements/:id/confirm`).
+
+5.8 Timeline Bencana Kolektif Publik & Laporan Final (Status: IMPLEMENTED)
+- Tujuan: Menyediakan transparansi publik atas seluruh riwayat aktivitas bantuan.
+- Masalah yang Diselesaikan: Donatur kehilangan jejak perkembangan bantuan setelah transfer.
+- Cara Kerja: Setiap event donasi anonim, pencairan dana, dan pembaruan milestone mitra 
+  dicatat ke subkoleksi `disasterTimeline`. Publik dapat melihat feed kronologis ini di 
+  halaman detail bencana. Ketika kampanye selesai, admin mempublikasikan laporan final 
+  melalui `AdminFinalReportPanel` dan mengarsipkan bencana.
+- Bukti Implementasi:
+  * File: `src/components/disaster/FinalReportSection.tsx`.
+  * File: `src/pages/TransparansiReportsPage.tsx`.
+  * File: `src/components/admin/AdminFinalReportPanel.tsx`.
+
+5.9 Analisis Dampak Bencana Otomatis (Status: PARTIALLY IMPLEMENTED)
+- Status: Berfungsi secara heuristik (rule-based evaluation di `src/lib/utils.ts` 
+  berdasarkan magnitudo, kedalaman gempa, dan potensi tsunami BMKG).
+- Gap Implementasi: Library `@google/genai` (v2.4.0) terdaftar di `package.json`, 
+  namun belum ada endpoint serverless yang mengeksekusi pemanggilan AI generatif langsung 
+  saat runtime demo karena sistem mengutamakan determinisme data resmi BMKG.
+
+
+6. ALUR KERJA PRODUK END-TO-END (END-TO-END PRODUCT WORKFLOW)
+--------------------------------------------------------------------------------
+Berikut adalah 4 alur kerja utama produk yang memetakan interaksi antar-pengguna, 
+sistem frontend, backend Express, dan layanan eksternal:
+
+================================================================================
+A. ALUR INFORMASI DAN VERIFIKASI BENCANA (DISASTER VERIFICATION WORKFLOW)
+================================================================================
+
+ [BMKG Open Data API]
+          │
+          ▼ (HTTP GET XML/JSON via Backend Proxy)
+ [Express: /api/bmkg/gempa-terkini]
+          │
+          ▼ (Sanitasi & Format Data)
+ [Firestore: Collection 'disasters']  ◄── Status: 'pending_verification'
+          │                               (DIISOLASI DARI KATALOG PUBLIK)
+          ▼
+ [Admin Portal: BMKG Verification Card]
+          │
+          ├─► Admin Meninjau Parameter Gempa (Magnitudo, Kedalaman, Lokasi)
+          ├─► Admin Wajib Memilih Mitra Lapangan (Mitra Assignment)
+          │
+          ▼ (Admin Klik "Approve & Assign Partner")
+ [Express / Firestore Update]
+          │
+          ▼
+ [Firestore: 'disasters']             ◄── Status: 'admin_approved' (ACTIVE)
+          │                               (PartnerId & PartnerName Terikat Sah)
+          ▼
+ [Katalog Publik: WideDisasterDashboard] ──► Tampil di Halaman Donatur
+
+* Catatan Kritis:
+  - Sebelum admin mengeklik tombol Approve, halaman publik donatur menampilkan 
+    EMPTY STATE ("Belum ada bencana aktif yang membutuhkan tanggap darurat").
+  - Tidak ada mekanisme auto-approval 24 jam untuk mencegah rilis bencana tanpa mitra.
+
+
+================================================================================
+B. ALUR DONASI DAN TRANSAKSI QRIS (DONATION & PAYMENT GATEWAY WORKFLOW)
+================================================================================
+
+ [Donatur di Halaman Katalog Bencana]
+          │
+          ▼ (Klik Tombol "Donasi Sekarang")
+ [Halaman TransactionDonatePage]
+          │
+          ├─► Pilih Nominal Donasi (Preset Rp25rb - Rp500rb atau Nominal Custom)
+          ├─► Input Nama Donatur & Email (Opsional: Donasi Sebagai Anonim)
+          ├─► Sistem Menghitung Biaya Layanan QRIS: 0,17% (Transparan)
+          │
+          ▼ (Klik "Lanjutkan Pembayaran")
+ [Express Backend: POST /api/duitku/create-invoice]
+          │
+          ├─► Generate merchantOrderId Unik
+          ├─► Kalkulasi Signature MD5/HMAC dengan DUITKU_API_KEY
+          ├─► Memanggil Duitku Sandbox Direct API (Metode 'SP' - QRIS)
+          │
+          ▼ (Duitku Mengembalikan 'qrString' & 'paymentUrl')
+ [Halaman TransactionCheckoutPage]
+          │
+          ├─► Render Gambar QRIS Interaktif dari 'qrString'
+          ├─► Menjalankan Timer Kedaluwarsa Transaksi
+          ├─► Memulai Background Polling ke /api/duitku/check-status/:orderId
+          │
+          ▼ (Donatur Memindai QRIS via Aplikasi Perbankan / E-Wallet)
+ [Duitku Payment Gateway Engine]
+          │
+          ▼ (HTTP POST Webhook Server-to-Server)
+ [Express Backend: POST /api/duitku/callback]
+          │
+          ├─► 1. Validasi Keaslian Signature Callback
+          ├─► 2. Cek Idempotensi: Jika status pembayaran == 'PAID', langsung return 200
+          ├─► 3. Mutasi Firestore via Firebase Admin SDK:
+          │      - Update collection 'payments' -> status: 'PAID'
+          │      - Update collection 'donations' -> status: 'verified'
+          │      - Atomic Increment 'disasters.collectedAmount' (+ nominal donasi)
+          │      - Buat event baru di 'disasterTimeline'
+          │
+          ▼
+ [Frontend Polling / WebSocket Mendeteksi Status PAID]
+          │
+          ▼
+ [Halaman TransactionStatusPage] ────► Tampilkan Bukti Donasi Berhasil
+          │
+          ▼
+ [Halaman MyDonationsPage] ──────────► Tersimpan di Riwayat Donasi Pengguna
+
+
+================================================================================
+C. ALUR PENCAIRAN DANA DAN LOGISTIK MITRA (DISBURSEMENT & FIELD OPERATIONS)
+================================================================================
+
+ [Saldo Donasi Terkumpul di Kampanye Bencana]
+          │
+          ▼ (Admin Mengakses DisbursementManager di Admin Portal)
+ [Admin Portal: Request Pencairan Dana]
+          │
+          ▼ (Input Nominal Pencairan & Alasan Kebutuhan Posko)
+ [Express Backend: POST /api/fundraising/admin/disbursements]
+          │
+          ├─► Validasi Atomic db.runTransaction():
+          │   Pastikan: (Total Dicairkan + Nominal Baru) <= Total Terkumpul
+          ├─► Simpan Dokumen Pencairan ke collection 'disbursements'
+          │   Status: 'approved'
+          │
+          ▼ (Admin Melakukan Transfer Dana ke Rekening Resmi Mitra)
+ [Mitra Lapangan Login ke PartnerDashboardView]
+          │
+          ├─► Mitra Melihat Notifikasi: "Pencairan Dana Telah Disetujui"
+          ├─► Mitra Memeriksa Rekening Operasional Lapangan
+          │
+          ▼ (Mitra Klik "Konfirmasi Penerimaan Dana")
+ [Express Backend: POST /api/fundraising/partner/disbursements/:id/confirm]
+          │
+          ├─► Status Pencairan Berubah Menjadi: 'received'
+          ├─► Catat Waktu Konfirmasi & Penanggung Jawab Mitra
+          ├─► Rekam Event Timeline Publik: "Dana Bantuan Diterima Mitra Lapangan"
+          │
+          ▼
+ [Card Proses Distribusi Terbuka di Dashboard Mitra]
+
+
+================================================================================
+D. ALUR PELAPORAN DISTRIBUSI DAN TRANSPARANSI (MILESTONE & LPJ WORKFLOW)
+================================================================================
+
+ [Mitra Lapangan Mengelola 6 Milestone Penyaluran di Posko]
+          │
+          ├─► Milestone 1: Dana Diterima (Funds Received)
+          ├─► Milestone 2: Pengemasan Logistik Sembako/Medis (Goods Packed)
+          ├─► Milestone 3: Logistik Berangkat Menuju Lokasi (In Transit)
+          ├─► Milestone 4: Bantuan Tiba di Posko Pengungsian (Arrived at Posko)
+          ├─► Milestone 5: Penyerahan Langsung ke Penyintas (Handed Over)
+          ├─► Milestone 6: Seluruh Distribusi Selesai (Completed)
+          │
+          ▼ (Untuk Setiap Milestone, Mitra Mengisi:)
+ [Form Update Milestone di PartnerDashboard]
+          │
+          ├─► Unggah Foto Bukti Dokumentasi (Tersimpan di Cloudinary CDN)
+          ├─► Masukkan Deskripsi Aktivitas Lapangan & Nama Posko
+          ├─► Konfirmasi Tanggal dan Lokasi Penyaluran
+          │
+          ▼
+ [Sinkronisasi Otomatis ke Firestore 'disasterTimeline']
+          │
+          ├─► Donatur melihat live timeline di halaman detail bencana
+          │
+          ▼ (Setelah Milestone 6 Selesai & Target Terpenuhi)
+ [Admin Menyusun Laporan Akhir di AdminFinalReportPanel]
+          │
+          ├─► Rekapitulasi Total Dana Masuk vs Total Dana Disalurkan
+          ├─► Ringkasan Jumlah Penerima Manfaat & Kondisi Akhir Posko
+          │
+          ▼ (Admin Klik "Tutup Kampanye & Publikasikan Laporan")
+ [Express Backend: POST /api/fundraising/admin/close]
+          │
+          ├─► Status Bencana Berubah Menjadi: 'archived'
+          ├─► Terbit Laporan Pertanggungjawaban Resmi di TransparansiReportsPage
+
+
+6.5 Matriks Pembeda Status dalam Model Data Sistem
+Untuk mencegah kebingungan, sistem membedakan secara tegas status finansial, 
+status administratif, dan status logistik operasional:
+
+1. Status Pembayaran Donasi (`payments.status`):
+   - `PENDING`  : Invoice terbuat, menunggu pembayaran QRIS dari donatur.
+   - `PAID`     : Pembayaran sukses divalidasi callback Duitku (dana sah).
+   - `FAILED`   : Transaksi ditolak atau error dari gateway.
+   - `EXPIRED`  : Batas waktu pemindaian QRIS terlampaui tanpa pembayaran.
+
+2. Status Pencairan Dana (`disbursements.status`):
+   - `pending`  : Permohonan pencairan diajukan, menunggu otorisasi admin.
+   - `approved` : Admin menyetujui dan memproses pengiriman dana ke mitra.
+   - `received` : Mitra lapangan telah mengonfirmasi bahwa dana masuk rekening.
+
+3. Status Distribusi Bantuan (`milestones.key`):
+   - `funds_received`   : Tahap 1 - Mitra menerima dana operasional.
+   - `goods_packed`     : Tahap 2 - Logistik/sembako dibeli dan dipaketkan.
+   - `in_transit`       : Tahap 3 - Armada logistik bergerak ke lokasi bencana.
+   - `arrived_at_posko` : Tahap 4 - Bantuan tiba di posko induk pengungsian.
+   - `handed_over`      : Tahap 5 - Bantuan diserahkan langsung ke tangan warga.
+   - `completed`        : Tahap 6 - Penyaluran tuntas dan posko ditutup.
+
+4. Status Bencana / Kampanye (`disasters.status`):
+   - `pending_verification` : Data mentah dari BMKG, dikarantina di admin panel.
+   - `admin_approved`       : Bencana diverifikasi, mitra ditugaskan, aktif di publik.
+   - `archived`             : Kampanye ditutup, LPJ final terbit, mode hanya-baca.
+
+
+7. EXPECTED FINAL PRODUCT (PROTOTIPE AKHIR HACKATHON)
+--------------------------------------------------------------------------------
+Bentuk konkret produk yang ditargetkan pada akhir hackathon adalah:
+"Aplikasi Web Responsif Tanggap Bencana & Donasi Terverifikasi yang Teruji End-to-End, 
+Dapat Diakses Secara Publik Melalui URL Demo, Serta Siap Diuji Secara Langsung oleh Dewan Juri."
+
+Komponen Hasil Akhir yang Ditargetkan:
+
++----+--------------------------------+--------------------+--------------------------------+
+| No | Komponen Produk Akhir          | Kesiapan Saat Audit| Status Target Hackathon        |
++----+--------------------------------+--------------------+--------------------------------+
+| 1  | Web App Donatur (Mobile-First) | 95% Selesai        | Siap Demo (Katalog & Donasi)   |
+| 2  | Ingesti BMKG Staged Flow       | 90% Selesai        | Siap Demo (Simulasi & Live)    |
+| 3  | Gateway Pembayaran QRIS Duitku | 90% Selesai        | Siap Demo (Sandbox Validated)  |
+| 4  | Portal Administrator Terpadu   | 90% Selesai        | Siap Demo (Full RBAC)          |
+| 5  | Portal Mitra Lapangan          | 85% Selesai        | Siap Demo (Konfirmasi & Foto)  |
+| 6  | 6-Milestone Logistics Tracker  | 90% Selesai        | Siap Demo (Timeline Interaktif)|
+| 7  | Laporan Transparansi Final/LPJ | 85% Selesai        | Siap Demo (Arsip & Ringkasan)  |
+| 8  | Deployment Cloud Publik        | Konfigurasi Siap   | Siap Demo (Vercel + Firebase)  |
++----+--------------------------------+--------------------+--------------------------------+
+
+Karakteristik Prototipe Hackathon vs Layanan Produksi Skala Besar:
+- Prototipe Hackathon:
+  * Menggunakan Duitku Sandbox Environment untuk memfasilitasi pengujian transaksi 
+    nyata tanpa memotong uang riil dewan juri/evaluator.
+  * Berfokus pada keandalan integritas data, ketepatan alur verifikasi, kemudahan navigasi, 
+    dan visualisasi transparansi logistik tanpa celah logika.
+- Layanan Produksi Skala Besar (Future Step):
+  * Membutuhkan perizinan resmi pengumpulan uang dan barang (PUB Kemensos RI), 
+    Duitku Production Credentials, audit penetrasi keamanan independen, 
+    dan SLA kemitraan hukum dengan lembaga relawan formal.
+
+
+8. INDIKATOR KEBERHASILAN PRODUK (PRODUCT SUCCESS METRICS)
+--------------------------------------------------------------------------------
+Indikator keberhasilan dirancang berdasarkan kriteria teknis dan operasional yang 
+dapat diverifikasi secara objektif tanpa manipulasi angka:
+
++----+-----------------------+--------------------+---------------------+--------------------+
+| No | Nama Metrik           | Metode Pengujian   | Kriteria Keberhasilan| Status Audit       |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M1 | Disaster Quarantine   | Inspeksi UI publik | Bencana baru BMKG   | TERVERIFIKASI      |
+|    | Enforcement           | sebelum verifikasi | TIDAK MUNCUL di     | (Kode query ketat  |
+|    |                       | admin              | katalog publik      | where status == app)|
++----+-----------------------+--------------------+---------------------+--------------------+
+| M2 | Mandatory Partner     | Percobaan approve  | Tombol approve      | TERVERIFIKASI      |
+|    | Assignment Integrity  | bencana tanpa      | disabled; sistem    | (Validasi form &   |
+|    |                       | memilih mitra      | menolak approval    | payload backend)   |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M3 | QRIS Invoice          | Create invoice via | API Duitku return   | TERVERIFIKASI      |
+|    | Generation Rate       | UI donasi          | qrString valid & QR | (Endpoint Express  |
+|    |                       |                    | ter-render di layar | Direct API SP OK)  |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M4 | Webhook Signature     | Simulasi callback  | Signature valid     | TERVERIFIKASI      |
+|    | & Idempotency         | dengan payload     | di-accept; callback | (HMAC check &      |
+|    |                       | ganda              | duplikat return 200 | payment.status gtd)|
+|    |                       |                    | tanpa saldo ganda   |                    |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M5 | Atomic Disbursement   | Submit pencairan   | Backend melempar    | TERVERIFIKASI      |
+|    | Balance Protection    | dana melebihi      | error saldo tidak   | (db.runTransaction |
+|    |                       | collectedAmount    | cukup; saldo aman   | proteksi overdraw) |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M6 | 6-Milestone Sequence  | Update milestone   | Setiap tahapan      | TERVERIFIKASI      |
+|    | Traceability          | bertahap via       | tercatat dengan jam,| (Koleksi sub-doc & |
+|    |                       | portal mitra       | foto & lokasi       | timeline terhubung)|
++----+-----------------------+--------------------+---------------------+--------------------+
+| M7 | Donor Privacy         | Audit tampilan     | Tidak ada email,    | TERVERIFIKASI      |
+|    | Preservation          | timeline publik    | nomor telepon, atau | (PII disaring pada |
+|    |                       |                    | saldo pribadi bocor | proyeksi data pub) |
++----+-----------------------+--------------------+---------------------+--------------------+
+| M8 | Mobile Responsive     | Pengujian Chrome   | Tidak ada layout    | TERVERIFIKASI      |
+|    | Visual Integrity      | DevTools viewport  | patah, overflow X,  | (Tailwind layout & |
+|    |                       | 360px - 414px      | atau tombol overlap | fixed navbar/modal)|
++----+-----------------------+--------------------+---------------------+--------------------+
+
+
+9. BATASAN DAN RISIKO PRODUK (LIMITATIONS & RISKS)
+--------------------------------------------------------------------------------
+9.1 Batasan Produk Saat Ini (Current Limitations)
+1. Gateway Pembayaran Berada dalam Mode Sandbox:
+   Pengujian QRIS menggunakan akun Duitku Sandbox, sehingga simulator pembayaran 
+   Duitku diperlukan untuk memicu callback status sukses saat demonstrasi.
+2. Transfer Bank ke Rekening Mitra Bersifat Pencatatan Sistem:
+   Sistem mencatat mutasi otorisasi pencairan dan konfirmasi mitra secara ketat di database, 
+   namun transfer uang riil antar-bank saat ini masih dilakukan melalui transfer 
+   manual oleh bendahara platform (belum terhubung ke Corporate Disbursement API).
+3. Dependensi Unggahan Foto pada Kuota Cloudinary:
+   Bukti foto milestone bergantung pada koneksi internet stabil di posko bencana 
+   dan kuota bandwidth gratis Cloudinary.
+4. Analisis Dampak Masih Bersifat Aturan Deterministik:
+   Klasifikasi urgensi bencana dihitung melalui formula magnitudo, kedalaman, 
+   dan parameter seismik BMKG di frontend/backend, bukan inferensi real-time model LLM.
+
+9.2 Risiko Pengujian Saat Demonstrasi & Rencana Mitigasi
+- Risiko 1: API BMKG mengalami timeout atau server maintenance saat live demo.
+  * Mitigasi: Tersedia fallback script injeksi mock candidate data bencana 
+    di lingkungan database pengujian tanpa mengubah aturan verifikasi admin.
+- Risiko 2: Keterlambatan Webhook Callback dari Duitku Sandbox ke localhost penguji.
+  * Mitigasi: Halaman status donasi dilengkapi background polling otomatis ke 
+    endpoint `/api/duitku/check-status/:merchantOrderId` sehingga status tetap 
+    diperbarui secara instan meskipun webhook jaringan lokal terhambat.
+- Risiko 3: Jaringan seluler lemah saat demonstrasi mobile view.
+  * Mitigasi: Seluruh aset statis dibundel secara efisien dengan Vite, ikon 
+    menggunakan SVG inline Lucide, dan state manajemen lokal caching via React Query / context.
+
+
+10. PRIORITAS PENGEMBANGAN (DEVELOPMENT PRIORITIES)
+--------------------------------------------------------------------------------
+Untuk mengoptimalkan sisa waktu persiapan kompetisi hackathon, skala prioritas 
+ditetapkan sebagai berikut:
+
+10.1 P0: Critical (Wajib Berfungsi Penuh untuk Kelayakan Demonstrasi)
+- [x] Alur Karantina BMKG -> Verifikasi Admin -> Assign Mitra -> Bencana Aktif.
+- [x] Alur Transaksi Donasi QRIS Duitku -> Generate QR -> Callback -> Status Sukses.
+- [x] Atomic Ledger Saldo Bencana (Donasi masuk menambah saldo, pencairan memvalidasi saldo).
+- [x] Portal Mitra Lapangan: Konfirmasi Penerimaan Dana & Update Milestone Bantuan.
+- [x] Public Disaster Timeline: Menampilkan perkembangan bantuan kepada donatur.
+
+10.2 P1: Important (Penyempurnaan Kualitas, Keamanan, dan Kerapian Sistem)
+- [x] UI Glassmorphism & Responsivitas Mobile pada seluruh formulir checkout.
+- [x] Filter status bencana di katalog donasi (Darurat Aktif, Selesai, Diarsipkan).
+- [x] Audit trail di Admin Portal untuk mencatat riwayat approval dan pencairan.
+- [ ] Penambahan preview gambar bukti dokumentasi lightbox di halaman timeline publik.
+- [ ] Tombol cetak / download PDF kuitansi donasi digital resmi pada halaman status donasi.
+
+10.3 P2: Optional (Dapat Ditunda Pasca-Hackathon / Fase Lanjutan)
+- [ ] Integrasi automated email invoice via Resend / Sendgrid API.
+- [ ] Otomasi pencairan dana langsung ke rekening bank mitra via Duitku Disbursement API.
+- [ ] Integrasi LLM generatif untuk penyusunan narasi otomatis siaran pers bencana.
+- [ ] Fitur multi-bahasa (Inggris / Indonesia) untuk donatur internasional.
+
+
+11. KESIMPULAN EXPECTED PRODUCT (PROPOSAL READINESS ANSWERS)
+--------------------------------------------------------------------------------
+Dokumen audit ini menjawab secara komprehensif 7 pertanyaan fundamental 
+bagian "Expected Product" dalam proposal hackathon nasional:
+
+1. Produk akhir apa yang dihasilkan?
+   Aplikasi web responsif "Bersama Kita" sebagai platform tanggap darurat dan 
+   donasi terverifikasi yang mengintegrasikan data BMKG, verifikasi otoritas admin, 
+   penugasan mitra lapangan resmi, donasi QRIS Duitku Direct API, serta pelacakan 
+   distribusi logistik bantuan 6 milestone transparan.
+
+2. Siapa yang akan menggunakan produk tersebut?
+   Tiga kelompok pengguna utama:
+   - Donatur (publik luas yang membutuhkan kemudahan berdonasi dan jaminan transparansi).
+   - Administrator (pengelola platform/otoritas yang memvalidasi data dan mengontrol dana).
+   - Mitra Lapangan (organisasi relawan resmi yang mengeksekusi dan melaporkan bantuan).
+
+3. Masalah apa yang diselesaikan dan apa manfaatnya?
+   Menyelesaikan masalah maraknya penggalangan dana fiktif (hoaks bencana), fenomena 
+   "Black Box Donation" (hilangnya jejak uang donatur), dan minimnya integrasi data 
+   BMKG dengan aksi nyata posko. Manfaat utamanya adalah memulihkan kepercayaan publik 
+   dan mempercepat mobilisasi bantuan logistik pada masa tanggap darurat.
+
+4. Apa fitur inti yang membentuk nilai utama produk?
+   - Karantina data BMKG dengan verifikasi manual dan mandatory partner assignment.
+   - Pembayaran QRIS instan ber-signature HMAC-SHA256 dengan biaya transparan 0,17%.
+   - Pencairan dana aman dengan pencegahan defisit melalui transaksi Firestore atomik.
+   - Pelaporan 6 milestone logistik oleh mitra posko dengan bukti foto dan geolokasi.
+   - Timeline kolektif publik dan Laporan Pertanggungjawaban (LPJ) terarsip terbuka.
+
+5. Bagaimana produk akan didemonstrasikan?
+   Melalui simulasi live demo interaktif end-to-end:
+   - Tahap 1: Admin mereview data gempa BMKG di admin portal, menetapkan mitra, dan menyetujui.
+   - Tahap 2: Penguji membuka katalog publik, memilih bencana, dan berdonasi via QRIS Duitku.
+   - Tahap 3: Simulator Duitku memicu callback -> saldo donasi bertambah seketika.
+   - Tahap 4: Admin menyetujui pencairan dana logistik posko melalui Disbursement Manager.
+   - Tahap 5: Mitra login, mengonfirmasi penerimaan dana, dan mengunggah foto progres logistik.
+   - Tahap 6: Penguji melihat timeline bantuan diperbarui secara transparan di ponsel donatur.
+
+6. Bagaimana keberhasilan produk akan diukur?
+   Diukur melalui 8 metrik teknis yang teruji: keberhasilan karantina data sebelum approval, 
+   ketiadaan kampanye tanpa mitra, keberhasilan render QRIS, keandalan tanda tangan webhook 
+   anti-duplikasi, integritas saldo atomik, kelengkapan 6 bukti milestone, perlindungan data 
+   pribadi donatur, serta responsivitas antarmuka pada perangkat mobile.
+
+7. Apa batasan yang diakui secara jujur?
+   Produk saat ini berada pada tahap prototipe hackathon berstatus sandbox payment gateway; 
+   pencairan bank ke mitra masih berupa pencatatan ledger sistem (bukan API payout otomatis); 
+   dan sistem memerlukan koneksi internet stabil bagi mitra lapangan di posko untuk mengunggah 
+   foto dokumentasi beresolusi tinggi.
+
+
+12. REFERENSI FILE DAN IMPLEMENTASI YANG DIAUDIT
+--------------------------------------------------------------------------------
+Berikut adalah berkas sumber rujukan utama yang diaudit dalam codebase:
+
+1. Modul Frontend & Antarmuka Pengguna:
+   - `src/pages/WideDisasterDashboard.tsx`   : Tampilan katalog donasi & filter bencana aktif.
+   - `src/pages/KatalogBMKGPage.tsx`          : Halaman edukasi & data gempabumi BMKG publik.
+   - `src/pages/SituationAnalysisPage.tsx`    : Analisis dampak bencana & visualisasi peta.
+   - `src/pages/TransactionDonatePage.tsx`    : Formulir pemilihan nominal & rincian donatur.
+   - `src/pages/TransactionCheckoutPage.tsx`  : Antarmuka pemindaian QRIS & hitung mundur.
+   - `src/pages/TransactionStatusPage.tsx`    : Bukti transaksi berhasil & status pembayaran.
+   - `src/pages/MyDonationsPage.tsx`          : Halaman riwayat donasi donatur terdaftar.
+   - `src/pages/TransparansiReportsPage.tsx`  : Publikasi arsip LPJ & rekapitulasi bantuan.
+
+2. Modul Administrator & Manajemen Mitra:
+   - `src/pages/AdminPortalView.tsx`          : Pusat kontrol admin (verifikasi, mitra, audit).
+   - `src/components/admin/BMKGVerificationCard.tsx` : Penelaahan BMKG & penugasan mitra wajib.
+   - `src/components/admin/DisbursementManager.tsx`  : Otorisasi dan pencatatan pencairan dana.
+   - `src/components/admin/AdminFinalReportPanel.tsx`: Penyusunan laporan akhir & penutupan posko.
+   - `src/components/admin/AdminPartnersView.tsx`    : Registrasi & pemantauan mitra lapangan.
+
+3. Modul Mitra Lapangan (Field Partner):
+   - `src/pages/PartnerDashboardView.tsx`     : Dashboard operasional posko mitra lapangan.
+   - `src/components/partner/DistributionProgressCard.tsx` : Manajemen 6 milestone & foto bukti.
+
+4. Modul Backend Express & Integrasi:
+   - `server/routes/bmkg.ts`                  : Proxy penarikan & sanitasi data gempabumi BMKG.
+   - `server/routes/duitku.ts`                : Create invoice QRIS, check-status, & webhook.
+   - `server/routes/fundraising.ts`           : Atomic disbursement transaction, closing & timeline.
+   - `server/routes/admin.ts`                 : Pengelolaan akun mitra via Firebase Admin SDK.
+   - `src/lib/fees.ts`                        : Formula transparan biaya transaksi QRIS (0,17%).
+
+5. Keamanan & Konfigurasi:
+   - `firestore.rules`                        : Kebijakan keamanan berbasis RBAC di Firestore.
+   - `AGENTS.md`                              : Aturan bisnis permanen platform & larangan auto-approve.
+   - `docs/hackaton/TECHNOLOGY_APPROACH.txt`  : Dokumen audit arsitektur teknologi pendukung.
+
+================================================================================
+               AKHIR DOKUMEN EXPECTED PRODUCT SPECIFICATION
+================================================================================
