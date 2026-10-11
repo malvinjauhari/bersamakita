@@ -5,6 +5,7 @@ import {
   subscribeAuthState,
   syncUserProfile,
   staffRoleForEmail,
+  completeGoogleRedirect,
   AppUser,
 } from '../../services/firebase/auth';
 import { UserProfile, UserRole } from '../../types';
@@ -23,7 +24,7 @@ interface AuthContextType {
   user: AppUser | null;
   profile: UserProfile | null;
   isGoogleAuthenticated: boolean;
-  loginGoogle: () => Promise<boolean>;
+  loginGoogle: () => Promise<void>;
   loginAsUser: (userParam: { uid: string; email: string; displayName: string; photoURL?: string }) => Promise<void>;
   logoutGoogle: () => Promise<void>;
   logout: () => Promise<void>; // Alias for user logout
@@ -69,6 +70,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     testConnection();
     ensureInitialSeed();
+
+    // Bersihkan sesi FIKTIF "Donatur Google" dari versi lama (fallback popup
+    // yang membuat uid palsu tidak terautentikasi → permission-denied di
+    // dashboard). Sesi ini tidak pernah dibuat lagi sejak beralih ke redirect.
+    try {
+      for (const key of [GOOGLE_SESSION_KEY, 'bersamakita_local_user']) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const uid: unknown = parsed?.user?.uid;
+          const email: unknown = parsed?.user?.email;
+          const isFake =
+            (typeof uid === 'string' && uid.startsWith('google-donatur-')) ||
+            email === 'donatur.google@bersamakita.org';
+          if (isFake) {
+            console.warn('Sesi fiktif Donatur Google dihapus:', key, uid || email);
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    } catch {
+      // abaikan JSON yang korup
+    }
+
+    // Selesaikan Google sign-in via redirect (hasil kembali dari
+    // accounts.google.com) dan buang pending redirect dari siklus sebelumnya.
+    completeGoogleRedirect().then((res) => {
+      if (!res.ok) {
+        console.warn('Redirect sign-in tidak selesai:', res.error);
+      }
+    });
 
     // Restore Google user session from cache if available
     const cachedGoogle = localStorage.getItem(GOOGLE_SESSION_KEY);
@@ -135,17 +167,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // User Authentication via Google Only
-  const loginGoogle = async (): Promise<boolean> => {
+  const loginGoogle = async (): Promise<void> => {
     setLoading(true);
     try {
-      const result = await loginWithGoogle();
-      setUser(result.user);
-      setProfile(result.profile);
-      localStorage.setItem(
-        GOOGLE_SESSION_KEY,
-        JSON.stringify({ user: result.user, profile: result.profile })
-      );
-      return !!result.wasFallback;
+      // Memulai Google sign-in via REDIRECT: halaman pindah ke Google lalu
+      // kembali ke app; sesi dibuat ulang oleh subscribeAuthState. Jangan
+      // navigate/set user di sini — itu dilakukan setelah balik dari Google.
+      await loginWithGoogle();
     } finally {
       setLoading(false);
     }

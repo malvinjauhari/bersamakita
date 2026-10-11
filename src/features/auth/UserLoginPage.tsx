@@ -40,8 +40,10 @@ export const UserLoginPage: React.FC = () => {
     setLoading(true);
     try {
       await loginGoogle();
-      showToast('Berhasil masuk sebagai Donatur dengan Google', 'success');
-      navigate(redirectPath);
+      // Redirect ke Google sudah dimulai; jangan navigate manual — browser
+      // memuat halaman Google lalu kembali ke app (sesi otomatis lewat
+      // onAuthStateChanged, dan efek `if (user)` di bawah yang menavigasi).
+      showToast('Mengalihkan ke Google untuk masuk…', 'info');
     } catch (err: any) {
       showToast('Gagal masuk: ' + (err.message || 'Silakan coba lagi'), 'error');
     } finally {

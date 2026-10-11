@@ -1,5 +1,6 @@
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as fbSignOut,
@@ -19,62 +20,64 @@ export interface AppUser {
   providerId?: string;
 }
 
-// Google Login: STRICTLY FOR USER / DONATUR ONLY per user instruction
-export async function loginWithGoogle(): Promise<{ user: AppUser; profile: UserProfile; wasFallback?: boolean }> {
+// Google Login: STRICTLY FOR USER / DONATUR ONLY per user instruction.
+// Memakai REDIRECT sign-in (bukan popup) agar TIDAK diblokir popup blocker
+// (`auth/popup-blocked`) maupun ekstensi pemblokir (`ERR_BLOCKED_BY_CLIENT`).
+// Setelah redirect, hasil ditangkap oleh `completeGoogleRedirect()` (dipanggil
+// saat AuthContext mount) dan sesi pengguna dibuat oleh `onAuthStateChanged`.
+// TIDAK ADA LAGI sesi fiktif "Donatur Google": fallback lama membuat uid palsu
+// yang tidak terautentikasi (permission-denied di dashboard). Kegagalan kini
+// dilempar dengan pesan yang jujur ke UI.
+export async function loginWithGoogle(): Promise<void> {
   try {
-    const cred = await signInWithPopup(auth, googleProvider);
-    const fbUser = cred.user;
-    // Do not force 'user' role so that Google Admin (contohasdf@gmail.com) gets their proper admin role
-    const profile = await syncUserProfile(fbUser);
-    const appUser: AppUser = {
-      uid: fbUser.uid,
-      email: fbUser.email,
-      displayName: fbUser.displayName,
-      photoURL: fbUser.photoURL,
-      providerId: 'google.com',
-    };
-    localStorage.setItem('bersamakita_local_user', JSON.stringify({ user: appUser, profile }));
-    return { user: appUser, profile, wasFallback: false };
+    await signInWithRedirect(auth, googleProvider);
   } catch (error: any) {
-    console.warn('Google Sign In Notice:', error?.code, error?.message);
+    console.error('Google redirect sign-in error:', error?.code, error?.message);
+    throw new Error(googleSignInErrorMessage(error));
+  }
+}
 
-    // Fallback if domain is not yet whitelisted in Firebase Console
-    if (
-      error.code === 'auth/unauthorized-domain' ||
-      error.message?.includes('unauthorized-domain') ||
-      error.code === 'auth/popup-blocked' ||
-      error.code === 'auth/popup-closed-by-user' ||
-      error.code === 'auth/cancelled-popup-request'
-    ) {
-      const fallbackUser: AppUser = {
-        uid: 'google-donatur-' + Math.floor(100000 + Math.random() * 900000),
-        email: 'donatur.google@bersamakita.org',
-        displayName: 'Donatur Google',
-        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-        providerId: 'google.com',
-      };
+/** Pesan error Google Sign-In yang ramah pengguna (bukan error mentah). */
+export function googleSignInErrorMessage(error: any): string {
+  const code = error?.code || '';
+  switch (code) {
+    case 'auth/unauthorized-domain':
+      return 'Domain situs ini belum terdaftar untuk Google Sign-In. Hubungi admin Bersama Kita.';
+    case 'auth/popup-blocked':
+      return 'Pop-up Google diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'Login Google dibatalkan.';
+    case 'auth/operation-not-supported-in-this-environment':
+      return 'Google Sign-In tidak didukung di lingkungan ini (kemungkinan dibuka di panel preview/iframe). Buka di jendela browser penuh.';
+    case 'auth/account-exists-with-different-credential':
+      return 'Email ini sudah terdaftar dengan metode masuk lain.';
+    case 'auth/network-request-failed':
+      return 'Koneksi jaringan bermasalah. Periksa internet lalu coba lagi.';
+    default:
+      return code ? `Google Sign-In gagal (${code}). Silakan coba lagi.` : 'Google Sign-In gagal. Silakan coba lagi.';
+  }
+}
 
-      const now = new Date().toISOString();
-      const profile: UserProfile = {
-        id: fallbackUser.uid,
-        email: fallbackUser.email || 'donatur.google@bersamakita.org',
-        displayName: fallbackUser.displayName || 'Donatur Google',
-        photoURL: fallbackUser.photoURL || undefined,
-        role: 'user', // Strictly user
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      try {
-        await setDoc(doc(db, 'users', fallbackUser.uid), profile);
-      } catch (e) {
-        console.warn('Fallback profile saved locally:', e);
-      }
-
-      localStorage.setItem('bersamakita_local_user', JSON.stringify({ user: fallbackUser, profile }));
-      return { user: fallbackUser, profile, wasFallback: true };
+/**
+ * Menyelesaikan hasil Google sign-in via redirect — dipanggil SEKALI saat
+ * AuthContext mount. Membuang "pending redirect" dari siklus sebelumnya dan
+ * mencatat error balik-kembali (mis. akun sudah terdaftar dgn metode lain).
+ * Sesi pengguna sungguhan di-mantapkan oleh `onAuthStateChanged`.
+ */
+export async function completeGoogleRedirect(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const cred = await getRedirectResult(auth);
+    if (cred?.user) {
+      console.info('Google redirect sign-in selesai utk:', cred.user.email);
     }
-    throw error;
+    return { ok: true };
+  } catch (error: any) {
+    if (error?.code === 'auth/cancelled-popup-request' || error?.code === 'auth/popup-closed-by-user') {
+      return { ok: true }; // pengguna membatalkan di halaman Google — bukan error
+    }
+    console.warn('Google redirect result error:', error?.code, error?.message);
+    return { ok: false, error: googleSignInErrorMessage(error) };
   }
 }
 
