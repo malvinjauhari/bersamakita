@@ -1,7 +1,5 @@
 import {
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as fbSignOut,
@@ -23,13 +21,10 @@ export interface AppUser {
 }
 
 // Google Login: STRICTLY FOR USER / DONATUR ONLY per user instruction.
-// HYBRID popup-first: popup utama (UX mulus, seperti semula). Bila popup
-// DIBLOKIR browser (`auth/popup-blocked` — setting per-situs, in-app
-// browser, atau pemblokir), OTOMATIS fallback ke `signInWithRedirect`
-// (halaman pindah ke Google lalu kembali; hasilnya ditangkap
-// `completeGoogleRedirect()` saat mount). Fallback ini yang membuat login
-// tetap bisa di domain Vercel tanpa user harus mengubah setting pop-up.
-// TIDAK ADA sesi fiktif "Donatur Google": kegagalan lain dilempar jujur ke UI.
+// POPUP MURNI — tidak ada fallback redirect. Jika popup gagal (mis.
+// `auth/popup-blocked`), kegagalan dibiarkan gagal dengan pesan jujur ke UI
+// agar user mengizinkan pop-up untuk situs ini. TIDAK ADA sesi fiktif
+// "Donatur Google". Keputusan owner: lupakan auth pakai redirect.
 export async function loginWithGoogle(): Promise<{ user: AppUser; profile: UserProfile }> {
   try {
     const cred = await signInWithPopup(auth, googleProvider);
@@ -46,50 +41,8 @@ export async function loginWithGoogle(): Promise<{ user: AppUser; profile: UserP
     safeSet('bersamakita_local_user', JSON.stringify({ user: appUser, profile }));
     return { user: appUser, profile };
   } catch (error: any) {
-    // Popup diblokir → fallback otomatis ke redirect (halaman pindah ke
-    // Google). Promise ini tidak resolve normal karena browser navigasi;
-    // sesi terbentuk via completeGoogleRedirect() + onAuthStateChanged.
-    if (
-      error?.code === 'auth/popup-blocked' ||
-      error?.code === 'auth/operation-not-supported-in-this-environment'
-    ) {
-      console.warn('Popup Google diblokir, fallback otomatis ke redirect:', error?.code);
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        // Navigasi dimulai — eksekusi berhenti di sini (halaman unload).
-        // Return di bawah hanya utk menenangkan type-checker.
-        return new Promise(() => {});
-      } catch (redirErr: any) {
-        console.warn('Google redirect fallback error:', redirErr?.code, redirErr?.message);
-        throw new Error(googleSignInErrorMessage(redirErr));
-      }
-    }
     console.warn('Google Sign In Notice:', error?.code, error?.message);
     throw new Error(googleSignInErrorMessage(error));
-  }
-}
-
-/**
- * Menyelesaikan hasil Google sign-in via redirect (dipakai saat fallback
- * popup→redirect aktif) — dipanggil SEKALI saat AuthContext mount.
- * PENTING: `getRedirectResult` hanya bisa dikonsumsi SEKALI, jadi user yang
- * didapat dikembalikan langsung ke pemanggil untuk eager-sync (jangan panggil
- * `getRedirectResult` dua kali — panggilan kedua selalu null).
- */
-export async function completeGoogleRedirect(): Promise<{ ok: boolean; error?: string; fbUser?: FirebaseUser }> {
-  try {
-    const cred = await getRedirectResult(auth);
-    if (cred?.user) {
-      console.info('Google redirect sign-in selesai utk:', cred.user.email);
-      return { ok: true, fbUser: cred.user };
-    }
-    return { ok: true };
-  } catch (error: any) {
-    if (error?.code === 'auth/cancelled-popup-request' || error?.code === 'auth/popup-closed-by-user') {
-      return { ok: true }; // pengguna membatalkan di halaman Google — bukan error
-    }
-    console.warn('Google redirect result error:', error?.code, error?.message);
-    return { ok: false, error: googleSignInErrorMessage(error) };
   }
 }
 
