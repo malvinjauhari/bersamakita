@@ -72,6 +72,8 @@ export interface Disaster {
   verificationMethod: VerificationMethod;
   partnerId?: string;
   partnerName?: string;
+  /** Target penggalangan dana khusus bencana (Rp). Kosong/absent → default Rp50.000.000. */
+  fundingTarget?: number;
   verifiedAt?: string;
   publishedAt?: string;
   notes?: string;
@@ -305,4 +307,41 @@ export interface AuditLog {
   before?: any;
   after?: any;
   timestamp: string;
+}
+
+/**
+ * Progres fundraising KOLEKTIF per bencana — diagregasi SERVER-SIDE oleh
+ * `GET /api/fundraising/summary` (Firebase Admin SDK) dari donations + payments
+ * berstatus `paid` dan disbursements. Identik untuk semua akun (guest/user/
+ * admin/partner), anti-manipulasi oleh client.
+ */
+export interface FundraisingTotals {
+  collected: number;
+  adminFeeTotal: number;
+  donationCount: number;
+  disbursed: number;
+  inflight: number;
+  remaining: number;
+}
+
+export interface FundraisingDisaster {
+  disasterId: string;
+  disasterTitle: string;
+  status: string;
+  fundingTarget: number;
+  partnerId: string | null;
+  partnerName: string | null;
+  collected: number;
+  adminFeeTotal: number;
+  donationCount: number;
+  disbursed: number;
+  inflight: number;
+  remaining: number;
+}
+
+export interface FundraisingSummary {
+  generatedAt: string;
+  adminFeeRate: number;
+  totals: FundraisingTotals;
+  disasters: FundraisingDisaster[];
 }

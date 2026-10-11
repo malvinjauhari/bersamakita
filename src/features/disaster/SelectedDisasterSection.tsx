@@ -18,7 +18,9 @@ export const SelectedDisasterSection: React.FC<SelectedDisasterSectionProps> = (
   partner,
   onDonateNow,
 }) => {
-  const targetNeed = FUNDRAISING_TARGET;
+  // Target penggalangan per bencana (opsional di `disasters.fundingTarget`),
+  // fallback ke target default Rp50jt untuk bencana lama.
+  const targetNeed = Number(disaster.fundingTarget) || FUNDRAISING_TARGET;
   const percentage = Math.min(100, Math.round((collectedAmount / targetNeed) * 100));
 
   return (

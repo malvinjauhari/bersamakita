@@ -7,17 +7,17 @@ import {
   Radio,
   ShieldCheck,
 } from 'lucide-react';
-import { Disaster, Donation, DistributionReport, Partner } from '../../types';
+import { Disaster, DistributionReport, Partner } from '../../types';
 import { EarthquakeCard } from './EarthquakeCard';
 import { EarthquakeMap } from './EarthquakeMap';
 import { SelectedDisasterSection } from './SelectedDisasterSection';
 import { AllocationTransparencySection } from './AllocationTransparencySection';
 import { AnalisisSituasiModal } from './AnalisisSituasiModal';
 import { useAuth } from '../auth/AuthContext';
+import { useFundraisingSummary } from '../../hooks/useFundraisingSummary';
 
 interface WideDisasterDashboardProps {
   disasters: Disaster[];
-  donations: Donation[];
   reports: DistributionReport[];
   partners: Partner[];
   onDonateDisaster: (disasterId: string) => void;
@@ -28,7 +28,6 @@ interface WideDisasterDashboardProps {
 
 export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
   disasters,
-  donations,
   reports,
   partners,
   onDonateDisaster,
@@ -38,6 +37,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { getDisasterStats } = useFundraisingSummary();
   const [selectedDisasterId, setSelectedDisasterId] = useState<string>(disasters[0]?.id || '');
   const [analyzingDisaster, setAnalyzingDisaster] = useState<Disaster | null>(null);
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -64,14 +64,11 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
     }
   };
 
-  // Compute donation stats per disaster from live donations
-  const getDisasterDonations = (disasterId: string) => {
-    const matched = donations.filter((d) => d.disasterId === disasterId && d.status === 'paid');
-    const total = matched.reduce((sum, d) => sum + d.amount, 0);
-    return { total, count: matched.length };
-  };
-
-  const selectedStats = activeDisaster ? getDisasterDonations(activeDisaster.id) : { total: 0, count: 0 };
+  // Progres donasi diambil dari agregasi SERVER (GET /api/fundraising/summary)
+  // — identik untuk semua akun, bukan dari donations user sendiri.
+  const selectedStats = activeDisaster
+    ? getDisasterStats(activeDisaster.id)
+    : { total: 0, count: 0, target: 0 };
 
   return (
     <div className="space-y-10">
@@ -221,7 +218,7 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
                 </div>
               ) : (
                 publishedDisasters.map((disaster) => {
-                  const stats = getDisasterDonations(disaster.id);
+                  const stats = getDisasterStats(disaster.id);
                 const isSelected = activeDisaster?.id === disaster.id;
 
                 return (

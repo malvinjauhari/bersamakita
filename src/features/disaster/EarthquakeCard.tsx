@@ -31,7 +31,10 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
   const magNum = parseFloat(disaster.magnitude) || 5.0;
   const isUrgent = magNum >= 5.5;
   const isHandled = magNum >= 5.0 && magNum < 5.5;
-  const percentage = Math.min(100, Math.round((collectedAmount / FUNDRAISING_TARGET) * 100));
+  // Target penggalangan per bencana (opsional di `disasters.fundingTarget`),
+  // fallback ke target default Rp50jt.
+  const target = Number(disaster.fundingTarget) || FUNDRAISING_TARGET;
+  const percentage = Math.min(100, Math.round((collectedAmount / target) * 100));
 
   const statusPill = isUrgent
     ? { label: 'Mendesak', className: 'bg-rose-100 text-rose-800 border-rose-200' }
@@ -100,7 +103,7 @@ export const EarthquakeCard: React.FC<EarthquakeCardProps> = ({
           </div>
           <div className="text-right">
             <span className="text-xs font-bold text-slate-700">{percentage}%</span>
-            <span className="text-[11px] text-slate-600 block">dari {formatRupiah(FUNDRAISING_TARGET)}</span>
+            <span className="text-[11px] text-slate-600 block">dari {formatRupiah(target)}</span>
           </div>
         </div>
 

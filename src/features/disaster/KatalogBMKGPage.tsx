@@ -1,21 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Radio, ArrowLeft, RefreshCw } from 'lucide-react';
-import { Disaster, Donation, Partner } from '../../types';
+import { Disaster, Partner } from '../../types';
 import { DisasterList } from './DisasterList';
 import { WideNavbar } from '../../components/layout/WideNavbar';
 import { WideFooter } from '../../components/layout/WideFooter';
 
 interface KatalogBMKGPageProps {
   disasters: Disaster[];
-  donations: Donation[];
   partners: Partner[];
   onRefreshBMKG: () => Promise<void>;
 }
 
 export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
   disasters,
-  donations,
   partners,
   onRefreshBMKG,
 }) => {
@@ -68,7 +66,6 @@ export const KatalogBMKGPage: React.FC<KatalogBMKGPageProps> = ({
         {/* Disaster List */}
         <DisasterList
           disasters={disasters}
-          donations={donations}
           partners={partners}
           onDonateForDisaster={(disasterId) => {
             navigate(`/transaction/donate/${disasterId}`);

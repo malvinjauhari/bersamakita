@@ -14,12 +14,14 @@ import {
   Building,
   PauseCircle,
   Info,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 import { Disaster, Donation } from '../../types';
-import { formatRupiah, formatRelativeTime } from '../../lib/utils';
+import { formatRupiah, formatRelativeTime, FUNDRAISING_TARGET } from '../../lib/utils';
 import { calculateAdminFee, calculateTotalPayment } from '../../lib/fees';
+import { useFundraisingSummary } from '../../hooks/useFundraisingSummary';
 import {
   createDonation,
   savePaymentRecord,
@@ -97,6 +99,9 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
 
   const selectedDisaster = listedDisaster ?? remoteDisaster;
   const isClosed = selectedDisaster?.status === 'archived';
+
+  // Progres donasi KOLEKTIF per bencana (server-side): identik untuk semua akun.
+  const { getDisasterStats } = useFundraisingSummary();
 
   const renderPageChrome = (children: React.ReactNode) => (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-800 selection:bg-[#0C8F63] selection:text-white">
@@ -498,6 +503,45 @@ export const TransactionDonatePage: React.FC<TransactionDonatePageProps> = ({
                     <span>•</span>
                     <span className="font-semibold text-emerald-700">MAG {selectedDisaster.magnitude}</span>
                   </div>
+
+                  {/* Progres dana kolektif — sumber: GET /api/fundraising/summary */}
+                  {(() => {
+                    const stats = getDisasterStats(selectedDisaster.id);
+                    const target = stats.target || FUNDRAISING_TARGET;
+                    const percent = Math.min(100, Math.round((stats.total / target) * 100));
+                    return (
+                      <div className="pt-2 space-y-2 border-t border-slate-100">
+                        <div className="flex items-end justify-between gap-2 text-xs">
+                          <div>
+                            <span className="text-[10px] font-semibold text-slate-500 block">
+                              Dana Terkumpul (Semua Donatur)
+                            </span>
+                            <span className="font-mono text-sm font-extrabold text-emerald-700">
+                              {formatRupiah(stats.total)}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-slate-700 block">{percent}%</span>
+                            <span className="text-[10px] text-slate-500">
+                              dari {formatRupiah(target)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-700 ease-out"
+                            style={{ width: `${Math.max(3, percent)}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                          <Users className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>
+                            <strong className="text-slate-700">{stats.count} donatur</strong> telah berpartisipasi
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 

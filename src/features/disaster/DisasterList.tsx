@@ -11,7 +11,8 @@ import {
   Users,
   CircleAlert,
 } from 'lucide-react';
-import { Disaster, Donation, Partner } from '../../types';
+import { Disaster, Partner } from '../../types';
+import { useFundraisingSummary } from '../../hooks/useFundraisingSummary';
 import {
   formatRupiah,
   formatRelativeTime,
@@ -21,29 +22,22 @@ import {
 
 interface DisasterListProps {
   disasters: Disaster[];
-  donations: Donation[];
   partners: Partner[];
   onDonateForDisaster: (disasterId: string) => void;
 }
 
 export const DisasterList: React.FC<DisasterListProps> = ({
   disasters,
-  donations,
   partners,
   onDonateForDisaster,
 }) => {
   const navigate = useNavigate();
+  const { getDisasterStats } = useFundraisingSummary();
 
   // Strict rule: user only sees approved / published disasters
   const publishedDisasters = disasters.filter((d) =>
     ['admin_approved', 'auto_approved', 'published'].includes(d.status)
   );
-
-  const getDisasterDonations = (disasterId: string) => {
-    const matched = donations.filter((d) => d.disasterId === disasterId && d.status === 'paid');
-    const total = matched.reduce((sum, d) => sum + d.amount, 0);
-    return { total, count: matched.length };
-  };
 
   return (
     <div className="space-y-6">
@@ -71,14 +65,12 @@ export const DisasterList: React.FC<DisasterListProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {publishedDisasters.map((disaster) => {
-            const stats = getDisasterDonations(disaster.id);
+            const stats = getDisasterStats(disaster.id);
+            const target = stats.target || FUNDRAISING_TARGET;
             const magNum = parseFloat(disaster.magnitude) || 5.0;
             const isUrgent = magNum >= 5.5;
             const isHandled = magNum >= 5.0 && magNum < 5.5;
-            const percentage = Math.min(
-              100,
-              Math.round((stats.total / FUNDRAISING_TARGET) * 100)
-            );
+            const percentage = Math.min(100, Math.round((stats.total / target) * 100));
             const statusPill = isUrgent
               ? { label: 'Mendesak', className: 'bg-rose-100 text-rose-800 border-rose-200' }
               : isHandled
@@ -140,7 +132,7 @@ export const DisasterList: React.FC<DisasterListProps> = ({
                     <div className="text-right">
                       <span className="text-xs font-bold text-slate-700">{percentage}%</span>
                       <span className="text-[11px] text-slate-600 block">
-                        dari {formatRupiah(FUNDRAISING_TARGET)}
+                        dari {formatRupiah(target)}
                       </span>
                     </div>
                   </div>

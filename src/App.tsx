@@ -57,14 +57,12 @@ import {
 // User Dashboard View Wrapper
 function UserDashboardPage({
   disasters,
-  donations,
   reports,
   partners,
   dataLoading,
   onRefreshBMKG,
 }: {
   disasters: Disaster[];
-  donations: Donation[];
   reports: DistributionReport[];
   partners: Partner[];
   dataLoading: boolean;
@@ -91,7 +89,6 @@ function UserDashboardPage({
         ) : (
           <WideDisasterDashboard
             disasters={disasters}
-            donations={donations}
             reports={reports}
             partners={partners}
             onDonateDisaster={(disasterId) => {
@@ -346,7 +343,6 @@ function MainRoutes() {
         element={
           <UserDashboardPage
             disasters={disasters}
-            donations={donations}
             reports={reports}
             partners={partners}
             dataLoading={dataLoading}
@@ -379,7 +375,6 @@ function MainRoutes() {
         element={
           <KatalogBMKGPage
             disasters={disasters}
-            donations={donations}
             partners={partners}
             onRefreshBMKG={handleUserRefreshBMKG}
           />
