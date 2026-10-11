@@ -166,13 +166,19 @@ function MainRoutes() {
       try {
         const filter = isAdminAuthenticated ? 'all' : 'published';
         let disasterList = await getDisasters(filter);
-        
-
-
         setDisasters(disasterList);
       } catch (err) {
         console.warn('Disasters fetch error:', err);
-        setDisasters([]);
+        // Sesuai rules: 'all' (tanpa filter status) hanya bisa dibaca token
+        // admin sungguhan. Jika gagal (mis. role session tidak sinkron dengan
+        // token Firebase yg aktif), jangan biarkan daftar kosong — kembali ke daftar publik.
+        try {
+          const fallback = await getDisasters('published');
+          setDisasters(fallback);
+        } catch (err2) {
+          console.warn('Disasters fallback fetch error:', err2);
+          setDisasters([]);
+        }
       }
 
       // 3. Fetch Partners

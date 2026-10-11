@@ -86,6 +86,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Subscribe ONLY to Firebase Google Auth state for User
     const unsubscribe = subscribeAuthState(async (fbUser) => {
       if (fbUser) {
+        // Rekonsiliasi session staff vs Firebase user aktif. Mencegah mismatch
+        // "flag admin stale + token non-admin" (staffSession admin tertinggal di
+        // localStorage sementara akun yg sign-in adalah Google biasa), yang semula
+        // memicu permission-denied di pool check & getDisasters('all') utk user biasa.
+        if (fbUser.email) {
+          setStaffSession((prev) => {
+            if (prev && prev.email !== fbUser.email) {
+              console.warn('Staff session dibersihkan (tidak sinkron dgn akun aktif):', prev.email);
+              localStorage.removeItem(STAFF_SESSION_KEY);
+              return null;
+            }
+            return prev;
+          });
+        }
         // Only accept if not an internal protonmail staff email in firebase auth
         const appUser: AppUser = {
           uid: fbUser.uid,
