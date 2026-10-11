@@ -42,6 +42,7 @@
   - **Fase 6.3 (hotfix)**: Login Google diganti **popup → redirect** (`signInWithRedirect` + `completeGoogleRedirect` saat mount) — kebal popup blocker (`auth/popup-blocked`) & ekstensi pemblokir (`ERR_BLOCKED_BY_CLIENT`); **fallback sesi fiktif "Donatur Google" dihapus** (sebelumnya membuat uid palsu → permission-denied di dashboard) + purge otomatis sesi fiktif lama; error sign-in kini tampil jujur lewat `googleSignInErrorMessage`.
   - **Fase 6.4 (hotfix)**: Hardening storage pasca-redirect — `src/lib/safe-storage.ts` (seluruh akses storage tidak pernah throw), `ensureAuthPersistence()` berlapis (local → session → memory), probe storage + flag `storageBlocked`/`redirectError` di `AuthContext`, banner panduan di `UserLoginPage`. Mengatasi `Uncaught (in promise) Access to storage is not allowed from this context` + stuck di halaman login saat site storage diblokir.
   - **Fase 6.5 (revert, atas permintaan owner)**: login Google kembali ke **popup** (kode auth `9ab15a7`) — tanpa navigasi halaman penuh; sesi fiktif tetap dihapus (error popup jujur via `googleSignInErrorMessage`); safe-storage wrapper dipertahankan; mesin redirect (`completeGoogleRedirect`, `ensureAuthPersistence`, banner storage) dihapus.
+  - **Fase 6.6**: hybrid popup-first + **fallback otomatis ke redirect** saat `auth/popup-blocked` (domain Vercel diblokir popup per-situs) — `completeGoogleRedirect()` konsumsi-tunggal + eager-sync saat mount.
 
 ## Outstanding Issues
 

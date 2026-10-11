@@ -5,6 +5,7 @@ import {
   subscribeAuthState,
   syncUserProfile,
   staffRoleForEmail,
+  completeGoogleRedirect,
   AppUser,
 } from '../../services/firebase/auth';
 import { UserProfile, UserRole } from '../../types';
@@ -70,6 +71,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     testConnection();
     ensureInitialSeed();
+
+    // Selesaikan fallback popup→redirect (jika popup diblokir saat klik
+    // login, browser kembali dari Google ke halaman ini). Hasil redirect
+    // hanya bisa dikonsumsi SEKALI — user langsung di-eager-sync di sini
+    // agar auto-navigate ke dashboard tidak menunggu onAuthStateChanged.
+    // Bila tidak ada redirect (jalur popup normal), ini no-op.
+    completeGoogleRedirect().then(async (res) => {
+      if (!res.ok) {
+        console.warn('Redirect sign-in tidak selesai:', res.error);
+        return;
+      }
+      const fbUser = res.fbUser;
+      if (!fbUser) return;
+      const appUser: AppUser = {
+        uid: fbUser.uid,
+        email: fbUser.email,
+        displayName: fbUser.displayName,
+        photoURL: fbUser.photoURL,
+      };
+      setUser(appUser);
+      try {
+        const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
+        setProfile(prof);
+        safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
+      } catch (e) {
+        console.warn('syncUserProfile post-redirect error:', e);
+      }
+      setLoading(false);
+    });
 
     // Restore Google user session from cache if available
     const cachedGoogle = safeGet(GOOGLE_SESSION_KEY);
