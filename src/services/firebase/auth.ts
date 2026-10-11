@@ -1,26 +1,16 @@
 import {
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as fbSignOut,
   onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence,
-  inMemoryPersistence,
   User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../../config/firebase';
 import { UserProfile, UserRole } from '../../types';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
-import {
-  safeSet,
-  safeRemove,
-  isStorageBlockedError,
-  STORAGE_BLOCKED_MESSAGE,
-} from '../../lib/safe-storage';
+import { safeSet, safeRemove, isStorageBlockedError, STORAGE_BLOCKED_MESSAGE } from '../../lib/safe-storage';
 
 export interface AppUser {
   uid: string;
@@ -31,18 +21,28 @@ export interface AppUser {
 }
 
 // Google Login: STRICTLY FOR USER / DONATUR ONLY per user instruction.
-// Memakai REDIRECT sign-in (bukan popup) agar TIDAK diblokir popup blocker
-// (`auth/popup-blocked`) maupun ekstensi pemblokir (`ERR_BLOCKED_BY_CLIENT`).
-// Setelah redirect, hasil ditangkap oleh `completeGoogleRedirect()` (dipanggil
-// saat AuthContext mount) dan sesi pengguna dibuat oleh `onAuthStateChanged`.
-// TIDAK ADA LAGI sesi fiktif "Donatur Google": fallback lama membuat uid palsu
-// yang tidak terautentikasi (permission-denied di dashboard). Kegagalan kini
-// dilempar dengan pesan yang jujur ke UI.
-export async function loginWithGoogle(): Promise<void> {
+// Memakai POPUP sign-in (kembali seperti sebelum eksperimen redirect).
+// TIDAK ADA sesi fiktif "Donatur Google": kegagalan popup (mis.
+// `auth/popup-blocked` oleh pemblokir browser) dilempar sebagai error jujur
+// ke UI agar user mengizinkan pop-up untuk situs ini — bukan diam-diam
+// masuk sebagai akun palsu yang memicu permission-denied di dashboard.
+export async function loginWithGoogle(): Promise<{ user: AppUser; profile: UserProfile }> {
   try {
-    await signInWithRedirect(auth, googleProvider);
+    const cred = await signInWithPopup(auth, googleProvider);
+    const fbUser = cred.user;
+    // Do not force 'user' role so that Google Admin (contohasdf@gmail.com) gets their proper admin role
+    const profile = await syncUserProfile(fbUser);
+    const appUser: AppUser = {
+      uid: fbUser.uid,
+      email: fbUser.email,
+      displayName: fbUser.displayName,
+      photoURL: fbUser.photoURL,
+      providerId: 'google.com',
+    };
+    safeSet('bersamakita_local_user', JSON.stringify({ user: appUser, profile }));
+    return { user: appUser, profile };
   } catch (error: any) {
-    console.error('Google redirect sign-in error:', error?.code, error?.message);
+    console.warn('Google Sign In Notice:', error?.code, error?.message);
     throw new Error(googleSignInErrorMessage(error));
   }
 }
@@ -69,65 +69,6 @@ export function googleSignInErrorMessage(error: any): string {
       return 'Koneksi jaringan bermasalah. Periksa internet lalu coba lagi.';
     default:
       return code ? `Google Sign-In gagal (${code}). Silakan coba lagi.` : 'Google Sign-In gagal. Silakan coba lagi.';
-  }
-}
-
-/**
- * Menegakkan persistensi Firebase Auth dengan fallback berlapis:
- * browserLocal (IndexedDB) → browserSession (tab) → inMemory.
- * Di konteks yang memblokir storage (adblock/privacy, iframe sandbox),
- * level pertama melempar — fallback dicoba agar KEGAGALAN TERTANGKAP dan
- * dilaporkan, bukan menjadi `Uncaught (in promise)`.
- *
- * CATATAN: redirect sign-in WAJIB persistence non-memory (hasil redirect
- * dibaca dari storage setelah navigasi penuh). Jika hanya inMemory yang
- * tersedia, login redirect tetap tidak bisa pulih → `storageBlocked: true`
- * agar UI menampilkan panduan, bukan hanging di halaman login.
- */
-export async function ensureAuthPersistence(): Promise<{
-  level: 'local' | 'session' | 'memory' | 'unavailable';
-  storageBlocked: boolean;
-}> {
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-    return { level: 'local', storageBlocked: false };
-  } catch (e1: any) {
-    console.warn('Auth persistence (local) tidak tersedia:', e1?.code || e1?.message);
-    try {
-      await setPersistence(auth, browserSessionPersistence);
-      return { level: 'session', storageBlocked: isStorageBlockedError(e1) };
-    } catch (e2: any) {
-      console.warn('Auth persistence (session) tidak tersedia:', e2?.code || e2?.message);
-      try {
-        await setPersistence(auth, inMemoryPersistence);
-        return { level: 'memory', storageBlocked: true };
-      } catch (e3: any) {
-        console.error('Auth persistence gagal total:', e3?.code || e3?.message);
-        return { level: 'unavailable', storageBlocked: true };
-      }
-    }
-  }
-}
-
-/**
- * Menyelesaikan hasil Google sign-in via redirect — dipanggil SEKALI saat
- * AuthContext mount. Membuang "pending redirect" dari siklus sebelumnya dan
- * mencatat error balik-kembali (mis. akun sudah terdaftar dgn metode lain).
- * Sesi pengguna sungguhan di-mantapkan oleh `onAuthStateChanged`.
- */
-export async function completeGoogleRedirect(): Promise<{ ok: boolean; error?: string; storageBlocked?: boolean }> {
-  try {
-    const cred = await getRedirectResult(auth);
-    if (cred?.user) {
-      console.info('Google redirect sign-in selesai utk:', cred.user.email);
-    }
-    return { ok: true };
-  } catch (error: any) {
-    if (error?.code === 'auth/cancelled-popup-request' || error?.code === 'auth/popup-closed-by-user') {
-      return { ok: true }; // pengguna membatalkan di halaman Google — bukan error
-    }
-    console.warn('Google redirect result error:', error?.code, error?.message);
-    return { ok: false, error: googleSignInErrorMessage(error), storageBlocked: isStorageBlockedError(error) };
   }
 }
 

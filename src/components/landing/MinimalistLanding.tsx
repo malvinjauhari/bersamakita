@@ -37,8 +37,8 @@ export const MinimalistLanding: React.FC = () => {
     try {
       setSubmitting(true);
       await loginGoogle();
-      // Redirect ke Google sudah dimulai; kembali ke app lalu sesi terbentuk.
-      showToast('Mengalihkan ke Google untuk masuk…', 'info');
+      showToast('Berhasil masuk sebagai Donatur dengan Google', 'success');
+      navigate('/dashboard');
     } catch (err: any) {
       showToast('Gagal masuk dengan Google: ' + (err.message || 'Periksa koneksi'), 'error');
     } finally {

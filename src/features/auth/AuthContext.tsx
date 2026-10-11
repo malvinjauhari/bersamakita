@@ -5,20 +5,12 @@ import {
   subscribeAuthState,
   syncUserProfile,
   staffRoleForEmail,
-  completeGoogleRedirect,
-  ensureAuthPersistence,
   AppUser,
 } from '../../services/firebase/auth';
-import {
-  safeGet,
-  safeSet,
-  safeRemove,
-  isWebStorageAvailable,
-  STORAGE_BLOCKED_MESSAGE,
-} from '../../lib/safe-storage';
 import { UserProfile, UserRole } from '../../types';
 import { testConnection } from '../../config/firebase';
 import { ensureInitialSeed } from '../../services/firebase/seed';
+import { safeGet, safeSet, safeRemove } from '../../lib/safe-storage';
 
 export interface StaffSession {
   email: string;
@@ -32,7 +24,7 @@ interface AuthContextType {
   user: AppUser | null;
   profile: UserProfile | null;
   isGoogleAuthenticated: boolean;
-  loginGoogle: () => Promise<void>;
+  loginGoogle: () => Promise<boolean>;
   loginAsUser: (userParam: { uid: string; email: string; displayName: string; photoURL?: string }) => Promise<void>;
   logoutGoogle: () => Promise<void>;
   logout: () => Promise<void>; // Alias for user logout
@@ -49,10 +41,6 @@ interface AuthContextType {
   role: UserRole;
   loading: boolean;
   switchRole: (role: UserRole) => Promise<void>;
-  /** true bila Web Storage diblokir (adblock/iframe) — sesi redirect tak bisa pulih. */
-  storageBlocked: boolean;
-  /** Error hasil redirect Google (sudah diterjemahkan ramah pengguna). */
-  redirectError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,8 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AppUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [storageBlocked, setStorageBlocked] = useState<boolean>(false);
-  const [redirectError, setRedirectError] = useState<string | null>(null);
 
   // 2. Staff Admin/Partner Session State (Completely Isolated from Google Session)
   const [staffSession, setStaffSession] = useState<StaffSession | null>(() => {
@@ -84,93 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     testConnection();
     ensureInitialSeed();
-
-    // 0. Probe Web Storage DAHULU: bila diblokir (adblock/privacy, iframe
-    //    sandbox), redirect sign-in tidak bisa memulihkan sesi (hasil redirect
-    //    wajib dibaca dari storage) — tandai agar UI menampilkan panduan,
-    //    bukan hanging di halaman login + `Uncaught (in promise)`.
-    const probe = isWebStorageAvailable();
-    if (!probe.ok) {
-      console.warn('Web Storage tidak tersedia:', probe.detail);
-      setStorageBlocked(true);
-      setRedirectError(STORAGE_BLOCKED_MESSAGE);
-    }
-
-    // 0b. Tegakkan persistensi Auth dgn fallback berlapis (local → session →
-    //     memory). Semua kegagalan tertangkap di dalam helper.
-    ensureAuthPersistence().then((p) => {
-      if (p.storageBlocked) {
-        setStorageBlocked(true);
-        setRedirectError((prev) => prev || STORAGE_BLOCKED_MESSAGE);
-      }
-    });
-
-    // Bersihkan sesi FIKTIF "Donatur Google" dari versi lama (fallback popup
-    // yang membuat uid palsu tidak terautentikasi → permission-denied di
-    // dashboard). Sesi ini tidak pernah dibuat lagi sejak beralih ke redirect.
-    // Memakai safeGet/safeRemove: tidak pernah melempar walau storage diblokir.
-    for (const key of [GOOGLE_SESSION_KEY, 'bersamakita_local_user']) {
-      try {
-        const raw = safeGet(key);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          const uid: unknown = parsed?.user?.uid;
-          const email: unknown = parsed?.user?.email;
-          const isFake =
-            (typeof uid === 'string' && uid.startsWith('google-donatur-')) ||
-            email === 'donatur.google@bersamakita.org';
-          if (isFake) {
-            console.warn('Sesi fiktif Donatur Google dihapus:', key, uid || email);
-            safeRemove(key);
-          }
-        }
-      } catch {
-        // abaikan JSON yang korup
-      }
-    }
-
-    // Selesaikan Google sign-in via redirect (hasil kembali dari
-    // accounts.google.com) dan buang pending redirect dari siklus sebelumnya.
-    // Error (termasuk storage-blocked) DITANGKAP dan disalurkan ke state
-    // `redirectError` agar tampil di UI — tidak pernah `Uncaught (in promise)`.
-    completeGoogleRedirect().then(async (res) => {
-      if (!res.ok) {
-        console.warn('Redirect sign-in tidak selesai:', res.error);
-        setRedirectError(res.error || 'Google Sign-In gagal. Silakan coba lagi.');
-        if (res.storageBlocked) {
-          setStorageBlocked(true);
-        }
-        return;
-      }
-      // Jika redirect memberikan cred.user, sinkronkan state segera agar
-      // navigasi balik ke dashboard tidak tertunda (onAuthStateChanged juga akan
-      // memanggil sinkronisasi, tapi ini mempercepat UX & lebih deterministik).
-      try {
-        const { auth } = await import('../../config/firebase');
-        const { getRedirectResult } = await import('firebase/auth');
-        const credNow = await getRedirectResult(auth);
-        if (credNow?.user) {
-          const fbUser = credNow.user;
-          const appUser: AppUser = {
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName,
-            photoURL: fbUser.photoURL,
-          };
-          setUser(appUser);
-          try {
-            const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
-            setProfile(prof);
-            safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
-          } catch (e) {
-            console.warn('syncUserProfile post-redirect error:', e);
-          }
-          setLoading(false);
-        }
-      } catch (e) {
-        // Abaikan — onAuthStateChanged tetap akan menangani sesi.
-      }
-    });
 
     // Restore Google user session from cache if available
     const cachedGoogle = safeGet(GOOGLE_SESSION_KEY);
@@ -233,14 +132,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
-  // User Authentication via Google Only
-  const loginGoogle = async (): Promise<void> => {
+  // User Authentication via Google Only (popup; tanpa sesi fallback)
+  const loginGoogle = async (): Promise<boolean> => {
     setLoading(true);
     try {
-      // Memulai Google sign-in via REDIRECT: halaman pindah ke Google lalu
-      // kembali ke app; sesi dibuat ulang oleh subscribeAuthState. Jangan
-      // navigate/set user di sini — itu dilakukan setelah balik dari Google.
-      await loginWithGoogle();
+      const result = await loginWithGoogle();
+      setUser(result.user);
+      setProfile(result.profile);
+      safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: result.user, profile: result.profile }));
+      return false;
     } finally {
       setLoading(false);
     }
@@ -424,8 +324,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         loading,
         switchRole,
-        storageBlocked,
-        redirectError,
       }}
     >
       {children}
