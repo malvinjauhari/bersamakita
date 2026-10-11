@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { ToastProvider, useToast } from './components/feedback/Toast';
+import { auth } from './config/firebase';
 import { MinimalistLanding } from './components/landing/MinimalistLanding';
 import { WideNavbar } from './components/layout/WideNavbar';
 import { WideDisasterDashboard } from './features/disaster/WideDisasterDashboard';
@@ -267,18 +268,22 @@ function MainRoutes() {
 
   const handleUserRefreshBMKG = async () => {
     try {
-      // Ingest any latest BMKG data as pending_verification into the pool
-      const autoGempa = await fetchAutogempa();
-      if (autoGempa) {
-        autoGempa.disaster.status = 'pending_verification';
-        autoGempa.disaster.verificationMethod = 'pending';
-        await saveBMKGDisaster(autoGempa.event, autoGempa.disaster);
+      // Ingest dilakukan SERVER (POST /api/bmkg/refresh) — klien tidak lagi
+      // menulis langsung ke earthquakeEvents/disasters (hardening rules).
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('Login diperlukan untuk memperbarui data BMKG.');
       }
-      const recent = await fetchGempaterkini();
-      for (const item of recent) {
-        item.disaster.status = 'pending_verification';
-        item.disaster.verificationMethod = 'pending';
-        await saveBMKGDisaster(item.event, item.disaster);
+      const res = await fetch('/api/bmkg/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = await res.json();
+      if (!json?.success) {
+        throw new Error(json?.message || 'Gagal memperbarui data BMKG.');
       }
 
       // Re-query only approved disasters for user

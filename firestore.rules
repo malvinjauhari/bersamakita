@@ -51,9 +51,11 @@ service cloud.firestore {
     }
 
     // Earthquake Events from BMKG
+    // Write: hanya admin (ingest klien/servernya: admin boot, BMKGVerificationCard,
+    // atau POST /api/bmkg/refresh via Admin SDK — bukan tulisan Firestore langsung pengguna).
     match /earthquakeEvents/{eventId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // Disasters (Published/approved data visible to everyone; Pending data only visible to Admin/Partner)
@@ -65,10 +67,12 @@ service cloud.firestore {
         isAdmin() ||
         isPartner()
       );
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isPartner();
     }
 
     // Cash Donations (Strict Database-Level User Isolation)
+    // Create/update: hanya pemilik donasi (own userId), admin, atau partner.
+    // Jalur guest dihapus — checkout donasi WAJIB login (TransactionDonatePage).
     match /donations/{donationId} {
       allow read: if (
         (isAuthenticated() && resource.data.userId == request.auth.uid) ||
@@ -77,12 +81,11 @@ service cloud.firestore {
       );
       allow create: if (
         (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
-        request.resource.data.userId == 'guest' ||
-        !isAuthenticated()
+        isAdmin() ||
+        isPartner()
       );
       allow update: if (
         (isAuthenticated() && resource.data.userId == request.auth.uid) ||
-        resource.data.userId == 'guest' ||
         isAdmin() ||
         isPartner()
       );
@@ -96,7 +99,11 @@ service cloud.firestore {
         isAdmin() ||
         isPartner()
       );
-      allow create: if true;
+      allow create: if (
+        (isAuthenticated() && request.resource.data.userId == request.auth.uid) ||
+        isAdmin() ||
+        isPartner()
+      );
       allow update: if (
         (isAuthenticated() && resource.data.userId == request.auth.uid) ||
         isAdmin() ||
@@ -114,13 +121,16 @@ service cloud.firestore {
     // Partners
     match /partners/{partnerId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // Partner Allocations (Transparan untuk Donatur & Tim Lapangan)
+    // Read: pengguna login (bagian Transparansi). Write: admin/partner saja
+    // (alokasi dibuat server-side oleh endpoint disbursement; partner hanya
+    // update milestone/status — pengguna biasa TIDAK boleh menulis).
     match /partnerAllocations/{allocationId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isPartner();
     }
 
     // Distribution Reports
@@ -130,7 +140,7 @@ service cloud.firestore {
         isAdmin() ||
         isPartner()
       );
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isPartner();
     }
 
     // Distributions (Alternative collection)
@@ -158,9 +168,11 @@ service cloud.firestore {
     }
 
     // Audit Logs
+    // Write: admin/partner saja (semua penulis klien audit log = admin/partner;
+    // DonationModal yang menulis audit log ternyata tidak dipakai siapa pun).
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isPartner();
     }
 
     // Disaster Timeline (Tracking KOLEKTIF per bencana)

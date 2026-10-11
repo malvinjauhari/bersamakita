@@ -24,7 +24,12 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
    - **Description**: Proxies `https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json` (daftar gempa terkini) with the same 8s timeout / 502 error handling.
    - **Response**: `{ success: true, data: { ... } }` or `502 { success: false, message: '...' }`.
 
-> **Note**: The old `POST /api/bmkg/auto-verify` route (24-hour auto-approval rule engine) has been **removed**. BMKG is data-only; all ingested disasters are written by the frontend with `status: 'pending_verification'` and require explicit admin approval.
+3. **`POST /api/bmkg/refresh`** *(Fase 5 — hardening rules)*
+   - **Description**: Ingest data BMKG via **server (Admin SDK)** ke `earthquakeEvents` + `disasters` sebagai `pending_verification` (tidak pernah otomatis publik). Re-sync bencana yang sudah ada hanya menyegarkan field BMKG mentah — **tidak menimpa** status/partner/verifikasi milik admin. Dipakai tombol "Refresh BMKG" pengguna biasa (klien tidak lagi menulis Firestore langsung).
+   - **Auth**: `Authorization: Bearer <Firebase ID Token>` (pengguna login mana pun; `403` tanpa token, `401` invalid).
+   - **Response**: `{ success: true, data: { ingested, userId } }` atau `502` jika BMKG gagal.
+
+> **Note**: The old `POST /api/bmkg/auto-verify` route (24-hour auto-approval rule engine) has been **removed**. BMKG is data-only; ingest pengguna → `POST /api/bmkg/refresh` (server), ingest admin → server/klien dengan role admin, semuanya `status: 'pending_verification'` dan menunggu persetujuan admin eksplisit.
 
 ### Duitku Payment Gateway (`/api/payments/duitku`)
 
