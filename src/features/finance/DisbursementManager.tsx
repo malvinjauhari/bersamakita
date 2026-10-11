@@ -10,21 +10,20 @@ import {
   Loader2,
   MapPin,
 } from 'lucide-react';
-import { Disbursement, Disaster, Partner, PartnerAllocation, Donation } from '../../types';
+import { Disbursement, Disaster, Partner } from '../../types';
 import {
-  createDisbursement,
   updateDisbursementStatus,
-  createPartnerAllocation,
   addAuditLog,
 } from '../../services/firebase/firestore';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
+import { auth } from '../../config/firebase';
 import { formatRupiah, formatDateIndo } from '../../lib/utils';
 import { calculateAdminFee, MIN_WITHDRAWAL, MIN_WITHDRAWAL_TOTAL, maxWithdrawableAmount } from '../../lib/fees';
+import { useFundraisingSummary } from '../../hooks/useFundraisingSummary';
 
 interface DisbursementManagerProps {
   disbursements: Disbursement[];
-  donations: Donation[];
   disasters: Disaster[];
   partners: Partner[];
   onDataChanged: () => void;
@@ -47,7 +46,6 @@ const disbursementOutflow = (d: Disbursement): number =>
 
 export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   disbursements,
-  donations,
   disasters,
   partners,
   onDataChanged,
@@ -62,67 +60,39 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const paidDonations = donations.filter((d) => d.status === 'paid');
+  // Progres dana KOLEKTIF per bencana — diagregasi SERVER-side
+  // (GET /api/fundraising/summary). Bukan dari state donations (limit 100).
+  const {
+    totals: fundraisingTotals,
+    disasters: fundraisingDisasters,
+    refresh: refreshFundraising,
+  } = useFundraisingSummary();
 
-  // Compute live financial totals from database (no fake numbers!)
-  const totalPaidDonations = paidDonations.reduce((sum, d) => sum + d.amount, 0);
+  const totalPaidDonations = fundraisingTotals?.collected ?? 0;
+  const totalDisbursedSuccess = fundraisingTotals?.disbursed ?? 0;
+  const totalDisbursing = fundraisingTotals?.inflight ?? 0;
+  const availableBalance = fundraisingTotals?.remaining ?? 0;
 
-  const totalDisbursedSuccess = disbursements
-    .filter((d) => d.status === 'success')
-    .reduce((sum, d) => sum + disbursementOutflow(d), 0);
-
-  const totalDisbursing = disbursements
-    .filter((d) => d.status === 'processing' || d.status === 'submitted')
-    .reduce((sum, d) => sum + disbursementOutflow(d), 0);
-
-  const availableBalance = Math.max(0, totalPaidDonations - totalDisbursedSuccess - totalDisbursing);
-
-  // Per-disaster / per-partner recap
-  const buildRecap = (): DisasterRecap[] => {
-    const rows = new Map<string, DisasterRecap>();
-
-    const getRow = (disasterId: string, disasterTitle: string): DisasterRecap => {
-      if (!rows.has(disasterId)) {
-        const disaster = disasters.find((x) => x.id === disasterId);
-        const partner = disaster?.partnerId
-          ? partners.find((p) => p.id === disaster.partnerId)
-          : undefined;
-        rows.set(disasterId, {
-          disasterId,
-          disasterTitle: disaster?.title || disasterTitle,
-          partnerName: partner?.name || 'Belum ada mitra',
-          partnerAssigned: !!partner,
-          paidIn: 0,
-          disbursed: 0,
-          disbursing: 0,
-          remaining: 0,
-        });
-      }
-      return rows.get(disasterId)!;
-    };
-
-    for (const don of paidDonations) {
-      const key = don.disasterId || `__uncategorized__`;
-      const row = getRow(key, don.disasterTitle || 'Donasi Tanpa Label Bencana');
-      row.paidIn += don.amount;
-    }
-
-    for (const disb of disbursements) {
-      const key = disb.disasterId || `__legacy__`;
-      const row = getRow(key, disb.disasterTitle || 'Pencairan Lama (Tanpa Bencana)');
-      if (disb.status === 'success') row.disbursed += disbursementOutflow(disb);
-      else if (disb.status === 'submitted' || disb.status === 'processing')
-        row.disbursing += disbursementOutflow(disb);
-    }
-
-    const list = Array.from(rows.values());
-    for (const row of list) {
-      row.remaining = Math.max(0, row.paidIn - row.disbursed - row.disbursing);
-    }
-    return list.sort((a, b) => b.paidIn - a.paidIn);
-  };
-
-  const recapRows = buildRecap();
+  // Per-disaster recap (semantik sama dengan endpoint summary)
+  const recapRows: DisasterRecap[] = fundraisingDisasters
+    .filter((r) => !r.disasterId.startsWith('__'))
+    .map((r) => {
+      const disaster = disasters.find((x) => x.id === r.disasterId);
+      const partner = disaster?.partnerId
+        ? partners.find((p) => p.id === disaster.partnerId)
+        : undefined;
+      return {
+        disasterId: r.disasterId,
+        disasterTitle: r.disasterTitle,
+        partnerName: partner?.name || 'Belum ada mitra',
+        partnerAssigned: !!partner,
+        paidIn: r.collected,
+        disbursed: r.disbursed,
+        disbursing: r.inflight,
+        remaining: r.remaining,
+      };
+    })
+    .sort((a, b) => b.paidIn - a.paidIn);
 
   // Disasters eligible for new disbursement: has paid donations AND has assigned partner
   const eligibleDisasters = recapRows.filter((r) => r.paidIn > 0 && !r.disasterId.startsWith('__'));
@@ -179,66 +149,30 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
 
     setSubmitting(true);
     try {
-      const disbId = `disb-${Date.now()}`;
-      const newDisbursement: Disbursement = {
-        id: disbId,
-        amount,
-        fee,
-        totalAmount: totalOutflow,
-        partnerId: selectedPartner.id,
-        partnerName: selectedPartner.name,
-        disasterId: selectedDisaster.id,
-        disasterTitle: selectedDisaster.title,
-        status: 'submitted',
-        provider: 'Transfer Bank Operasional / Duitku Payout Adapter',
-        requestedAt: new Date().toISOString(),
-        notes,
-        createdBy: user?.uid || 'admin',
-      };
+      // Pembuatan disbursement + allocation + audit + timeline sekarang DIVALIDASI
+      // dan ditulis ATOMIK oleh server (Admin SDK) — saldo dihitung ulang
+      // server-side, client tidak bisa memanipulasi agregasi.
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('Sesi admin belum siap. Silakan login ulang.');
+      }
 
-      await createDisbursement(newDisbursement);
-
-      // Create linked partner allocation — source = paid donations of THIS disaster only
-      const sourceDonationIds = paidDonations
-        .filter((d) => d.disasterId === selectedDisaster.id)
-        .map((d) => d.id);
-      const allocId = `alloc-${Date.now()}`;
-      const newAllocation: PartnerAllocation = {
-        id: allocId,
-        disbursementId: disbId,
-        partnerId: selectedPartner.id,
-        partnerName: selectedPartner.name,
-        disasterId: selectedDisaster.id,
-        disasterTitle: selectedDisaster.title,
-        amount,
-        sourceDonationIds,
-        status: 'allocated',
-        allocatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      await createPartnerAllocation(newAllocation);
-
-      // Audit Log
-      await addAuditLog({
-        id: `audit-${Date.now()}`,
-        actorId: user?.uid || 'admin',
-        actorRole: 'admin',
-        action: 'DISBURSEMENT_CREATED',
-        entityType: 'disbursement',
-        entityId: disbId,
-        after: {
-          amount,
-          fee,
-          totalAmount: totalOutflow,
-          partnerId: selectedPartner.id,
-          partnerName: selectedPartner.name,
-          disasterId: selectedDisaster.id,
-          disasterTitle: selectedDisaster.title,
+      const res = await fetch('/api/fundraising/admin/disbursements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        timestamp: new Date().toISOString(),
+        body: JSON.stringify({
+          disasterId: selectedDisaster.id,
+          amount,
+          notes,
+        }),
       });
+      const json = await res.json();
+      if (!json?.success) {
+        throw new Error(json?.message || 'Gagal membuat pencairan.');
+      }
 
       showToast(
         `Pencairan ${formatRupiah(amount)} (biaya admin ${formatRupiah(fee)} → total keluar ${formatRupiah(totalOutflow)}) untuk bencana "${selectedDisaster.title}" diajukan ke ${selectedPartner.name}`,
@@ -249,6 +183,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       setNotes('');
       setSelectedDisasterId('');
       onDataChanged();
+      await refreshFundraising();
     } catch (err: any) {
       showToast('Gagal membuat pencairan: ' + err.message, 'error');
     } finally {
@@ -273,6 +208,7 @@ export const DisbursementManager: React.FC<DisbursementManagerProps> = ({
       });
       showToast(`Status pencairan diperbarui ke ${newStatus}`, 'success');
       onDataChanged();
+      await refreshFundraising();
     } catch (err: any) {
       showToast('Gagal memperbarui status: ' + err.message, 'error');
     } finally {

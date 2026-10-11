@@ -1,6 +1,11 @@
 import { Router } from 'express';
-import { adminDb } from '../../src/config/firebase-admin.js';
-import { ADMIN_FEE_RATE } from '../../src/lib/fees.js';
+import { adminDb, adminAuth } from '../../src/config/firebase-admin.js';
+import {
+  ADMIN_FEE_RATE,
+  MIN_WITHDRAWAL,
+  calculateAdminFee,
+  maxWithdrawableAmount,
+} from '../../src/lib/fees.js';
 import { FUNDRAISING_TARGET } from '../../src/lib/utils.js';
 
 const router = Router();
@@ -146,6 +151,193 @@ router.get('/summary', async (_req, res) => {
     });
   } catch (error: any) {
     console.error('Fundraising summary error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/fundraising/admin/disbursements
+// Membuat PENCARIAN (disbursement + allocation + audit + timeline) secara
+// ATOMIK dengan validasi saldo SERVER-SIDE. Sumber angka = data nyata
+// (Admin SDK), bukan input client — client tidak bisa mengada-ada saldo.
+// Auth: Bearer <Firebase ID Token> + verifikasi role admin.
+// ---------------------------------------------------------------------------
+router.post('/admin/disbursements', async (req, res) => {
+  try {
+    if (!adminDb || !adminAuth) {
+      return res.status(500).json({ success: false, message: 'Firebase Admin not initialized.' });
+    }
+    // Local aliases — menjaga TS narrowing `adminDb`/`adminAuth` di dalam closure
+    // (Promise.all / runTransaction) setelah guard selesai.
+    const db = adminDb;
+    const fbAuth = adminAuth;
+
+    // 1. Auth admin
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(403).json({ success: false, message: 'Forbidden: No token provided.' });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    let adminEmail: string;
+    try {
+      const decoded = await fbAuth.verifyIdToken(token);
+      const userDoc = await db.collection('users').doc(decoded.uid).get();
+      const isAdmin =
+        decoded.email === 'admin_backend@bersamakita.org' ||
+        decoded.email === 'contohasdf@gmail.com' ||
+        decoded.email === 'bersamakita.my.id@protonmail.com' ||
+        (userDoc.exists && userDoc.data()?.role === 'admin');
+      if (!isAdmin) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Bukan admin.' });
+      }
+      adminEmail = decoded.email || decoded.uid;
+    } catch (err: any) {
+      return res.status(401).json({ success: false, message: 'Token tidak valid: ' + err.message });
+    }
+
+    // 2. Validasi input
+    const { disasterId, amount, notes } = req.body || {};
+    const nominal = Math.floor(Number(amount));
+    if (!disasterId || !Number.isFinite(nominal) || nominal < MIN_WITHDRAWAL) {
+      return res.status(400).json({
+        success: false,
+        message: `Parameter pencairan tidak valid. Minimal Rp${MIN_WITHDRAWAL.toLocaleString('id-ID')}.`,
+      });
+    }
+
+    // 3. Data bencana & mitra
+    const disasterSnap = await db.collection('disasters').doc(disasterId).get();
+    if (!disasterSnap.exists) {
+      return res.status(404).json({ success: false, message: 'Bencana tidak ditemukan.' });
+    }
+    const disaster = disasterSnap.data() || {};
+    const partnerId = disaster.partnerId || null;
+    const partnerName = disaster.partnerName || null;
+    if (!partnerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bencana belum memiliki mitra lapangan. Tetapkan mitra sebelum pencairan.',
+      });
+    }
+
+    // 4. Hitung saldo tersedia dari data NYATA (Admin SDK) — bukan dari client
+    const [paidSnap, disbSnap] = await Promise.all([
+      db.collection('donations').where('status', '==', 'paid').get(),
+      db.collection('disbursements').get(),
+    ]);
+
+    let paidIn = 0;
+    const sourceDonationIds: string[] = [];
+    for (const doc of paidSnap.docs) {
+      const don = doc.data();
+      if (don.disasterId !== disasterId) continue;
+      paidIn += Number(don.amount || 0);
+      sourceDonationIds.push(doc.id);
+    }
+
+    let disbursed = 0;
+    let inflight = 0;
+    for (const doc of disbSnap.docs) {
+      const d = doc.data();
+      if (d.disasterId !== disasterId) continue;
+      const outflow = disbursementOutflow(d);
+      if (d.status === 'success') disbursed += outflow;
+      else if (d.status === 'submitted' || d.status === 'processing') inflight += outflow;
+    }
+    const remaining = Math.max(0, paidIn - disbursed - inflight);
+
+    // 5. Validasi saldo (server-side authoritative)
+    const maxAllowed = maxWithdrawableAmount(remaining);
+    if (nominal > maxAllowed) {
+      return res.status(400).json({
+        success: false,
+        message: `Nominal melebihi maksimal pencairan Rp${maxAllowed.toLocaleString('id-ID')} (sisa kas Rp${remaining.toLocaleString('id-ID')} − biaya admin).`,
+      });
+    }
+
+    const fee = calculateAdminFee(nominal);
+    const totalOutflow = nominal + fee;
+    const now = new Date().toISOString();
+    const disbId = `disb-${Date.now()}`;
+    const allocId = `alloc-${Date.now()}`;
+    const timelineId = `tl-${Date.now()}`;
+
+    // 6. Transaksi atomik: disbursement + allocation + audit + timeline
+    await db.runTransaction(async (t) => {
+      t.set(db.collection('disbursements').doc(disbId), {
+        id: disbId,
+        amount: nominal,
+        fee,
+        totalAmount: totalOutflow,
+        partnerId,
+        partnerName,
+        disasterId,
+        disasterTitle: disaster.title || '',
+        status: 'submitted',
+        provider: 'Transfer Bank Operasional / Duitku Payout Adapter',
+        requestedAt: now,
+        notes: notes || '',
+        createdBy: adminEmail,
+      });
+
+      t.set(db.collection('partnerAllocations').doc(allocId), {
+        id: allocId,
+        disbursementId: disbId,
+        partnerId,
+        partnerName,
+        disasterId,
+        disasterTitle: disaster.title || '',
+        amount: nominal,
+        sourceDonationIds,
+        status: 'allocated',
+        allocatedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      t.set(db.collection('auditLogs').doc(`audit-${Date.now()}`), {
+        id: `audit-${Date.now()}`,
+        actorId: adminEmail,
+        actorRole: 'admin',
+        action: 'DISBURSEMENT_CREATED',
+        entityType: 'disbursement',
+        entityId: disbId,
+        after: {
+          amount: nominal,
+          fee,
+          totalAmount: totalOutflow,
+          partnerId,
+          partnerName,
+          disasterId,
+          disasterTitle: disaster.title || '',
+        },
+        timestamp: now,
+      });
+
+      // Timeline KOLEKTIF per bencana — sinyal untuk semua donatur disaster ini
+      t.set(
+        db.doc(`disasterTimeline/${disasterId}/events/${timelineId}`),
+        {
+          id: timelineId,
+          disasterId,
+          disasterTitle: disaster.title || '',
+          type: 'disbursement_created',
+          title: 'Pencairan Dana Diajukan',
+          description: `Pencairan dana Rp${nominal.toLocaleString('id-ID')} (biaya admin Rp${fee.toLocaleString('id-ID')} → total keluar Rp${totalOutflow.toLocaleString('id-ID')}) diajukan ke ${partnerName} untuk bencana "${disaster.title}".`,
+          amount: nominal,
+          actorRole: 'admin',
+          actorName: adminEmail,
+          createdAt: now,
+        }
+      );
+    });
+
+    return res.json({
+      success: true,
+      data: { disbursementId: disbId, allocationId: allocId },
+    });
+  } catch (error: any) {
+    console.error('Fundraising create disbursement error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

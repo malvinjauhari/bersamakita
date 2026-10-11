@@ -75,7 +75,7 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
 ### Fundraising (Kolektif per Bencana) (`/api/fundraising`)
 
 1. **`GET /api/fundraising/summary`**
-   - **Description**: **Sumber kebenaran progres donasi kolektif per bencana** — identik untuk semua role (guest/user/admin/partner) karena diagregasi server-side via **Firebase Admin SDK**. Angka di-derive murni dari data nyata: `donations` + `payments` berstatus `paid` (join `donationId`, fallback `paymentId`) dan `disbursements`. Karena semua jalur konfirmasi Duitku (callback/check-status/simulate-paid/expire-sweep) bersifat idempotent, agregasi **tidak mungkin dihitung ganda** oleh callback duplikat. Tidak ada donor email/phone yang diekspos. Semantik finansial (disbursed/inflight/remaining) identik dengan `DisbursementManager`.
+   - **Description**: **SUMBER KEBENARAN progres donasi kolektif per bencana** — identik untuk semua role (guest/user/admin/partner) karena diagregasi server-side via **Firebase Admin SDK**. Angka di-derive murni dari data nyata: `donations` + `payments` berstatus `paid` (join `donationId`, fallback `paymentId`) dan `disbursements`. Karena semua jalur konfirmasi Duitku (callback/check-status/simulate-paid/expire-sweep) bersifat idempotent, agregasi **tidak mungkin dihitung ganda** oleh callback duplikat. Tidak ada donor email/phone yang diekspos. Semantik finansial (disbursed/inflight/remaining) identik dengan `DisbursementManager`.
    - **Response**:
      ```json
      { "success": true, "data": {
@@ -89,6 +89,12 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
      }}
      ```
    - Aturan per baris: `disbursed` = outflow disbursement berstatus `success`; `inflight` = `submitted`/`processing`; `remaining = max(0, collected − disbursed − inflight)`; `fundingTarget` = `disasters.fundingTarget ?? 50000000`. Donasi tanpa `disasterId` masuk bucket `__none__`, pencairan tanpa `disasterId` masuk bucket `__legacy__` (tetap dihitung di `totals`, bukan ditampilkan sebagai kartu bencana oleh frontend).
+
+2. **`POST /api/fundraising/admin/disbursements`**
+   - **Description**: Membuat **pencairan secara kolektif per bencana** — validasi saldo dilakukan **server-side** (dihitung ulang dari data nyata via Admin SDK, bukan input client). Client tidak bisa mengada-ada saldo/agregasi. Menulis **satu transaksi atomik** (Firestore `runTransaction`): `disbursements` + `partnerAllocations` (dengan `sourceDonationIds` = semua donasi paid bencana itu) + `auditLogs` + event `disbursement_created` di `disasterTimeline/{disasterId}/events`.
+   - **Auth**: `Authorization: Bearer <Firebase ID Token>` + verifikasi role admin (email allowlist / `users.role == 'admin'`) → `403` tanpa token, `401` token invalid.
+   - **Body**: `{ disasterId, amount, notes? }`. **Validasi**: `amount >= Rp1.000.000`, bencana ada, mitra sudah ditugaskan, `amount <= maxWithdrawable(remaining)` (nominal + biaya admin 0,17% harus muat di sisa kas).
+   - **Response**: `{ success: true, data: { disbursementId, allocationId } }`.
 
 ### Admin Endpoints (`/api/admin`)
 

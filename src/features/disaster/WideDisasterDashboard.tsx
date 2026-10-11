@@ -12,6 +12,7 @@ import { EarthquakeCard } from './EarthquakeCard';
 import { EarthquakeMap } from './EarthquakeMap';
 import { SelectedDisasterSection } from './SelectedDisasterSection';
 import { AllocationTransparencySection } from './AllocationTransparencySection';
+import { DisasterTimelineSection } from '../distribution/DisasterTimelineSection';
 import { AnalisisSituasiModal } from './AnalisisSituasiModal';
 import { useAuth } from '../auth/AuthContext';
 import { useFundraisingSummary } from '../../hooks/useFundraisingSummary';
@@ -258,6 +259,26 @@ export const WideDisasterDashboard: React.FC<WideDisasterDashboardProps> = ({
           partner={partners.find(p => p.id === activeDisaster.partnerId)}
           onDonateNow={() => onDonateDisaster(activeDisaster.id)}
         />
+      )}
+
+      {/* 4b. TIMELINE PENYALURAN KOLEKTIF — satu timeline utk semua donatur */}
+      {activeDisaster && (
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+              Lacak Bantuan — Timeline Penyaluran
+            </h3>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 ml-auto">
+              Sinkron utk Semua Donatur
+            </span>
+          </div>
+          <DisasterTimelineSection
+            disasterId={activeDisaster.id}
+            disasterTitle={activeDisaster.title}
+            allowPost
+          />
+        </div>
       )}
 
       {/* 5. TRANSPARANSI PENGGUNAAN & ALOKASI DANA */}

@@ -8,6 +8,7 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
   limit,
   writeBatch,
 } from 'firebase/firestore';
@@ -29,6 +30,7 @@ import {
   EarthquakeEvent,
   DistributionMilestoneKey,
   DistributionMilestone,
+  DisasterTimelineEvent,
 } from '../../types';
 import { handleFirestoreError, OperationType } from '../../lib/firestore-errors';
 
@@ -650,6 +652,28 @@ export async function updateAllocationMilestone(
       };
 
       await saveDistributionReport(reportData);
+
+      // Timeline KOLEKTIF per bencana — SATU timeline utk semua donatur disaster ini.
+      // (trackingEvents per-donasi di atas tetap ditulis sebagai nota donor privat.)
+      const timelineEvent: DisasterTimelineEvent = {
+        id: `tl-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        disasterId: updatedAllocation.disasterId || '__unknown__',
+        disasterTitle: updatedAllocation.disasterTitle,
+        type: 'milestone_updated',
+        title: milestoneTitles[milestoneKey],
+        description: `${descriptions[milestoneKey]}${
+          data.detail ? ` ${data.detail}` : ''
+        }`,
+        location: data.location || updatedAllocation.targetLocation,
+        photoUrl: nextPhotoUrl,
+        amount: updatedAllocation.amount,
+        actorRole: 'partner',
+        actorName: data.actorEmail || updatedAllocation.partnerName,
+        createdAt: now,
+      };
+      if (timelineEvent.disasterId && !timelineEvent.disasterId.startsWith('__')) {
+        await addDisasterTimelineEvent(timelineEvent);
+      }
     }
 
     return updatedAllocation;
@@ -785,6 +809,37 @@ export async function addTrackingEvent(event: TrackingEvent): Promise<void> {
     await setDoc(doc(db, 'trackingEvents', event.id), sanitizeForFirestore(event));
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `trackingEvents/${event.id}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Disaster Timeline (Tracking KOLEKTIF per bencana)
+// SATU timeline per bencana — terlihat identik oleh SEMUA donatur disaster itu.
+// Write: admin/partner (firestore.rules). Tanpa PII donatur.
+// ---------------------------------------------------------------------------
+
+export async function addDisasterTimelineEvent(event: DisasterTimelineEvent): Promise<void> {
+  try {
+    await setDoc(
+      doc(db, 'disasterTimeline', event.disasterId, 'events', event.id),
+      sanitizeForFirestore(event)
+    );
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `disasterTimeline/${event.disasterId}/events/${event.id}`);
+  }
+}
+
+export async function getDisasterTimelineEvents(
+  disasterId: string
+): Promise<DisasterTimelineEvent[]> {
+  try {
+    const collRef = collection(db, 'disasterTimeline', disasterId, 'events');
+    const q = query(collRef, orderBy('createdAt', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as DisasterTimelineEvent);
+  } catch (error) {
+    console.warn(`getDisasterTimelineEvents ${disasterId} notice:`, error);
+    return [];
   }
 }
 

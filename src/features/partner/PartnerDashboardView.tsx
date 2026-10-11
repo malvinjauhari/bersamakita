@@ -30,7 +30,7 @@ import {
   saveDistributionReport,
   addAuditLog,
   addTrackingEvent,
-  createPartnerAllocation,
+  addDisasterTimelineEvent,
 } from '../../services/firebase/firestore';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../../components/feedback/Toast';
@@ -119,7 +119,7 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
         timestamp: new Date().toISOString(),
       });
 
-      // Synchronize tracking event for each source donation
+      // Synchronize tracking event for each source donation (nota privat donatur)
       if (alloc.sourceDonationIds && alloc.sourceDonationIds.length > 0) {
         for (const donId of alloc.sourceDonationIds) {
           await addTrackingEvent({
@@ -135,51 +135,28 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
         }
       }
 
+      // Timeline KOLEKTIF per bencana — satu timeline utk semua donatur disaster ini
+      if (alloc.disasterId && !alloc.disasterId.startsWith('__')) {
+        await addDisasterTimelineEvent({
+          id: `tl-rec-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          disasterId: alloc.disasterId,
+          disasterTitle: alloc.disasterTitle,
+          type: 'funds_received_by_partner',
+          title: 'Dana Diterima Mitra Lapangan',
+          description: `Mitra ${alloc.partnerName} telah menerima dana Rp${alloc.amount.toLocaleString('id-ID')} dan mulai menyiapkan pengadaan logistik untuk bencana "${alloc.disasterTitle || 'Tanggap Darurat'}".`,
+          amount: alloc.amount,
+          actorRole: 'partner',
+          actorName: staffSession?.name || staffSession?.email,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
       showToast(`Dana alokasi ${formatRupiah(alloc.amount)} berhasil dikonfirmasi diterima`, 'success');
       onDataChanged();
     } catch (err: any) {
       showToast('Gagal konfirmasi: ' + err.message, 'error');
     } finally {
       setConfirmingId(null);
-    }
-  };
-
-  const handleStartDistributionFromDonation = async (don: Donation) => {
-    try {
-      const allocId = `alloc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      const newAlloc: PartnerAllocation = {
-        id: allocId,
-        disbursementId: `disb-${Date.now()}`,
-        partnerId: staffSession?.email || 'partner-pmi',
-        partnerName: staffSession?.name || 'Mitra Lapangan Terpadu',
-        ...(don.disasterId ? { disasterId: don.disasterId } : {}),
-        ...(don.disasterTitle ? { disasterTitle: don.disasterTitle } : {}),
-        amount: don.amount,
-        sourceDonationIds: [don.id],
-        status: 'funds_received',
-        allocatedAt: new Date().toISOString(),
-        receivedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      await createPartnerAllocation(newAlloc);
-
-      await addTrackingEvent({
-        id: `trk-start-${Date.now()}`,
-        donationId: don.id,
-        type: 'distribution_started',
-        title: 'Mitra Lapangan Menyiapkan Penyaluran Bantuan',
-        description: `Mitra ${newAlloc.partnerName} telah menerima mandat dan dana donasi ${formatRupiah(don.amount)} untuk segera disalurkan ke posko lapangan.`,
-        visibleToUser: true,
-        createdBy: staffSession?.email || 'partner',
-        timestamp: new Date().toISOString(),
-      });
-
-      showToast(`Tugas penyaluran untuk donasi ${formatRupiah(don.amount)} berhasil disiapkan!`, 'success');
-      onDataChanged();
-      openCreateReport(newAlloc);
-    } catch (err: any) {
-      showToast('Gagal menyiapkan tugas distribusi: ' + err.message, 'error');
     }
   };
 
@@ -520,13 +497,12 @@ export const PartnerDashboardView: React.FC<PartnerDashboardViewProps> = ({
                   </div>
 
                   {!alreadyAllocated ? (
-                    <button
-                      onClick={() => handleStartDistributionFromDonation(don)}
-                      className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Package className="w-3.5 h-3.5" />
-                      <span>Mulai Penyaluran</span>
-                    </button>
+                    <span className="text-[10px] font-bold px-3 py-2 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0 text-right">
+                      Pencairan dikelola kolektif Admin
+                      <span className="block text-[9px] font-medium text-slate-400 mt-0.5">
+                        pantau penugasan di bawah
+                      </span>
+                    </span>
                   ) : (
                     <span className="text-xs text-indigo-600 font-semibold flex items-center gap-1 shrink-0">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />

@@ -345,3 +345,35 @@ export interface FundraisingSummary {
   totals: FundraisingTotals;
   disasters: FundraisingDisaster[];
 }
+
+/**
+ * Timeline tracking KOLEKTIF per bencana (`disasterTimeline/{disasterId}/events`).
+ * SATU timeline untuk SEMUA donatur bencana yang sama — menggantikan tracking
+ * per-donasi yang tersembunyi/terfragmentasi. Tanpa PII donatur.
+ */
+export type DisasterTimelineEventType =
+  | 'disbursement_created'
+  | 'funds_disbursed'
+  | 'funds_received_by_partner'
+  | 'distribution_started'
+  | 'milestone_updated'
+  | 'report_submitted'
+  | 'report_published'
+  | 'fundraising_closed'
+  | 'partner_update'
+  | 'system';
+
+export interface DisasterTimelineEvent {
+  id: string;
+  disasterId: string;
+  disasterTitle?: string;
+  type: DisasterTimelineEventType;
+  title: string;
+  description: string;
+  location?: string;
+  photoUrl?: string;
+  amount?: number;
+  actorRole: 'admin' | 'partner' | 'system';
+  actorName?: string;
+  createdAt: string;
+}
