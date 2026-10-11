@@ -4,7 +4,9 @@
  * Membuktikan:
  * 1. `GET /api/fundraising/summary` & `/report/:id` IDENTIK untuk guest, user A, user B
  *    (agregasi kolektif server-side — bukan data per-akun).
- * 2. Aturan `firestore.rules` hardening LIVE: user biasa BISA baca `disasterTimeline`,
+ * 2. Donasi PENDING milik User A TIDAK mengubah progres kolektif (butir 4 Task 7):
+ *    hanya transaksi berstatus `paid` yang dihitung.
+ * 3. Aturan `firestore.rules` hardening LIVE: user biasa BISA baca `disasterTimeline`,
  *    tapi DITOLAK menulis ke `disasterTimeline`, `earthquakeEvents`, `disasters`.
  *
  * User QA dibuat via Admin SDK lalu DIHAPUS di akhir (tidak meninggalkan jejak).
@@ -12,6 +14,7 @@
  */
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const PROD = 'https://bersamakita.vercel.app';
 const API_KEY = 'AIzaSyDIY2-sZQ65l4WNmWebAnxJOgOLqyE2yZk';
@@ -44,6 +47,7 @@ async function main() {
     initializeApp({ credential: cert(cred) });
   }
   const auth = getAuth();
+  const db = getFirestore();
 
   console.log(`Project (Admin SDK): ${cred.project_id}\n`);
 
@@ -131,7 +135,41 @@ async function main() {
         `  summary report: collected=${repGuest.json?.data?.summary?.totalCollected} disbursed=${repGuest.json?.data?.summary?.disbursed} inflight=${repGuest.json?.data?.summary?.inflight} remaining=${repGuest.json?.data?.summary?.remaining}`
       );
 
-      // --- 5. Rules live: user biasa baca timeline (harus 200) ---
+      // --- 5. (Task 7 butir 4) Donasi PENDING milik User A TIDAK menaikkan progres kolektif ---
+      const pendingId = `qa-pending-${Date.now()}`;
+      const sumBefore = await get('/api/fundraising/summary');
+      const rowBefore = (sumBefore.json?.data?.disasters || []).find((x: any) => x.disasterId === did);
+      const pendingCreate = await fetch(`${FS_URL}/donations?documentId=${pendingId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({
+          fields: {
+            id: { stringValue: pendingId },
+            userId: { stringValue: qaUids[0] },
+            disasterId: { stringValue: did },
+            amount: { integerValue: '12345' },
+            status: { stringValue: 'pending_payment' },
+            donorName: { stringValue: 'QA Donor' },
+            createdAt: { stringValue: new Date().toISOString() },
+          },
+        }),
+      });
+      check(
+        'User A dapat membuat donasi pending MILIKNYA sendiri (rules own-user)',
+        pendingCreate.status === 200,
+        `HTTP ${pendingCreate.status}`
+      );
+      const sumAfter = await get('/api/fundraising/summary');
+      const rowAfter = (sumAfter.json?.data?.disasters || []).find((x: any) => x.disasterId === did);
+      check(
+        'Donasi PENDING TIDAK menaikkan progres kolektif (butir 4)',
+        rowBefore?.collected === rowAfter?.collected && rowBefore?.donationCount === rowAfter?.donationCount,
+        `before=${rowBefore?.collected}/${rowBefore?.donationCount} · after=${rowAfter?.collected}/${rowAfter?.donationCount}`
+      );
+      await db.collection('donations').doc(pendingId).delete();
+      console.log(`  Donasi pending QA dihapus: ${pendingId}`);
+
+      // --- 6. Rules live: user biasa baca timeline (harus 200) ---
       const tlGet = await fetch(`${FS_URL}/disasterTimeline/${did}/events?pageSize=5`, {
         headers: { Authorization: `Bearer ${tokenA}` },
       });
