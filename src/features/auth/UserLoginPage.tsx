@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Heart, Loader2, ShieldCheck, Activity } from 'lucide-react';
+import { Heart, Loader2, ShieldCheck, Activity, AlertTriangle } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useToast } from '../../components/feedback/Toast';
 
@@ -16,10 +16,11 @@ export const UserLoginPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/dashboard';
 
-  const { user, loginGoogle } = useAuth();
+  const { user, loginGoogle, storageBlocked, redirectError } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const shownRedirectError = React.useRef<string | null>(null);
 
   // Auto-scroll images
   useEffect(() => {
@@ -35,6 +36,14 @@ export const UserLoginPage: React.FC = () => {
       navigate(redirectPath);
     }
   }, [user, navigate, redirectPath]);
+
+  // Tampilkan error hasil redirect Google (mis. storage diblokir) sekali saja.
+  React.useEffect(() => {
+    if (redirectError && shownRedirectError.current !== redirectError) {
+      shownRedirectError.current = redirectError;
+      showToast('Gagal masuk: ' + redirectError, 'error');
+    }
+  }, [redirectError, showToast]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -107,6 +116,30 @@ export const UserLoginPage: React.FC = () => {
             Login Donatur
           </h1>
           <p className="text-sm text-gray-500 mb-8 font-medium">Selamat datang kembali! Lanjutkan niat baik Anda hari ini.</p>
+
+          {storageBlocked && (
+            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-6 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-amber-800">Penyimpanan browser diblokir</h4>
+                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                  Browser memblokir penyimpanan situs ini sehingga sesi login tidak bisa disimpan.
+                  Izinkan "cookies &amp; site data" untuk situs ini / nonaktifkan pemblokir
+                  (adblock/privacy) untuk domain ini, lalu buka di tab browser penuh
+                  (bukan panel preview/iframe) dan coba masuk lagi.
+                </p>
+              </div>
+            </div>
+          )}
+          {redirectError && !storageBlocked && (
+            <div className="bg-rose-50 p-4 rounded-2xl border border-rose-200 mb-6 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-bold text-rose-800">Login Google belum selesai</h4>
+                <p className="text-xs text-rose-700 mt-1 leading-relaxed">{redirectError}</p>
+              </div>
+            </div>
+          )}
           
           {/* Feature highlights to fill space and build trust */}
           <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 mb-8 space-y-4">

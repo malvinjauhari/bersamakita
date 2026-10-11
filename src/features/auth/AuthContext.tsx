@@ -6,8 +6,16 @@ import {
   syncUserProfile,
   staffRoleForEmail,
   completeGoogleRedirect,
+  ensureAuthPersistence,
   AppUser,
 } from '../../services/firebase/auth';
+import {
+  safeGet,
+  safeSet,
+  safeRemove,
+  isWebStorageAvailable,
+  STORAGE_BLOCKED_MESSAGE,
+} from '../../lib/safe-storage';
 import { UserProfile, UserRole } from '../../types';
 import { testConnection } from '../../config/firebase';
 import { ensureInitialSeed } from '../../services/firebase/seed';
@@ -41,6 +49,10 @@ interface AuthContextType {
   role: UserRole;
   loading: boolean;
   switchRole: (role: UserRole) => Promise<void>;
+  /** true bila Web Storage diblokir (adblock/iframe) — sesi redirect tak bisa pulih. */
+  storageBlocked: boolean;
+  /** Error hasil redirect Google (sudah diterjemahkan ramah pengguna). */
+  redirectError: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,11 +65,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AppUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [storageBlocked, setStorageBlocked] = useState<boolean>(false);
+  const [redirectError, setRedirectError] = useState<string | null>(null);
 
   // 2. Staff Admin/Partner Session State (Completely Isolated from Google Session)
   const [staffSession, setStaffSession] = useState<StaffSession | null>(() => {
     try {
-      const saved = localStorage.getItem(STAFF_SESSION_KEY);
+      const saved = safeGet(STAFF_SESSION_KEY);
       if (saved) {
         return JSON.parse(saved);
       }
@@ -71,12 +85,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     testConnection();
     ensureInitialSeed();
 
+    // 0. Probe Web Storage DAHULU: bila diblokir (adblock/privacy, iframe
+    //    sandbox), redirect sign-in tidak bisa memulihkan sesi (hasil redirect
+    //    wajib dibaca dari storage) — tandai agar UI menampilkan panduan,
+    //    bukan hanging di halaman login + `Uncaught (in promise)`.
+    const probe = isWebStorageAvailable();
+    if (!probe.ok) {
+      console.warn('Web Storage tidak tersedia:', probe.detail);
+      setStorageBlocked(true);
+      setRedirectError(STORAGE_BLOCKED_MESSAGE);
+    }
+
+    // 0b. Tegakkan persistensi Auth dgn fallback berlapis (local → session →
+    //     memory). Semua kegagalan tertangkap di dalam helper.
+    ensureAuthPersistence().then((p) => {
+      if (p.storageBlocked) {
+        setStorageBlocked(true);
+        setRedirectError((prev) => prev || STORAGE_BLOCKED_MESSAGE);
+      }
+    });
+
     // Bersihkan sesi FIKTIF "Donatur Google" dari versi lama (fallback popup
     // yang membuat uid palsu tidak terautentikasi → permission-denied di
     // dashboard). Sesi ini tidak pernah dibuat lagi sejak beralih ke redirect.
-    try {
-      for (const key of [GOOGLE_SESSION_KEY, 'bersamakita_local_user']) {
-        const raw = localStorage.getItem(key);
+    // Memakai safeGet/safeRemove: tidak pernah melempar walau storage diblokir.
+    for (const key of [GOOGLE_SESSION_KEY, 'bersamakita_local_user']) {
+      try {
+        const raw = safeGet(key);
         if (raw) {
           const parsed = JSON.parse(raw);
           const uid: unknown = parsed?.user?.uid;
@@ -86,19 +121,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email === 'donatur.google@bersamakita.org';
           if (isFake) {
             console.warn('Sesi fiktif Donatur Google dihapus:', key, uid || email);
-            localStorage.removeItem(key);
+            safeRemove(key);
           }
         }
+      } catch {
+        // abaikan JSON yang korup
       }
-    } catch {
-      // abaikan JSON yang korup
     }
 
     // Selesaikan Google sign-in via redirect (hasil kembali dari
     // accounts.google.com) dan buang pending redirect dari siklus sebelumnya.
+    // Error (termasuk storage-blocked) DITANGKAP dan disalurkan ke state
+    // `redirectError` agar tampil di UI — tidak pernah `Uncaught (in promise)`.
     completeGoogleRedirect().then(async (res) => {
       if (!res.ok) {
         console.warn('Redirect sign-in tidak selesai:', res.error);
+        setRedirectError(res.error || 'Google Sign-In gagal. Silakan coba lagi.');
+        if (res.storageBlocked) {
+          setStorageBlocked(true);
+        }
         return;
       }
       // Jika redirect memberikan cred.user, sinkronkan state segera agar
@@ -120,10 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
             setProfile(prof);
-            localStorage.setItem(
-              GOOGLE_SESSION_KEY,
-              JSON.stringify({ user: appUser, profile: prof })
-            );
+            safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
           } catch (e) {
             console.warn('syncUserProfile post-redirect error:', e);
           }
@@ -135,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Restore Google user session from cache if available
-    const cachedGoogle = localStorage.getItem(GOOGLE_SESSION_KEY);
+    const cachedGoogle = safeGet(GOOGLE_SESSION_KEY);
     if (cachedGoogle) {
       try {
         const parsed = JSON.parse(cachedGoogle);
@@ -159,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setStaffSession((prev) => {
             if (prev && prev.email !== fbUser.email) {
               console.warn('Staff session dibersihkan (tidak sinkron dgn akun aktif):', prev.email);
-              localStorage.removeItem(STAFF_SESSION_KEY);
+              safeRemove(STAFF_SESSION_KEY);
               return null;
             }
             return prev;
@@ -178,15 +216,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // oleh forcedRole (lihat syncUserProfile: forcedRole != data.role -> overwrite).
           const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
           setProfile(prof);
-          localStorage.setItem(
-            GOOGLE_SESSION_KEY,
-            JSON.stringify({ user: appUser, profile: prof })
-          );
+          safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
         } catch (e) {
           console.error('Error syncing Google user profile:', e);
         }
       } else {
-        const cached = localStorage.getItem(GOOGLE_SESSION_KEY);
+        const cached = safeGet(GOOGLE_SESSION_KEY);
         if (!cached) {
           setUser(null);
           setProfile(null);
@@ -240,7 +275,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setUser(appUser);
       setProfile(prof);
-      localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
+      safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user: appUser, profile: prof }));
     } finally {
       setLoading(false);
     }
@@ -252,8 +287,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await authLogout();
       setUser(null);
       setProfile(null);
-      localStorage.removeItem(GOOGLE_SESSION_KEY);
-      localStorage.removeItem('bersamakita_local_user');
+      safeRemove(GOOGLE_SESSION_KEY);
+      safeRemove('bersamakita_local_user');
     } finally {
       setLoading(false);
     }
@@ -300,7 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginAt: new Date().toISOString(),
       };
       setStaffSession(session);
-      localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(session));
+      safeSet(STAFF_SESSION_KEY, JSON.stringify(session));
       return { role: 'admin' };
     } 
     
@@ -324,7 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginAt: new Date().toISOString(),
       };
       setStaffSession(session);
-      localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(session));
+      safeSet(STAFF_SESSION_KEY, JSON.stringify(session));
       return { role: 'partner' };
     } catch (err: any) {
       console.error('Staff login error:', err);
@@ -336,7 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logoutStaff = () => {
     setStaffSession(null);
-    localStorage.removeItem(STAFF_SESSION_KEY);
+    safeRemove(STAFF_SESSION_KEY);
   };
 
   const quickFillCredential = (type: 'admin' | 'partner') => {
@@ -357,7 +392,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !profile) return;
     const updated = await syncUserProfile(user, newRole);
     setProfile(updated);
-    localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({ user, profile: updated }));
+    safeSet(GOOGLE_SESSION_KEY, JSON.stringify({ user, profile: updated }));
   };
 
   const isAdminAuthenticated = staffSession !== null && staffSession.role === 'admin';
@@ -389,6 +424,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         loading,
         switchRole,
+        storageBlocked,
+        redirectError,
       }}
     >
       {children}
