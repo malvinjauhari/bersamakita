@@ -127,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (e) {
             console.warn('syncUserProfile post-redirect error:', e);
           }
+          setLoading(false);
         }
       } catch (e) {
         // Abaikan — onAuthStateChanged tetap akan menangani sesi.
