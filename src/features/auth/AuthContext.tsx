@@ -96,9 +96,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Selesaikan Google sign-in via redirect (hasil kembali dari
     // accounts.google.com) dan buang pending redirect dari siklus sebelumnya.
-    completeGoogleRedirect().then((res) => {
+    completeGoogleRedirect().then(async (res) => {
       if (!res.ok) {
         console.warn('Redirect sign-in tidak selesai:', res.error);
+        return;
+      }
+      // Jika redirect memberikan cred.user, sinkronkan state segera agar
+      // navigasi balik ke dashboard tidak tertunda (onAuthStateChanged juga akan
+      // memanggil sinkronisasi, tapi ini mempercepat UX & lebih deterministik).
+      try {
+        const { auth } = await import('../../config/firebase');
+        const { getRedirectResult } = await import('firebase/auth');
+        const credNow = await getRedirectResult(auth);
+        if (credNow?.user) {
+          const fbUser = credNow.user;
+          const appUser: AppUser = {
+            uid: fbUser.uid,
+            email: fbUser.email,
+            displayName: fbUser.displayName,
+            photoURL: fbUser.photoURL,
+          };
+          setUser(appUser);
+          try {
+            const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
+            setProfile(prof);
+            localStorage.setItem(
+              GOOGLE_SESSION_KEY,
+              JSON.stringify({ user: appUser, profile: prof })
+            );
+          } catch (e) {
+            console.warn('syncUserProfile post-redirect error:', e);
+          }
+        }
+      } catch (e) {
+        // Abaikan — onAuthStateChanged tetap akan menangani sesi.
       }
     });
 
