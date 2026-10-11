@@ -25,7 +25,7 @@
 
 ## Partner Information Sync (UI)
 
-- The **Admin Dashboard** provides an interface to edit Partner details, including Name, Description, Location, and uploading a Logo to Firebase Storage.
+- The **Admin Dashboard** provides an interface to edit Partner details, including Name, Description, Location, and uploading a Logo. Logos are uploaded to **Cloudinary** via `POST /api/images/sign` + `src/services/cloudinary.ts`; the resulting `secureUrl` is stored in `partners.logo` and the `public_id` in `partners.logoPublicId`.
 - When an Admin updates a Partner, `updatePartner` writes these changes directly to the `partners` collection in Firestore.
 - In **User Dashboards** (like the BMKG Catalog or Disaster Details), the UI relies solely on `partnerId` linked to the active `Disaster`.
 - The frontend dynamically resolves `partners.find(p => p.id === activeDisaster.partnerId)` and uses the resulting object to render the Partner card. This guarantees that logo updates or description changes propagate immediately to the public UI without stale cached fields.

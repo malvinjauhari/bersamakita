@@ -29,7 +29,7 @@ This schema reflects the actual Firestore structure based on `firestore.rules` a
 
 ## 7. `partners`
 - **Fields**: `id`, `userId` (Firebase Auth UID), `name`, `email`, `organization`, `contact`, `operationalArea`, `logo` (image URL — legacy external or Cloudinary), `logoPublicId` (Cloudinary `public_id` of `logo`, empty for legacy URLs), `description`, `location`, `status`, `createdAt`, `updatedAt`
-- **Rules**: Public read. Admin authenticated write only. Created strictly via backend endpoint.
+- **Rules**: Public read. Authenticated write (in practice created via the backend `/api/admin/create-partner` endpoint; `firestore.rules` allows any authenticated write to keep the flow simple).
 
 ## 8. `partnerAllocations`
 - **Fields**: `id`, `disbursementId`, `partnerId`, `partnerName`, `amount`, `sourceDonationIds`, `status`, `evidencePhotoUrl` (Cloudinary or legacy URL), `evidencePhotoPublicId`, `milestones[].photoUrl`, `milestones[].photoPublicId`, `allocatedAt`, `createdAt`, `updatedAt`

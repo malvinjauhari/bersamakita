@@ -2,22 +2,25 @@
 
 This document tracks known issues, technical debt, and recommended fixes based on the current architecture.
 
-## Current Issues & Technical Debt
-- **[ISSUE-1] Payment Callback Firestore Update (PARTIAL/BROKEN)**: 
-  - **Context**: `server.ts` receives the Duitku callback (`/api/payments/duitku/callback`), validates the signature, but only logs the outcome. It does *not* update the Firestore `donations` and `payments` documents.
-  - **Impact**: Relies on frontend polling or manual verification to finalize transaction status.
-  - **Debt**: Lacks Firebase Admin SDK initialization in the backend (with service account credentials) to perform secure background updates.
+## Status Summary
 
-- **[ISSUE-2] Missing `firebase-admin` Configuration**:
-  - **Context**: `package.json` includes `firebase-admin`, but `server.ts` attempts to circumvent admin privileges by signing in as a regular user (`admin_backend@bersamakita.org`) via client SDK (`signInWithEmailAndPassword`) in the `/api/admin/reset-transactions` endpoint.
-  - **Debt**: This is an anti-pattern for server environments and should be replaced with `firebase-admin`.
+The previously documented issues are **resolved**:
 
-- **[ISSUE-3] Secrets Management**:
-  - **Context**: Hardcoded credentials in `server.ts` (e.g., Duitku API keys, fallback admin passwords).
-  - **Debt**: These should strictly use environment variables and be removed from source code.
+- ~~**[ISSUE-1] Payment Callback Firestore Update (PARTIAL/BROKEN)**~~ — **RESOLVED**: `POST /api/payments/duitku/callback` validates HMAC-SHA256, is idempotent, and updates `payments`, `donations`, and `trackingEvents` via the Firebase Admin SDK.
+- ~~**[ISSUE-2] Missing `firebase-admin` Configuration**~~ — **RESOLVED**: backend uses the Admin SDK (`src/config/firebase-admin.ts`) for all administrative writes; `/api/admin/reset-transactions` no longer signs in as a regular user.
+- ~~**[ISSUE-3] Secrets Management**~~ — **RESOLVED**: all credentials live in `.env` (backend, non-`VITE_`); `.env.example` documents every variable.
+- ~~**[ISSUE-4] Error Handling on BMKG Proxies**~~ — **RESOLVED**: `server/routes/bmkg.ts` adds an 8-second `AbortSignal.timeout()`, a `User-Agent` header, non-OK status detection, and `502` JSON responses on failure.
 
-## Recommended Fix Order
-1. **Configure Firebase Admin SDK**: Set up the backend to securely access Firestore using a service account instead of client-side authentication.
-2. **Implement Payment Webhook Logic**: Update the Duitku callback in `server.ts` to use Firebase Admin SDK to update the `donations` and `payments` collection statuses directly.
-3. **Refactor Hardcoded Secrets**: Move all fallback API keys and passwords to the `.env` file.
-4. **Error Handling on BMKG Proxies**: Enhance the error handling and retry mechanisms on `/api/bmkg/autogempa` and `/api/bmkg/gempaterkini`.
+## Remaining Recommendations (Non-Blocking)
+
+- **[REC-1] Rotate leaked credentials**: Duitku API Key, Merchant Code, and Admin Secret Key were previously hardcoded and live in git history. Rotate them and update the Vercel project env vars.
+- **[REC-2] Vercel env completeness**: ensure `CRON_SECRET` is set for the `expire-sweep` cron and that `DUITKU_ENVIRONMENT` stays `sandbox` until production sign-off.
+- **[REC-3] Firestore indexes**: confirm composite indexes (e.g., `donations` by `status` + `createdAt`, `payments` by `donationId`) match `firestore.indexes.json` before heavy usage.
+- **[REC-4] Rate limiting & abuse protection**: consider `express-rate-limit` on `/api/payments/duitku/*` and `/api/admin/*` in production.
+- **[REC-5] Production Duitku checklist**: flip `DUITKU_ENVIRONMENT=production`, verify callback/return URLs use HTTPS `APP_URL`, and run the sandbox test suite (`test-callback.ts`, `test-admin.ts`) one last time.
+- **[REC-6] CI**: add a GitHub Action running `npm run lint` + `npm run build` (and optionally `firebase emulators:exec` for Firestore rules tests).
+
+## Recommended Fix Order (if any item above is picked up)
+1. Rotate secrets and update `.env` + Vercel env. (REC-1)
+2. Set `CRON_SECRET` on Vercel. (REC-2)
+3. Add rate limiting and CI. (REC-4, REC-6)

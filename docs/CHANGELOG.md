@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Massive Folder Structure Refactoring (Feature-Driven Architecture)**: Migrated `src/domains/` to `src/features/` and `src/integrations/` to `src/services/` to follow a scalable, modular architecture without altering functionality or routing.
+- **Documentation sync**: rewrote `README.md` (replaced the AI Studio boilerplate with Bersama Kita setup/deploy docs), updated `ARCHITECTURE.md`, `API.md`, `CONTRACT.md`, `CURRENT_STATE.md`, `NOW.md`, `TASKS.md`, `DATABASE.md`, `PAYMENT.md`, `PARTNER.md`, `AUTH.md`, and `GIT_STATE.md` to match the refactored feature-driven codebase and the current endpoint inventory (removed the phantom `/api/bmkg/auto-verify`, documented `create-partner`, `simulate-paid`, and `expire-sweep`).
+- Added `CRON_SECRET` (guard for `GET /api/payments/duitku/expire-sweep`) to `.env.example`.
 - **Backend Monolith Splitting**: Refactored the single `server.ts` monolith (900+ lines) into a modular `server/` directory, introducing individual route handlers (`server/routes/bmkg.ts`, `server/routes/payments.ts`, `server/routes/transparency.ts`, `server/routes/admin.ts`, `server/routes/images.ts`) and a clean entry point (`server/app.ts`).
 - **Tailwind CSS v4 Upgrade**: Automated the syntax migration across all frontend components (e.g. `max-w-[400px]` to `max-w-100`, `bg-gradient-to-r` to `bg-linear-to-r`) using `@tailwindcss/upgrade`.
 - **Comprehensive UI/UX Overhaul**: Upgraded design aesthetics across multiple domains (Disaster Management, Donation Flows, Transparency Reports, Partner/Admin Dashboards) using modern styling, dynamic layouts, and consistent theming.

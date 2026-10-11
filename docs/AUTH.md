@@ -11,7 +11,7 @@
    - Cannot create partner accounts.
 
 2. **Admin (Operasional)**
-   - Hardcoded master admin login (`bersamakita.my.id@protonmail.com`).
+   - Hardcoded master admin login (`[EMAIL_ADDRESS]`).
    - Or Firebase Auth users with `role: 'admin'` in their `users` document.
    - Authorized to manage BMKG disasters, disbursements, and create Partner accounts via backend `/api/admin/*` endpoints.
 
@@ -23,5 +23,5 @@
 
 ## Security Controls
 - **Client Side**: `AuthContext.tsx` handles checking custom roles (`isAdminAuthenticated`, `isPartnerAuthenticated`) and routes protection.
-- **Backend / API Server Side**: All `/api/admin/*` routes expect a Firebase ID Token (`Authorization: Bearer <token>`). The server uses the Firebase Admin SDK to decode the token and cross-checks the user's role against the `users` Firestore collection before performing sensitive operations like `adminAuth.createUser()`.
+- **Backend / API Server Side**: `/api/admin/create-partner` (and `/api/images/sign`) expect a Firebase ID Token (`Authorization: Bearer <token>`); the server uses the Firebase Admin SDK to decode the token and cross-checks the user's role against the `users` Firestore collection before performing sensitive operations. `POST /api/admin/reset-transactions` is an internal-only route guarded by `ADMIN_SECRET_KEY` (a bearer secret from the environment, not a Firebase token).
 - **Database Rules**: `firestore.rules` enforces row-level security. Partner accounts can only write to specific reports and their own dashboard. User data is strictly isolated (`request.auth.uid == userId`).

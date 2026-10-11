@@ -21,13 +21,13 @@ Contoh: Donasi Rp100.000 → Biaya Admin Rp170 → Total Dibayar Rp100.170
 ## Architecture
 
 1. **Initiation (Frontend)**: User initiates a donation on `/transaction/donate/:disasterId`. QRIS is the only method (no other options in UI or API).
-2. **Creation (Backend)**: `PaymentService` (`src/integrations/duitku/payment-service.ts`) calls `/api/payments/duitku/create`. The backend computes the 0,17% fee server-side, then calls Duitku with `paymentMethod: 'SP'` and `paymentAmount = amount + fee`.
-3. **Duitku API**: Backend generates an MD5 signature (`merchantCode + merchantOrderId + paymentAmount + apiKey`) and sends a `POST` request to Duitku Sandbox `inquiry` endpoint.
+2. **Creation (Backend)**: `DuitkuPaymentService` (`src/services/duitku.ts`) calls `POST /api/payments/duitku/create` (nominal donasi minimum **Rp10.000**). The backend computes the 0,17% fee server-side, then calls Duitku with `paymentMethod: 'SP'` and `paymentAmount = amount + fee`.
+3. **Duitku API**: Backend generates an **MD5** signature (`merchantCode + merchantOrderId + paymentAmount + apiKey`) and sends a `POST` request to the Duitku `inquiry` endpoint (`sandbox.duitku.com` or `passport.duitku.com`). `expiryPeriod: 60` menit (disinkronkan dengan countdown checkout).
 4. **Checkout (Frontend)**: Backend returns `qrString` with `fee` and `totalAmount`. The checkout page shows the fee breakdown and checks the transaction status via `/api/payments/duitku/check-status`.
 5. **Callback (Backend)**: Duitku sends a webhook to `/api/payments/duitku/callback` when payment is completed.
-   - The backend validates the **HMAC-SHA256** signature.
-   - It performs an idempotency check.
-   - It updates the Firestore `payments` and `donations` documents directly via the Firebase Admin SDK.
+   - The backend validates the **HMAC-SHA256** signature (key = `DUITKU_API_KEY`).
+   - It performs an idempotency check (already-`paid` payments are acknowledged without mutation).
+   - On `resultCode '00'` it updates Firestore `payments` → `paid`, `donations` → `paid`, and inserts a `trackingEvents` row via the **Firebase Admin SDK**; other result codes transition only `pending` records to `failed` (`'01'`) or `expired`.
 6. **Return URL**: User is redirected back to `/transaction/status/:donationId` after successful payment.
 
 ## Supported Payment Methods

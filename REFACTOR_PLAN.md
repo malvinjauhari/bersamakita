@@ -1,3 +1,5 @@
+> **STATUS: SELESAI — Juni/Oktober 2026.** Seluruh pemetaan di bawah telah dieksekusi pada commit `d9a9efc` (feature-driven architecture, `server/` modular, Tailwind v4). Gunakan dokumen ini hanya sebagai riwayat rencana; lihat `docs/ARCHITECTURE.md` & `README.md` untuk struktur terkini.
+
 # Audit Singkat Kondisi Awal Codebase
 - Frontend (React + Vite) berada di `src/` dengan struktur modular lama (domains, integrations).
 - Backend (Express) saat ini menyatu di dalam file `server.ts` di root directory.

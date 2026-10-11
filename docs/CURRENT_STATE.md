@@ -3,35 +3,38 @@
 ## Milestones Achieved
 
 - **Phase 1: Backend & Firebase Admin Integration**
-  - Secured `server.ts` to use Firebase Admin SDK via service account credentials.
-  - Replaced frontend Firebase Client workarounds for admin roles.
+  - Secured the backend to use the Firebase Admin SDK via service account env (`src/config/firebase-admin.ts`).
+  - Replaced frontend client SDK workarounds for admin actions (`/api/admin/reset-transactions` now uses Admin SDK).
 - **Phase 2: Duitku Payment Gateway Callback Integration**
-  - Callback signature verified.
-  - Handled duplicate/idempotent callbacks correctly.
-  - Linked `payments` to `donations` securely without trusting client payload.
+  - Callback signature verified (HMAC-SHA256).
+  - Duplicate/idempotent callbacks handled correctly.
+  - `payments`/`donations` updated securely via Admin SDK — no client trust.
 - **Phase 3: Security & Environment Cleanup**
   - Hardcoded API Keys, Merchant Codes, and service accounts removed.
-  - Moved secrets to `.env` variables, cleanly separating frontend (`VITE_*`) and backend credentials.
-  - Created `.env.example`.
+  - Secrets moved to `.env` (backend, non-`VITE_`), `.env.example` created (incl. `CRON_SECRET`).
 - **Phase 4: BMKG Integration Revamp (Strict Manual Approval)**
-  - Removed `.slice(0, 5)` limitations for fetching earthquake data; all ~15 data from `gempaterkini` is fetched.
-  - Disabled all automated "auto-publish" logic, including 24-hour rule engine and empty-database fallback rules.
-  - Implemented strict business rule: `BMKG Fetch → Save Disaster → PENDING_APPROVAL → Admin Review + Mitra Assignment → Admin Approval → ACTIVE → User`.
-  - Admin now *must* select a Mitra Lapangan (partner) before approving any disaster.
+  - All `gempaterkini` events fetched (no `.slice(0,5)`).
+  - All auto-publish / 24-hour rule engine / empty-database fallbacks removed.
+  - Strict flow: `BMKG Fetch → Save Disaster → PENDING_APPROVAL → Admin Review + Mitra Assignment → Admin Approval → ACTIVE`.
+  - Admin must assign a Mitra Lapangan before approving.
 - **Phase 5: Partner Authentication Flow**
-  - Secured Partner creation. Regular users cannot self-register as partners.
-  - Admin uses the Dashboard to create a Partner, triggering a secure backend call to `/api/admin/create-partner`.
-  - Backend leverages Firebase Admin SDK to create a robust Firebase Auth account (handling email/password securely).
-  - Backend writes strict `role: 'partner'` to the `users` collection and creates the `partners` profile collection without ever storing plaintext passwords in Firestore.
-  - `PartnerAuthPage.tsx` was refactored to securely use standard Firebase `signInWithEmailAndPassword`, linking Partner sessions directly to strict `firestore.rules` enforcement.
-- **Phase 6: Real Payment Gateway Integration**
-  - Upgraded Duitku checkout from mock/POP UI to Real Direct API rendering (Raw QRIS strings and DANA direct URLs).
-  - Webhook securely handles HMAC-SHA256 signatures, updating database identically to documentation.
-  - Implemented `/check-status` for frontend polling, removing frontend-determined "success" mocks entirely.
+  - Partners can only be created by Admins via `POST /api/admin/create-partner` (verified Firebase ID token + admin role check).
+  - `role: 'partner'` written to `users`; profile written to `partners`; password never stored in Firestore.
+  - `PartnerAuthPage` uses standard `signInWithEmailAndPassword` → sessions enforced by `firestore.rules`.
+- **Phase 6: Real Payment Gateway Integration (QRIS-only)**
+  - Duitku **Direct API** (not POP): raw `qrString` rendered on checkout; DANA/ShopeePay e-money options removed.
+  - Webhook securely handles HMAC-SHA256 signatures and writes to Firestore.
+  - `/check-status` for frontend polling; frontend never marks a payment as paid by itself.
+- **Phase 7: Feature-Driven Refactor & Documentation Sync**
+  - Migrated `src/domains/` → `src/features/` and `src/integrations/` → `src/services/`.
+  - Split the `server.ts` monolith into `server/app.ts` + `server/routes/*`.
+  - Upgraded to TailwindCSS v4; comprehensive UI/UX overhaul.
+  - Documentation (`docs/`, `README.md`) synchronized with the actual code.
 
 ## Outstanding Issues
 
-- **None currently identified for the core flows.** The system is now fully aligned with strict verification, security, and administrative compliance.
+- **None currently identified for the core flows.** The system is fully aligned with strict verification, security, and administrative compliance.
+- Known operational notes (not bugs): `CRON_SECRET` should be set in the Vercel project for the `expire-sweep` cron; `DUITKU_ENVIRONMENT` must be flipped to `production` only when ready for live payments.
 
 ## Environment Variables Requirement
-See `.env.example` for the required configuration. Backend requires `FIREBASE_SERVICE_ACCOUNT_JSON`, `DUITKU_API_KEY`, etc.
+See `.env.example` for the required configuration. Backend requires `FIREBASE_SERVICE_ACCOUNT_JSON`, `DUITKU_MERCHANT_CODE`, `DUITKU_API_KEY`, `ADMIN_SECRET_KEY`, `CRON_SECRET` (for cron), and optionally `CLOUDINARY_*`.

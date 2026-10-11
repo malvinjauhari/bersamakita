@@ -1,42 +1,64 @@
 # API Integration Specifications
 
-This document outlines the API endpoints provided by `server.ts` and external API usage.
+This document outlines the API endpoints provided by the backend (`server/app.ts` + `server/routes/*`) and external API usage.
 
-## Internal Backend APIs (`server.ts`)
+> Backend entry points (mounted in `server/app.ts`):
+> - `/api/bmkg` → `server/routes/bmkg.ts`
+> - `/api/payments/duitku` → `server/routes/payments.ts`
+> - `/api/transparency` → `server/routes/transparency.ts`
+> - `/api/admin` → `server/routes/admin.ts`
+> - `/api/images` → `server/routes/images.ts`
+>
+> On Vercel, `api/index.ts` exports the same Express `app` as a serverless function, and any unmatched `/api/*` returns JSON 404 (never HTML).
 
-### BMKG Proxy & Verification
+## Internal Backend APIs
+
+### BMKG Proxy (`/api/bmkg`)
+
 1. **`GET /api/bmkg/autogempa`**
-   - **Description**: Proxies `https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json`
-   - **Response**: `{ success: true, data: { ... } }` or `{ success: false, message: '...' }`
+   - **Description**: Proxies `https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json` (gempa terbaru) with an 8s timeout and `User-Agent` header.
+   - **Response**: `{ success: true, data: { ... } }` or `502 { success: false, message: '...' }` on BMKG failure.
 
 2. **`GET /api/bmkg/gempaterkini`**
-   - **Description**: Proxies `https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json`
-   - **Response**: `{ success: true, data: { ... } }` or `{ success: false, message: '...' }`
+   - **Description**: Proxies `https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json` (daftar gempa terkini) with the same 8s timeout / 502 error handling.
+   - **Response**: `{ success: true, data: { ... } }` or `502 { success: false, message: '...' }`.
 
-3. **`POST /api/bmkg/auto-verify`**
-   - **Body**: `{ eventTime, ingestionTime, magnitude, force24h }`
-   - **Description**: Evaluates if a BMKG event should be automatically approved (e.g. > 24 hours without admin action).
-   - **Response**: `{ success: true, isAutoApproved: boolean, reason: string, ... }`
+> **Note**: The old `POST /api/bmkg/auto-verify` route (24-hour auto-approval rule engine) has been **removed**. BMKG is data-only; all ingested disasters are written by the frontend with `status: 'pending_verification'` and require explicit admin approval.
 
-### Duitku Payment Gateway
+### Duitku Payment Gateway (`/api/payments/duitku`)
+
 1. **`POST /api/payments/duitku/create`**
-   - **Body**: `{ donationId, amount, donorName, donorEmail, donorPhone, paymentMethod }` — `amount` = **nominal donasi**; `paymentMethod` must be `'SP'` (QRIS) or omitted (defaults to QRIS).
-   - **Description**: Creates a Duitku inquiry/invoice. Computes the transparent 0,17% admin fee server-side (`src/lib/fees.ts`) and charges `paymentAmount = amount + fee`. Generates MD5 signature for the inquiry.
-   - **Response**: `{ success: true, reference: string, paymentUrl?: string, qrString?: string, vaNumber?: string, fee: number, totalAmount: number }`
+   - **Headers**: `Content-Type: application/json`
+   - **Body**: `{ donationId, amount, donorName, donorEmail, donorPhone?, paymentMethod? }`
+     - `amount` = **nominal donasi** (minimum **Rp10.000**).
+     - `paymentMethod` must be `'SP'` (QRIS) or omitted (defaults to QRIS). `'DA'`/`'SA'` are rejected with `400 "Metode pembayaran tidak didukung. Hanya QRIS."`
+   - **Description**: Computes the transparent 0,17% admin fee server-side (`src/lib/fees.ts`) and charges `paymentAmount = amount + fee`. Generates **MD5** signature (`merchantCode + merchantOrderId + paymentAmount + apiKey`) and sends a Duitku `inquiry`. `expiryPeriod: 60` minutes (kept in sync with the checkout countdown).
+   - **Response**: `{ success: true, reference, paymentUrl?, qrString?, vaNumber?, fee, totalAmount }`
 
 2. **`POST /api/payments/duitku/callback`**
-   - **Body**: Standard Duitku callback payload.
-   - **Description**: Receives payment notifications from Duitku. Verifies HMAC-SHA256 signature. Updates Firestore directly using Firebase Admin SDK.
-   - **Response**: `{ success: true, message: 'Callback processed' }`
+   - **Body**: Standard Duitku callback payload (`merchantCode, amount, merchantOrderId, signature, reference, resultCode`).
+   - **Description**: Verifies **HMAC-SHA256** signature (`merchantCode + amount + merchantOrderId`, keyed with `DUITKU_API_KEY`). On `resultCode '00'` updates `payments` → `paid` + `donations` → `paid` and inserts a `trackingEvents` row ("Dana Donasi Diterima") via **Firebase Admin SDK**. **Idempotent**: if payment is already `paid`, returns success without mutating. On failure (`'01'` → `failed`, otherwise `expired`) only pending records are transitioned.
+   - **Response**: `{ success: true, message: 'Callback processed' }` (or `403` on invalid signature).
 
 3. **`POST /api/payments/duitku/check-status`**
    - **Body**: `{ merchantOrderId }`
-   - **Description**: Queries Duitku transactionStatus API to get current payment status. Verifies using HMAC-SHA256 signature. Updates Firestore if status is paid or failed.
-   - **Response**: `{ success: true, statusCode: string, statusMessage: string, reference: string }`
+   - **Description**: Queries Duitku `transactionStatus` API (HMAC-SHA256 signature over `merchantCode + merchantOrderId`) and syncs `paid` (statusCode `00`) / `failed` (statusCode `02`) to Firestore when the local status is stale.
+   - **Response**: `{ success: true, statusCode, statusMessage, reference }`
 
-### Transparency
+4. **`POST /api/payments/duitku/simulate-paid`** *(sandbox only)*
+   - **Body**: `{ merchantOrderId }`
+   - **Description**: Marks a pending payment as `paid` in one click for demo purposes. **Locked**: responds `403` unless `DUITKU_ENVIRONMENT=sandbox`. Idempotent.
+   - **Response**: `{ success: true, message: 'Pembayaran disimulasikan sebagai lunas (sandbox).' }`
+
+5. **`GET /api/payments/duitku/expire-sweep`** *(Vercel Cron)*
+   - **Headers** (optional, recommended on Vercel): `Authorization: Bearer <CRON_SECRET>`
+   - **Description**: Resolves donations stuck in `pending_payment` past the 60-minute expiry. Each stale donation is checked against Duitku `transactionStatus` (authoritative); `00` → `paid`, otherwise `failed`. Idempotent per record. Triggered daily at 17:00 UTC by the cron in `vercel.json`.
+   - **Response**: `{ success: true, checked, paid, failed }`
+
+### Transparency (`/api/transparency`)
+
 1. **`GET /api/transparency/summary`**
-   - **Description**: Public, read-only summary of recorded (paid) transactions via Firebase Admin SDK — identical for every role (guest/user/admin/partner). Never exposes donor email/phone.
+   - **Description**: Public, read-only summary of recorded (paid) transactions via **Firebase Admin SDK** — identical for every role (guest/user/admin/partner). Never exposes donor email/phone. Payments are joined to donations by `donationId` (with `paymentId` fallback).
    - **Response**:
      ```json
      { "success": true, "data": {
@@ -49,19 +71,32 @@ This document outlines the API endpoints provided by `server.ts` and external AP
      ```
    - `transactions` is capped to the 100 most recent paid donations; aggregates cover all paid donations.
 
-### Admin Endpoints
-1. **`POST /api/admin/reset-transactions`**
-   - **Headers**: `Authorization: Bearer <ADMIN_SECRET_KEY>`
-   - **Description**: Deletes all transaction data (donations, payments, etc.) for testing purposes.
-   - **Response**: `{ success: true, deletedCount: number }`
+### Admin Endpoints (`/api/admin`)
 
-### Image Upload (Cloudinary)
+1. **`POST /api/admin/create-partner`**
+   - **Headers**: `Authorization: Bearer <Firebase ID Token>`
+   - **Body**: `{ email, password, name, organization, contact?, area? }`
+   - **Description**: Creates a Partner account. Backend verifies the token via `adminAuth.verifyIdToken()`, then confirms the caller is an admin (email allowlist in `server/routes/admin.ts` or `role == 'admin'` in `users`). Creates the Firebase Auth user, writes `users/{uid}` with `role: 'partner'`, and creates the `partners/{uid}` profile. Passwords are never stored in Firestore.
+   - **Response**: `{ success: true, partner: { ... } }` or `403` when not admin, `400` on missing fields.
+
+2. **`POST /api/admin/reset-transactions`**
+   - **Headers**: `Authorization: Bearer <ADMIN_SECRET_KEY>`
+   - **Description**: Deletes all transaction data (`donations`, `payments`, `disbursements`, `partnerAllocations`, `distributionReports`, `distributions`, `trackingEvents`) in batches of 500 via the Admin SDK. For testing only.
+   - **Response**: `{ success: true, message: 'Transaction data successfully reset.', deletedCount: number }`
+
+### Image Upload — Cloudinary (`/api/images`)
+
 1. **`POST /api/images/sign`**
    - **Headers**: `Authorization: Bearer <Firebase ID Token>` (role `admin` or `partner`)
    - **Body**: `{ folder: 'bersamakita/reports' | 'bersamakita/evidence' | 'bersamakita/partners' }`
-   - **Description**: Issues a Cloudinary signed-upload signature (SHA-1 computed server-side). `CLOUDINARY_API_SECRET` never leaves the server and the browser uploads the file directly to `https://api.cloudinary.com/v1_1/<cloud>/image/upload`. Unknown folders are rejected with `400`, missing/invalid tokens with `401`.
+   - **Description**: Issues a Cloudinary signed-upload signature (SHA-1 computed server-side). `CLOUDINARY_API_SECRET` never leaves the server; the browser uploads the file directly to `https://api.cloudinary.com/v1_1/<cloud>/image/upload`. Unknown folders → `400`, missing/invalid tokens → `401`.
    - **Response**: `{ success: true, data: { cloudName, apiKey, timestamp, signature, folder } }`
-   - **Frontend helper**: `src/integrations/cloudinary/upload.ts` → `uploadImageToCloudinary(file, folder)` returns `{ secureUrl, publicId }`.
+   - **Frontend helper**: `src/services/cloudinary.ts` → `uploadImageToCloudinary(file, folder)` returns `{ secureUrl, publicId }` (validates 5 MB max, `JPG/JPEG/PNG/WEBP`).
 
 ## External APIs
-- **Firebase / Firestore**: Client-side direct access using Firebase JS SDK, protected by `firestore.rules`.
+
+- **Firebase / Firestore**: Client-side direct access using Firebase JS SDK, protected by `firestore.rules` (see `docs/DATABASE.md`).
+- **Firebase Admin SDK** (`src/config/firebase-admin.ts`): used by the backend for administrative writes (payments, donations, trackingEvents, partners, transparency, reset). Initialized from `FIREBASE_SERVICE_ACCOUNT_JSON`.
+- **BMKG Open Data**: fetched server-side only (proxies above) — never called directly from the browser.
+- **Duitku Direct API**: `inquiry`, `transactionStatus`, and callback webhook — backend only.
+- **Cloudinary**: direct browser upload signed by `/api/images/sign` — backend only signs.
