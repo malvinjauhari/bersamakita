@@ -49,4 +49,6 @@
 - Strict approval flow for disasters (no auto-publish, mandatary Mitra assignment).
 
 ## Compromised Credentials (Must Rotate)
-- Duitku API Key & Merchant Code, Admin Secret Key: previously hardcoded in frontend/backend and published in git history. **They have been moved to `.env`, but any secret ever committed should be rotated** before production use.
+- Duitku API Key & Merchant Code: were hardcoded in frontend/backend and published in git history. **Rotated state: pending** — sandbox values are still in old commits; use freshly generated **production** values when going live.
+- Admin Secret Key: was hardcoded in frontend/backend. **Rotated ✅** (new 64-char secret in local `.env` + Vercel production env).
+- GitHub & Vercel tokens shared in chat (see `docs/GIT_STATE.md`): **revoked ✅** / manual revocation step provided.

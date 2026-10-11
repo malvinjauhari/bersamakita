@@ -13,7 +13,10 @@ The previously documented issues are **resolved**:
 
 ## Remaining Recommendations (Non-Blocking)
 
-- **[REC-1] Rotate leaked credentials**: Duitku API Key, Merchant Code, and Admin Secret Key were previously hardcoded and live in git history. Rotate them and update the Vercel project env vars.
+- **[REC-1] Rotate leaked credentials**: Duitku API Key, Merchant Code, and Admin Secret Key were previously hardcoded and live in git history.
+  - `ADMIN_SECRET_KEY` — **DONE (2026-10)**: rotated in local `.env` and Vercel production env.
+  - Duitku API Key / Merchant Code — **PENDING user action**: generate fresh **production** keys from the Duitku merchant dashboard and update `DUITKU_MERCHANT_CODE` + `DUITKU_API_KEY` (`.env` + Vercel) before go-live.
+  - GitHub `ghp_` / Vercel `vcp_` tokens shared in chat — **revoked** (see `docs/GIT_STATE.md`).
 - **[REC-2] Vercel env completeness**: ensure `CRON_SECRET` is set for the `expire-sweep` cron and that `DUITKU_ENVIRONMENT` stays `sandbox` until production sign-off.
 - **[REC-3] Firestore indexes**: confirm composite indexes (e.g., `donations` by `status` + `createdAt`, `payments` by `donationId`) match `firestore.indexes.json` before heavy usage.
 - **[REC-4] Rate limiting & abuse protection**: consider `express-rate-limit` on `/api/payments/duitku/*` and `/api/admin/*` in production.
