@@ -40,6 +40,20 @@ function short(s: string, n = 400) {
   return s.length > n ? s.slice(0, n) + '...' : s;
 }
 
+/** fetch dengan retry (jaringan ke Google API sering ETIMEDOUT di lingkungan ini). */
+async function rafetch(url: string, init?: RequestInit, retries = 4): Promise<Response> {
+  let lastErr: any;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      lastErr = e;
+      if (attempt < retries) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+}
+
 async function main() {
   const cred = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '');
   if (!cred.project_id) throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON tidak tersedia.');
@@ -74,7 +88,7 @@ async function main() {
   try {
     // --- 2. Sign-in dua akun + guest token null ---
     const signIn = async (email: string, password: string) => {
-      const res = await fetch(FIREBASE_URL, {
+      const res = await rafetch(FIREBASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, returnSecureToken: true }),
@@ -87,7 +101,7 @@ async function main() {
     check('ID token didapat untuk 2 akun QA', Boolean(tokenA) && Boolean(tokenB));
 
     const get = async (path: string, token?: string) => {
-      const res = await fetch(`${PROD}${path}`, {
+      const res = await rafetch(`${PROD}${path}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       return { status: res.status, json: await res.json() };
@@ -139,7 +153,7 @@ async function main() {
       const pendingId = `qa-pending-${Date.now()}`;
       const sumBefore = await get('/api/fundraising/summary');
       const rowBefore = (sumBefore.json?.data?.disasters || []).find((x: any) => x.disasterId === did);
-      const pendingCreate = await fetch(`${FS_URL}/donations?documentId=${pendingId}`, {
+      const pendingCreate = await rafetch(`${FS_URL}/donations?documentId=${pendingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
         body: JSON.stringify({
@@ -169,14 +183,40 @@ async function main() {
       await db.collection('donations').doc(pendingId).delete();
       console.log(`  Donasi pending QA dihapus: ${pendingId}`);
 
+      // --- 5b. (Regresi Fase 5) User biasa BISA query baca disasters
+      //          (status admin_approved) — jalur getDisasters('published') ---
+      const readQuery = await rafetch(`${FS_URL}:runQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
+        body: JSON.stringify({
+          structuredQuery: {
+            from: [{ collectionId: 'disasters' }],
+            where: {
+              fieldFilter: {
+                field: { fieldPath: 'status' },
+                op: 'EQUAL',
+                value: { stringValue: 'admin_approved' },
+              },
+            },
+            limit: 5,
+          },
+        }),
+      });
+      const readQueryBody = await readQuery.json();
+      check(
+        'user biasa BISA query baca disasters terverifikasi (getDisasters(\'published\'))',
+        readQuery.status === 200 && Array.isArray(readQueryBody) && readQueryBody.length > 0,
+        `HTTP ${readQuery.status} · ${Array.isArray(readQueryBody) ? readQueryBody.length + ' dokumen' : short(JSON.stringify(readQueryBody))}`
+      );
+
       // --- 6. Rules live: user biasa baca timeline (harus 200) ---
-      const tlGet = await fetch(`${FS_URL}/disasterTimeline/${did}/events?pageSize=5`, {
+      const tlGet = await rafetch(`${FS_URL}/disasterTimeline/${did}/events?pageSize=5`, {
         headers: { Authorization: `Bearer ${tokenA}` },
       });
       check('user A BISA baca disasterTimeline', tlGet.status === 200, `HTTP ${tlGet.status}`);
 
       // --- 6. Rules live: user biasa TIDAK boleh menulis timeline / earthquakes / disasters ---
-      const tlCreate = await fetch(`${FS_URL}/disasterTimeline/${did}/events?documentId=qa-${Date.now()}`, {
+      const tlCreate = await rafetch(`${FS_URL}/disasterTimeline/${did}/events?documentId=qa-${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
         body: JSON.stringify({
@@ -192,14 +232,14 @@ async function main() {
       });
       check('user A DITOLAK menulis disasterTimeline', tlCreate.status === 403, `HTTP ${tlCreate.status}`);
 
-      const eqCreate = await fetch(`${FS_URL}/earthquakeEvents?documentId=qa-${Date.now()}`, {
+      const eqCreate = await rafetch(`${FS_URL}/earthquakeEvents?documentId=qa-${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
         body: JSON.stringify({ fields: { id: { stringValue: `qa-${Date.now()}` } } }),
       });
       check('user A DITOLAK menulis earthquakeEvents', eqCreate.status === 403, `HTTP ${eqCreate.status}`);
 
-      const dPatch = await fetch(`${FS_URL}/disasters/${did}?updateMask.fieldPaths=title`, {
+      const dPatch = await rafetch(`${FS_URL}/disasters/${did}?updateMask.fieldPaths=title`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenA}` },
         body: JSON.stringify({ fields: { title: { stringValue: 'QA HACK TITLE' } } }),

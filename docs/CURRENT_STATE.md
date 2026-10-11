@@ -37,6 +37,7 @@
   - **Fase 4**: `GET /api/fundraising/report/:disasterId` (laporan akhir derive dari transaksi nyata, publik, tanpa PII) + `POST /api/fundraising/admin/close` (status `archived`, atomik & idempoten) + UI laporan akhir & tombol "Tutup Penggalangan".
   - **Fase 5**: Hardening `firestore.rules` (write kolektif → least privilege) + `POST /api/bmkg/refresh` (ingest BMKG server-side utk user biasa; earthquake/disasters write = admin/partner).
   - **Fase 6**: Docs sinkron (`API.md`/`CHANGELOG.md`/`DATABASE.md`) + **QA sandbox 2 akun Firebase** (`scripts/qa-phase6.ts`, user dibuat & dihapus otomatis): summary & report IDENTIK antar-akun; user biasa ditolak menulis koleksi operasional.
+  - **Fase 6.1 (hotfix)**: hapus sisa jalur tulis BMKG sisi klien — pool check (`loadData`) & admin refresh kini pakai `POST /api/bmkg/refresh` server-side (helper `refreshBMKGServer()`); `getDisasters('all')` tak lagi dipanggil saat bootstrap; inisialisasi Firebase Storage yang mati dihapus (`getStorage`). Default **"klien hanya baca; semua write via endpoint + Admin SDK"** berlaku penuh (utk disaster/earthquake). QA: user biasa baca `admin_approved` = 200, tulis = 403. Detail: `docs/TROUBLESHOOTING.md`.
 
 ## Outstanding Issues
 

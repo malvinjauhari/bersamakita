@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDIY2-sZQ65l4WNmWebAnxJOgOLqyE2yZk",
@@ -15,7 +14,11 @@ export const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+// NOTE: Firebase Storage TIDAK diinisialisasi di sini. Dulu `getStorage(app)`
+// dieksekusi saat import dan melempar "Access to storage is not allowed from
+// this context." di lingkungan tanpa indexedDB (iframe/sandbox). Semua upload
+// (bukti penyaluran, foto) sudah via Cloudinary (server). Jika kelak butuh
+// Storage, inisialisasi LAZY tepat di modul yang memakainya.
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 

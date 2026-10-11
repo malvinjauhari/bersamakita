@@ -42,9 +42,7 @@ import {
   getPartnerAllocations,
   getDistributionReports,
   getAuditLogs,
-  saveBMKGDisaster,
 } from './services/firebase/firestore';
-import { fetchAutogempa, fetchGempaterkini } from './services/bmkg';
 import {
   Disaster,
   Donation,
@@ -54,6 +52,25 @@ import {
   DistributionReport,
   AuditLog,
 } from './types';
+
+// Ingest BMKG SELALU lewat server (`POST /api/bmkg/refresh`, Admin SDK).
+// Klien TIDAK pernah menulis langsung ke `earthquakeEvents`/`disasters`,
+// sesuai hardening `firestore.rules` (Fase 5) — mencegah error
+// "Missing or insufficient permissions" & akses tulis yang tidak sah.
+async function refreshBMKGServer(): Promise<number> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error('Login diperlukan untuk memperbarui data BMKG.');
+  const res = await fetch('/api/bmkg/refresh', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const json = await res.json();
+  if (!json?.success) throw new Error(json?.message || 'Gagal memperbarui data BMKG.');
+  return json?.data?.ingested ?? 0;
+}
 
 // User Dashboard View Wrapper
 function UserDashboardPage({
@@ -132,25 +149,14 @@ function MainRoutes() {
   // Load data strictly according to Role & Permissions
   const loadData = async () => {
     try {
-      // 1. Check if system needs initial BMKG pool ingestion in Firestore (Admin only)
+      // 1. Bootstrap kolam BMKG (Admin only). Ingest dilakukan SERVER
+      //    (`POST /api/bmkg/refresh` via Admin SDK) — klien TIDAK menulis
+      //    `disasters`/`earthquakeEvents` langsung. Ini mencegah error
+      //    "Missing or insufficient permissions" ketika session staff stale
+      //    memakai token akun Google biasa.
       if (isAdminAuthenticated) {
         try {
-          const existingDisasters = await getDisasters('all');
-          if (existingDisasters.length === 0) {
-            // Ingest BMKG data directly into Firestore
-            const autoGempa = await fetchAutogempa();
-            const recentList = await fetchGempaterkini();
-            if (autoGempa) {
-              autoGempa.disaster.status = 'pending_verification';
-              autoGempa.disaster.verificationMethod = 'pending';
-              await saveBMKGDisaster(autoGempa.event, autoGempa.disaster);
-            }
-            for (const item of recentList) {
-              item.disaster.status = 'pending_verification';
-              item.disaster.verificationMethod = 'pending';
-              await saveBMKGDisaster(item.event, item.disaster);
-            }
-          }
+          await refreshBMKGServer();
         } catch (seedErr) {
           console.warn('Initial BMKG pool check notice:', seedErr);
         }
@@ -268,23 +274,9 @@ function MainRoutes() {
 
   const handleUserRefreshBMKG = async () => {
     try {
-      // Ingest dilakukan SERVER (POST /api/bmkg/refresh) — klien tidak lagi
+      // Ingest dilakukan SERVER (`POST /api/bmkg/refresh`) — klien tidak lagi
       // menulis langsung ke earthquakeEvents/disasters (hardening rules).
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        throw new Error('Login diperlukan untuk memperbarui data BMKG.');
-      }
-      const res = await fetch('/api/bmkg/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const json = await res.json();
-      if (!json?.success) {
-        throw new Error(json?.message || 'Gagal memperbarui data BMKG.');
-      }
+      await refreshBMKGServer();
 
       // Re-query only approved disasters for user
       const published = await getDisasters('published');
@@ -303,18 +295,9 @@ function MainRoutes() {
 
   const handleAdminRefreshBMKG = async () => {
     try {
-      const autogempa = await fetchAutogempa();
-      if (autogempa) {
-        autogempa.disaster.status = 'pending_verification';
-        autogempa.disaster.verificationMethod = 'pending';
-        await saveBMKGDisaster(autogempa.event, autogempa.disaster);
-      }
-      const recent = await fetchGempaterkini();
-      for (const item of recent) {
-        item.disaster.status = 'pending_verification';
-        item.disaster.verificationMethod = 'pending';
-        await saveBMKGDisaster(item.event, item.disaster);
-      }
+      // Ingest via SERVER — admin tidak lagi menulis disaster/earthquake
+      // langsung dari browser (selaras dengan hardening rules Fase 5).
+      await refreshBMKGServer();
       showToast('Data BMKG berhasil ditarik ke antrean verifikasi admin', 'success');
       await loadData();
     } catch (e) {
