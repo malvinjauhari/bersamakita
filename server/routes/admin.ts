@@ -21,6 +21,7 @@ router.post('/create-partner', async (req: Request, res: Response): Promise<any>
     const isAdmin = 
       decodedToken.email === 'admin_backend@bersamakita.org' || 
       decodedToken.email === 'contohasdf@gmail.com' ||
+      decodedToken.email === 'bersamakita.my.id@protonmail.com' ||
       (userDoc.exists && userDoc.data()?.role === 'admin');
       
     if (!isAdmin) {

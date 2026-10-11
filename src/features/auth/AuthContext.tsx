@@ -4,6 +4,7 @@ import {
   logout as authLogout,
   subscribeAuthState,
   syncUserProfile,
+  staffRoleForEmail,
   AppUser,
 } from '../../services/firebase/auth';
 import { UserProfile, UserRole } from '../../types';
@@ -109,7 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         setUser(appUser);
         try {
-          const prof = await syncUserProfile(fbUser, 'user');
+          // Role staf (admin/partner) dihitung dari email agar tidak tertimpa 'user'
+          // oleh forcedRole (lihat syncUserProfile: forcedRole != data.role -> overwrite).
+          const prof = await syncUserProfile(fbUser, staffRoleForEmail(fbUser.email));
           setProfile(prof);
           localStorage.setItem(
             GOOGLE_SESSION_KEY,

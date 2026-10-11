@@ -23,6 +23,14 @@ Future developers and AI Agents **MUST** review this document when debugging or 
 - **Fix Applied**: Completely restored `firestore.rules` from `backup/rules2.md` and meticulously reapplied custom rules line-by-line.
 - **Lesson Learned**: When modifying `firestore.rules`, avoid doing partial regex replacements. Ensure the brackets and logical conditions `||` / `&&` remain perfectly balanced.
 
+### 🔴 Error: `/api/admin/create-partner` → 403 "Forbidden: Admin access required" (Master Admin)
+- **Symptoms**: Gagal menambahkan mitra dari portal admin: `POST /api/admin/create-partner:1 Failed to load resource: the server responded with a status of 403` dan toast `Gagal menambahkan mitra: Forbidden: Admin access required`. Login admin (via `loginStaff` / `quickFillCredential`) sukses, portal admin terbuka, tetapi submit form mitra selalu ditolak.
+- **Root Cause**: Allowlist admin di `server/routes/admin.ts` (`create-partner`) hanya memuat dua email (`admin_backend@bersamakita.org`, `contohasdf@gmail.com`) + syarat `users.role == 'admin'` — **tanpa `bersamakita.my.id@protonmail.com`** (master admin yang dipakai `loginStaff`). Sementara itu `firestore.rules` `isAdmin()`, `AuthContext`, dan endpoint server lain (`fundraising.ts`, `images.ts`) sudah mengizinkan email master tersebut. Tambahan lagi, dokumen `users/{uid}` master admin ber-role **`user`** (bukan `admin`) karena `subscribeAuthState` memanggil `syncUserProfile(fbUser, 'user')` yang menimpa role akun staf ke `'user'` setiap sign-in/refresh — jadi jalur `users.role == 'admin'` pun gagal untuk akun staff.
+- **Fix Applied**: 
+  1. Tambah `bersamakita.my.id@protonmail.com` ke allowlist `create-partner` (`server/routes/admin.ts`) — selaras dengan `firestore.rules` & endpoint lain.
+  2. Helper terpusat `staffRoleForEmail()` di `src/services/firebase/auth.ts` (3 email admin + 1 email partner, "single source of truth"), dipakai `syncUserProfile` (sekarang termasuk `admin_backend@bersamakita.org`) dan `AuthContext` (`syncUserProfile(fbUser, staffRoleForEmail(fbUser.email))`) — role staf tidak lagi tertimpa `'user'`; akun Google biasa tetap dipaksa `'user'`.
+- **Lesson Learned**: Jangan menduplikasi allowlist admin per endpoint — sekecil apa pun bentuknya, dua salinan yang berbeda akan menyimpang (di sini server vs rules vs AuthContext). Semua pengecekan role staf harus berasal dari SATU sumber (helper berbagi / `firestore.rules` sebagai referensi). Juga: **jangan pernah melempar `forcedRole: 'user'` ke `syncUserProfile` utk semua akun** — itu menghapus role staf yang sah dari `users` collection dan membuat pengecekan berbasis dokumen (`users.role == 'admin'`/`'partner'`) tidak dapat diandalkan.
+
 ---
 
 ## 2. Firebase Admin SDK (Node.js / Express Backend)

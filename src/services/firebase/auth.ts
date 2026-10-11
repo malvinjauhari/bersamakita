@@ -233,27 +233,45 @@ export async function registerWithEmail(
   }
 }
 
+/**
+ * Role staf berdasarkan email — SATU sumber kebenaran, selaras dengan
+ * `isAdmin()`/`isPartner()` di `firestore.rules` (3 email admin + 1 partner).
+ * Dipakai oleh syncUserProfile & AuthContext agar role `users.*` untuk akun
+ * staf tidak tertimpa menjadi 'user'.
+ */
+export function staffRoleForEmail(email?: string | null): 'admin' | 'partner' | 'user' {
+  const normalized = (email || '').toLowerCase();
+  if (
+    normalized === 'bersamakita.my.id@protonmail.com' ||
+    normalized === 'admin_backend@bersamakita.org' ||
+    normalized === 'contohasdf@gmail.com'
+  ) {
+    return 'admin';
+  }
+  if (normalized === 'partnerbersamakita@protonmail.com') {
+    return 'partner';
+  }
+  return 'user';
+}
+
 export async function syncUserProfile(user: FirebaseUser | AppUser, forcedRole?: UserRole): Promise<UserProfile> {
   const userRef = doc(db, 'users', user.uid);
   try {
     const snapshot = await getDoc(userRef);
     const now = new Date().toISOString();
 
-    const normalizedEmail = (user.email || '').toLowerCase();
-    const isAdminEmail =
-      normalizedEmail === 'bersamakita.my.id@protonmail.com' ||
-      normalizedEmail === 'contohasdf@gmail.com';
-    const isPartnerEmail =
-      normalizedEmail === 'partnerbersamakita@protonmail.com';
+    const staffRole = staffRoleForEmail(user.email);
+    const isAdminEmail = staffRole === 'admin';
+    const isPartnerEmail = staffRole === 'partner';
 
-    let initialRole: UserRole = forcedRole || (isAdminEmail ? 'admin' : (isPartnerEmail ? 'partner' : 'user'));
+    let initialRole: UserRole = forcedRole || staffRole;
 
     if (snapshot.exists()) {
       const data = snapshot.data() as UserProfile;
       if (isAdminEmail) {
         try {
           await setDoc(doc(db, 'admins', user.uid), {
-            email: normalizedEmail,
+            email: (user.email || '').toLowerCase(),
             role: 'admin',
             createdAt: now,
           }, { merge: true });
@@ -281,7 +299,7 @@ export async function syncUserProfile(user: FirebaseUser | AppUser, forcedRole?:
       if (isAdminEmail) {
         try {
           await setDoc(doc(db, 'admins', user.uid), {
-            email: normalizedEmail,
+            email: (user.email || '').toLowerCase(),
             role: 'admin',
             createdAt: now,
           }, { merge: true });
@@ -293,12 +311,9 @@ export async function syncUserProfile(user: FirebaseUser | AppUser, forcedRole?:
     }
   } catch (error) {
     console.warn('Sync user   profile fallback without blocking:', error);
-    const normalizedEmail = (user.email || '').toLowerCase();
-    const isAdminEmail =
-      normalizedEmail === 'bersamakita.my.id@protonmail.com' ||
-      normalizedEmail === 'contohasdf@gmail.com';
-    const isPartnerEmail =
-      normalizedEmail === 'partnerbersamakita@protonmail.com';
+    const staffRole = staffRoleForEmail(user.email);
+    const isAdminEmail = staffRole === 'admin';
+    const isPartnerEmail = staffRole === 'partner';
 
     return {
       id: user.uid,

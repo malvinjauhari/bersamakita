@@ -38,6 +38,7 @@
   - **Fase 5**: Hardening `firestore.rules` (write kolektif → least privilege) + `POST /api/bmkg/refresh` (ingest BMKG server-side utk user biasa; earthquake/disasters write = admin/partner).
   - **Fase 6**: Docs sinkron (`API.md`/`CHANGELOG.md`/`DATABASE.md`) + **QA sandbox 2 akun Firebase** (`scripts/qa-phase6.ts`, user dibuat & dihapus otomatis): summary & report IDENTIK antar-akun; user biasa ditolak menulis koleksi operasional.
   - **Fase 6.1 (hotfix)**: hapus sisa jalur tulis BMKG sisi klien — pool check (`loadData`) & admin refresh kini pakai `POST /api/bmkg/refresh` server-side (helper `refreshBMKGServer()`); `getDisasters('all')` tak lagi dipanggil saat bootstrap; inisialisasi Firebase Storage yang mati dihapus (`getStorage`). Default **"klien hanya baca; semua write via endpoint + Admin SDK"** berlaku penuh (utk disaster/earthquake). QA: user biasa baca `admin_approved` = 200, tulis = 403. Detail: `docs/TROUBLESHOOTING.md`.
+  - **Fase 6.2 (hotfix)**: `POST /api/admin/create-partner` 403 utk Master Admin — allowlist `create-partner` kini memuat ketiga email admin (`admin_backend@bersamakita.org`, `contohasdf@gmail.com`, `bersamakita.my.id@protonmail.com`), selaras `firestore.rules` & endpoint lain; helper terpusat `staffRoleForEmail()` mencegah role staf (`admin`/`partner`) tertimpa `'user'` di `users/{uid}` saat sign-in/refresh.
 
 ## Outstanding Issues
 
