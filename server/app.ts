@@ -29,12 +29,14 @@ import paymentsRoutes from './routes/payments.js';
 import transparencyRoutes from './routes/transparency.js';
 import adminRoutes from './routes/admin.js';
 import imagesRoutes from './routes/images.js';
+import fundraisingRoutes from './routes/fundraising.js';
 
 app.use('/api/bmkg', bmkgRoutes);
 app.use('/api/payments/duitku', paymentsRoutes);
 app.use('/api/transparency', transparencyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/images', imagesRoutes);
+app.use('/api/fundraising', fundraisingRoutes);
 
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {

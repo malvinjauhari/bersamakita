@@ -8,6 +8,7 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
 > - `/api/transparency` → `server/routes/transparency.ts`
 > - `/api/admin` → `server/routes/admin.ts`
 > - `/api/images` → `server/routes/images.ts`
+> - `/api/fundraising` → `server/routes/fundraising.ts`
 >
 > On Vercel, `api/index.ts` exports the same Express `app` as a serverless function, and any unmatched `/api/*` returns JSON 404 (never HTML).
 
@@ -70,6 +71,24 @@ This document outlines the API endpoints provided by the backend (`server/app.ts
      }}
      ```
    - `transactions` is capped to the 100 most recent paid donations; aggregates cover all paid donations.
+
+### Fundraising (Kolektif per Bencana) (`/api/fundraising`)
+
+1. **`GET /api/fundraising/summary`**
+   - **Description**: **Sumber kebenaran progres donasi kolektif per bencana** — identik untuk semua role (guest/user/admin/partner) karena diagregasi server-side via **Firebase Admin SDK**. Angka di-derive murni dari data nyata: `donations` + `payments` berstatus `paid` (join `donationId`, fallback `paymentId`) dan `disbursements`. Karena semua jalur konfirmasi Duitku (callback/check-status/simulate-paid/expire-sweep) bersifat idempotent, agregasi **tidak mungkin dihitung ganda** oleh callback duplikat. Tidak ada donor email/phone yang diekspos. Semantik finansial (disbursed/inflight/remaining) identik dengan `DisbursementManager`.
+   - **Response**:
+     ```json
+     { "success": true, "data": {
+         "generatedAt": "", "adminFeeRate": 0.0017,
+         "totals": { "collected": 0, "adminFeeTotal": 0, "donationCount": 0,
+                     "disbursed": 0, "inflight": 0, "remaining": 0 },
+         "disasters": [{ "disasterId": "", "disasterTitle": "", "status": "admin_approved",
+                         "fundingTarget": 50000000, "partnerId": null, "partnerName": null,
+                         "collected": 0, "adminFeeTotal": 0, "donationCount": 0,
+                         "disbursed": 0, "inflight": 0, "remaining": 0 }]
+     }}
+     ```
+   - Aturan per baris: `disbursed` = outflow disbursement berstatus `success`; `inflight` = `submitted`/`processing`; `remaining = max(0, collected − disbursed − inflight)`; `fundingTarget` = `disasters.fundingTarget ?? 50000000`. Donasi tanpa `disasterId` masuk bucket `__none__`, pencairan tanpa `disasterId` masuk bucket `__legacy__` (tetap dihitung di `totals`, bukan ditampilkan sebagai kartu bencana oleh frontend).
 
 ### Admin Endpoints (`/api/admin`)
 
